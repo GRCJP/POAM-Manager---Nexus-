@@ -900,135 +900,133 @@
                 </button>
             </div>
 
-            <!-- Key Metrics Dashboard -->
-            <div class="bg-purple-50 rounded-xl p-6 mb-6 border border-purple-200">
-                <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center">
-                    <i class="fas fa-chart-pie text-purple-600 mr-2"></i>
-                    POAM Metrics Overview
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                    <div class="bg-white rounded-lg p-4 border border-slate-200 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all" onclick="filterPOAMsByMetric('all')">
-                        <div class="flex items-center justify-between mb-2">
-                            <h4 class="font-semibold text-slate-800">Total POAMs</h4>
-                            <i class="fas fa-clipboard-list text-blue-500"></i>
+            <!-- Security Posture Overview -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-8 mb-6">
+                <!-- Section Title Block -->
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-slate-900 tracking-tight">Security Posture Overview</h2>
+                    <p class="text-slate-500 mt-1">Real-time remediation velocity across the enclave.</p>
+                </div>
+
+                <!-- KPI Card Row -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <!-- Total POAM Items -->
+                    <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="p-2 bg-indigo-50 rounded-lg">
+                                <i class="fas fa-clipboard-list text-indigo-600 text-lg"></i>
+                            </div>
+                            <span class="text-xs text-slate-500 font-medium">ACTIVE</span>
                         </div>
-                        <p class="text-2xl font-bold text-blue-600" id="total-poams-count">0</p>
-                        <p class="text-xs text-slate-500">Click to view all</p>
+                        <p class="text-3xl font-bold text-slate-900 mb-1" id="total-poams-count">0</p>
+                        <p class="text-sm text-slate-600">Total POAM Items</p>
+                        <p class="text-xs text-emerald-600 mt-2" id="total-poams-delta">+0 from last scan</p>
                     </div>
-                    <div class="bg-white rounded-lg p-4 border border-slate-200 cursor-pointer hover:border-red-400 hover:shadow-md transition-all" onclick="filterPOAMsByMetric('critical')">
-                        <div class="flex items-center justify-between mb-2">
-                            <h4 class="font-semibold text-slate-800">Critical POAMs</h4>
-                            <i class="fas fa-exclamation-triangle text-red-500"></i>
+
+                    <!-- Overdue Milestones -->
+                    <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="p-2 bg-red-50 rounded-lg">
+                                <i class="fas fa-calendar-times text-red-600 text-lg"></i>
+                            </div>
+                            <span class="text-xs text-slate-500 font-medium">URGENT</span>
                         </div>
-                        <p class="text-2xl font-bold text-red-600" id="critical-poams-count">0</p>
-                        <p class="text-xs text-slate-500">Click to filter</p>
+                        <p class="text-3xl font-bold text-slate-900 mb-1" id="overdue-poams-count">0</p>
+                        <p class="text-sm text-slate-600">Overdue Milestones</p>
+                        <p class="text-xs text-slate-500 mt-2" id="overdue-milestones-tooltip">Milestones not configured</p>
                     </div>
-                    <div class="bg-white rounded-lg p-4 border border-slate-200 cursor-pointer hover:border-purple-400 hover:shadow-md transition-all" onclick="filterPOAMsByMetric('risk-accepted')">
-                        <div class="flex items-center justify-between mb-2">
-                            <h4 class="font-semibold text-slate-800">Risk Accepted</h4>
-                            <i class="fas fa-shield-alt text-purple-500"></i>
+
+                    <!-- Critical Findings -->
+                    <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="p-2 bg-rose-50 rounded-lg">
+                                <i class="fas fa-exclamation-triangle text-rose-600 text-lg"></i>
+                            </div>
+                            <span class="text-xs text-slate-500 font-medium">CRITICAL</span>
                         </div>
-                        <p class="text-2xl font-bold text-purple-600" id="risk-accepted-count">0</p>
-                        <p class="text-xs text-slate-500">Click to filter</p>
+                        <p class="text-3xl font-bold text-slate-900 mb-1" id="critical-poams-count">0</p>
+                        <p class="text-sm text-slate-600">Critical Findings</p>
+                        <p class="text-xs text-slate-500 mt-2">Requires immediate action</p>
                     </div>
-                    <div class="bg-white rounded-lg p-4 border border-slate-200 cursor-pointer hover:border-orange-400 hover:shadow-md transition-all" onclick="filterPOAMsByMetric('overdue')">
-                        <div class="flex items-center justify-between mb-2">
-                            <h4 class="font-semibold text-slate-800">Overdue POAMs</h4>
-                            <i class="fas fa-calendar-times text-orange-500"></i>
+
+                    <!-- System Confidence -->
+                    <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="p-2 bg-emerald-50 rounded-lg">
+                                <i class="fas fa-shield-alt text-emerald-600 text-lg"></i>
+                            </div>
+                            <span class="text-xs text-slate-500 font-medium">HEALTH</span>
                         </div>
-                        <p class="text-2xl font-bold text-orange-600" id="overdue-poams-count">0</p>
-                        <p class="text-xs text-slate-500">Click to filter</p>
+                        <p class="text-3xl font-bold text-slate-900 mb-1" id="system-confidence">N/A</p>
+                        <p class="text-sm text-slate-600">System Confidence</p>
+                        <p class="text-xs text-slate-500 mt-2" id="confidence-tooltip">Confidence data not available</p>
                     </div>
                 </div>
-                
-                <!-- Upcoming Due Dates -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div class="bg-white rounded-lg p-4 border border-slate-200 cursor-pointer hover:border-yellow-400 hover:shadow-md transition-all" onclick="filterPOAMsByMetric('due-30')">
-                        <div class="flex items-center justify-between mb-2">
-                            <h4 class="font-semibold text-slate-800">Due in 30 Days</h4>
-                            <i class="fas fa-clock text-yellow-500"></i>
+
+                <!-- Two-Column Content Block -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Left Column: Active Remediation Groups -->
+                    <div class="lg:col-span-2">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold text-slate-900">Active Remediation Groups</h3>
+                            <select class="text-sm border border-slate-200 rounded-lg px-3 py-1.5 bg-white text-slate-700" onchange="sortRemediationGroups(this.value)">
+                                <option value="severity">Sort by severity</option>
+                                <option value="due-date">Sort by due date</option>
+                                <option value="assets">Sort by assets</option>
+                            </select>
                         </div>
-                        <p class="text-2xl font-bold text-yellow-600" id="due-30-days-count">0</p>
-                        <p class="text-xs text-slate-500">Click to filter</p>
-                    </div>
-                    <div class="bg-white rounded-lg p-4 border border-slate-200 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all" onclick="filterPOAMsByMetric('due-60')">
-                        <div class="flex items-center justify-between mb-2">
-                            <h4 class="font-semibold text-slate-800">Due in 60 Days</h4>
-                            <i class="fas fa-calendar text-blue-500"></i>
-                        </div>
-                        <p class="text-2xl font-bold text-blue-600" id="due-60-days-count">0</p>
-                        <p class="text-xs text-slate-500">Click to filter</p>
-                    </div>
-                    <div class="bg-white rounded-lg p-4 border border-slate-200 cursor-pointer hover:border-green-400 hover:shadow-md transition-all" onclick="filterPOAMsByMetric('closed')">
-                        <div class="flex items-center justify-between mb-2">
-                            <h4 class="font-semibold text-slate-800">POAMs Closed</h4>
-                            <i class="fas fa-check-circle text-green-500"></i>
-                        </div>
-                        <p class="text-2xl font-bold text-green-600" id="poams-closed-count">0</p>
-                        <p class="text-xs text-slate-500">Click to filter</p>
-                    </div>
-                </div>
-                
-                <!-- Baseline Metrics -->
-                <div class="bg-slate-50 rounded-lg p-4 border border-slate-200">
-                    <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center">
-                        <i class="fas fa-chart-line text-indigo-500 mr-2"></i>
-                        Baseline Analysis
-                    </h3>
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-                        <div class="bg-white rounded-lg p-3 border border-slate-200 cursor-pointer hover:border-amber-400 hover:shadow-md transition-all" onclick="filterPOAMsByMetric('legacy')">
-                            <div class="flex items-center justify-between mb-2">
-                                <h4 class="font-semibold text-slate-800 text-sm">Legacy POAMs</h4>
-                                <i class="fas fa-history text-amber-500"></i>
+                        
+                        <div class="space-y-4" id="active-remediation-groups">
+                            <!-- Remediation group cards will be populated here -->
+                            <div class="text-center py-8 text-slate-500">
+                                <i class="fas fa-inbox text-4xl mb-3 block text-slate-300"></i>
+                                <p class="text-sm">No active remediation groups</p>
+                                <p class="text-xs text-slate-400 mt-1">Upload a scan to see remediation groups</p>
                             </div>
-                            <p class="text-xl font-bold text-amber-600" id="legacy-poams-count">0</p>
-                            <p class="text-xs text-slate-500">> 2 years old</p>
-                        </div>
-                        <div class="bg-white rounded-lg p-3 border border-slate-200 cursor-pointer hover:border-teal-400 hover:shadow-md transition-all" onclick="filterPOAMsByMetric('recent')">
-                            <div class="flex items-center justify-between mb-2">
-                                <h4 class="font-semibold text-slate-800 text-sm">Recent POAMs</h4>
-                                <i class="fas fa-sparkles text-teal-500"></i>
-                            </div>
-                            <p class="text-xl font-bold text-teal-600" id="recent-poams-count">0</p>
-                            <p class="text-xs text-slate-500">≤ 15 days old</p>
-                        </div>
-                        <div class="bg-white rounded-lg p-3 border border-slate-200 cursor-pointer hover:border-slate-400 hover:shadow-md transition-all" onclick="filterPOAMsByMetric('standard')">
-                            <div class="flex items-center justify-between mb-2">
-                                <h4 class="font-semibold text-slate-800 text-sm">Standard POAMs</h4>
-                                <i class="fas fa-folder text-slate-500"></i>
-                            </div>
-                            <p class="text-xl font-bold text-slate-600" id="standard-poams-count">0</p>
-                            <p class="text-xs text-slate-500">Normal findings</p>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="bg-white rounded-lg p-3 border border-slate-200 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all" onclick="filterPOAMsByMetric('baseline-active')">
-                            <div class="flex items-center justify-between mb-2">
-                                <h4 class="font-semibold text-slate-800 text-sm">Baseline Active</h4>
-                                <i class="fas fa-check text-blue-500"></i>
+
+                    <!-- Right Column: Stacked Widgets -->
+                    <div class="space-y-6">
+                        <!-- Risk Distribution Widget -->
+                        <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                            <h3 class="text-sm font-semibold text-slate-900 mb-4">Risk Distribution</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-slate-600">Critical</span>
+                                    <span class="text-sm font-medium text-rose-600" id="risk-critical-count">0</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-slate-600">High</span>
+                                    <span class="text-sm font-medium text-orange-600" id="risk-high-count">0</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-slate-600">Moderate</span>
+                                    <span class="text-sm font-medium text-yellow-600" id="risk-moderate-count">0</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-slate-600">Low</span>
+                                    <span class="text-sm font-medium text-emerald-600" id="risk-low-count">0</span>
+                                </div>
                             </div>
-                            <p class="text-xl font-bold text-blue-600" id="baseline-active-count">0</p>
-                            <p class="text-xs text-slate-500">Known findings</p>
                         </div>
-                        <div class="bg-white rounded-lg p-3 border border-slate-200 cursor-pointer hover:border-red-400 hover:shadow-md transition-all" onclick="filterPOAMsByMetric('baseline-expired')">
-                            <div class="flex items-center justify-between mb-2">
-                                <h4 class="font-semibold text-slate-800 text-sm">Baseline Expired</h4>
-                                <i class="fas fa-exclamation-triangle text-red-500"></i>
+
+                        <!-- System Health Widget -->
+                        <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl border border-indigo-200 p-6 shadow-sm">
+                            <h3 class="text-sm font-semibold text-indigo-900 mb-2">System Health</h3>
+                            <p class="text-xs text-indigo-700 mb-4" id="baseline-name">Baseline: Current</p>
+                            <div class="text-center">
+                                <p class="text-4xl font-bold text-indigo-900 mb-2" id="system-health-percent">0%</p>
+                                <p class="text-xs text-indigo-700">Resolved Assets</p>
+                                <div class="flex items-center justify-center mt-3">
+                                    <span class="text-xs text-emerald-600 font-medium" id="health-delta">+0%</span>
+                                    <span class="text-xs text-indigo-600 ml-1">from last scan</span>
+                                </div>
                             </div>
-                            <p class="text-xl font-bold text-red-600" id="baseline-expired-count">0</p>
-                            <p class="text-xs text-slate-500">Near expiry</p>
-                        </div>
-                        <div class="bg-white rounded-lg p-3 border border-slate-200 cursor-pointer hover:border-green-400 hover:shadow-md transition-all" onclick="filterPOAMsByMetric('baseline-new')">
-                            <div class="flex items-center justify-between mb-2">
-                                <h4 class="font-semibold text-slate-800 text-sm">New Findings</h4>
-                                <i class="fas fa-plus text-green-500"></i>
-                            </div>
-                            <p class="text-xl font-bold text-green-600" id="baseline-new-count">0</p>
-                            <p class="text-xs text-slate-500">Not in baseline</p>
                         </div>
                     </div>
                 </div>
-                
+            </div>    
                 <!-- Security Control Families most impacted -->
                 <div class="bg-white rounded-lg p-4 border border-slate-200">
                     <div class="flex items-center justify-between mb-3">
