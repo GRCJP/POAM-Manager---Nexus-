@@ -28,26 +28,44 @@ async function showPOAMDetails(poamId) {
     }
     
     console.log('📋 POAM data structure:', poam);
-    console.log('🔍 POAM.description:', poam.description || 'undefined');
-    console.log('🔍 POAM.findingDescription:', poam.findingDescription || 'undefined');
-    console.log('🔍 POAM.affectedAssets:', poam.affectedAssets);
-    console.log('🔍 POAM.assets:', poam.assets);
-    console.log('🔍 Available fields:', Object.keys(poam));
-    console.log('🔍 POAM.rawFindings:', poam.rawFindings);
-    console.log('🔍 POAM.rawData:', poam.rawData);
-    console.log('🔍 POAM.totalAffectedAssets:', poam.totalAffectedAssets);
-    console.log('🔍 POAM.breachedAssets:', poam.breachedAssets);
-    console.log('🔍 POAM.vulnerabilityName:', poam.vulnerabilityName);
-    console.log('🔍 POAM.title:', poam.title);
-    console.log('🔍 POAM.vulnerability:', poam.vulnerability);
     
-    // Check if this is an old POAM vs new POAM
-    const hasNewStructure = poam.affectedAssets && Array.isArray(poam.affectedAssets);
-    console.log('🔍 Has new POAM structure:', hasNewStructure ? 'YES' : 'NO (old POAM)');
+    // Try to get latest scan summary for this POAM
+    let scanSummary = null;
+    if (poam.latestScanId) {
+        scanSummary = await poamDB.getPoamScanSummary(poamId, poam.latestScanId);
+    } else {
+        // Fallback: get the latest scan summary for this POAM
+        scanSummary = await poamDB.getLatestPoamScanSummary(poamId);
+    }
     
-    // Check if we have raw scan data to extract from
-    const hasRawData = poam.rawFindings || poam.rawData;
-    console.log('🔍 Has raw scan data:', hasRawData ? 'YES' : 'NO');
+    console.log('📸 Scan summary:', scanSummary);
+    
+    // Extract data from scan summary if available, otherwise use POAM data
+    let findingDescription = poam.findingDescription || poam.description || '';
+    let affectedAssets = poam.affectedAssets || poam.assets || [];
+    let solutionText = poam.mitigation || '';
+    let firstDetected = null;
+    let lastDetected = null;
+    let resultsSamples = [];
+    
+    if (scanSummary) {
+        console.log('🔍 Using data from scan summary');
+        findingDescription = scanSummary.rawFindings[0]?.results || scanSummary.rawFindings[0]?.description || scanSummary.rawFindings[0]?.title || findingDescription;
+        affectedAssets = scanSummary.affectedAssets || affectedAssets;
+        solutionText = scanSummary.solutionText || solutionText;
+        firstDetected = scanSummary.firstDetectedMin;
+        lastDetected = scanSummary.lastDetectedMax;
+        resultsSamples = scanSummary.resultsSamples || [];
+        
+        console.log('🔍 Extracted finding description from raw data:', findingDescription.substring(0, 100) + '...');
+        console.log('🔍 Extracted affected assets:', affectedAssets.length, 'assets');
+        console.log('🔍 Extracted solution text:', solutionText.substring(0, 100) + '...');
+    } else {
+        console.log('🔍 No scan summary available, using POAM data');
+    }
+    
+    console.log('🔍 Final finding description:', findingDescription.substring(0, 100) + '...');
+    console.log('🔍 Final affected assets:', affectedAssets.length, 'assets');
     
     currentPOAMDetail = poam;
     
@@ -83,65 +101,32 @@ function renderFocusedPOAMDetailPage(poam) {
         return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD format
     };
     
-    // For old POAMs, extract assets from raw scan data if available
-    let extractedAssets = poam.affectedAssets || poam.assets || [];
-    
-    // If this is an old POAM with no separate assets, try to extract from raw scan data
-    if ((!extractedAssets || extractedAssets.length === 0)) {
-        // First try raw findings data
-        if (poam.rawFindings && Array.isArray(poam.rawFindings) && poam.rawFindings.length > 0) {
-            console.log('🔍 Extracting assets from rawFindings:', poam.rawFindings.length, 'findings');
-            extractedAssets = [];
-            const assetSet = new Set();
-            
-            poam.rawFindings.forEach(finding => {
-                if (finding.asset) assetSet.add(finding.asset);
-                if (finding.host) assetSet.add(finding.host);
-                if (finding.ip && finding.ip !== 'N/A') {
-                    assetSet.add(`${finding.ip} (${finding.asset || finding.host || 'Unknown'})`);
-                }
-            });
-            
-            extractedAssets = Array.from(assetSet).slice(0, 10);
-            console.log('🔍 Extracted assets from rawFindings:', extractedAssets);
-        }
-        // Fallback: try to extract from description (old format)
-        else if (poam.findingDescription) {
-            console.log('🔍 No rawFindings, trying to extract from description');
-            const assetLines = poam.findingDescription.split('\n').filter(line => 
-                line.includes('Affected Assets:') || line.includes('Affected Host:') || 
-                line.includes('Host:') || line.includes('Server:')
-            );
-            if (assetLines.length > 0) {
-                extractedAssets = assetLines.flatMap(line => 
-                    line.split(':')[1]?.split(',').map(asset => asset.trim()).filter(Boolean) || []
-                );
-                console.log('🔍 Extracted assets from description:', extractedAssets);
-            }
-        }
-    }
-    
-    // Map formal fields to display fields
+    // Map formal fields to display fields using scan summary data
     const displayPOAM = {
         ...poam,
         risk: poam.riskLevel || poam.risk || 'medium',
         status: poam.findingStatus || poam.status || 'Open',
         vulnerability: poam.vulnerabilityName || poam.vulnerability || poam.title || 'Unknown',
-        description: poam.description || poam.findingDescription || '', // Prioritize scan description (Column B)
+        description: findingDescription, // Use description from scan summary or POAM
         dueDate: formatDateForInput(poam.updatedScheduledCompletionDate || poam.dueDate),
         poc: poam.poc || 'Unassigned',
         controlFamily: poam.controlFamily || 'CM',
         findingSource: poam.findingSource || 'Vulnerability Scan',
         initialScheduledCompletionDate: formatDateForInput(poam.initialScheduledCompletionDate),
         actualCompletionDate: formatDateForInput(poam.actualCompletionDate),
-        mitigation: poam.mitigation || '',
+        mitigation: solutionText, // Use solution from scan summary
         resourcesRequired: poam.resourcesRequired || '',
         notes: poam.notes || '',
-        // Use extracted assets for display
-        assets: extractedAssets
+        // Use assets from scan summary
+        assets: affectedAssets,
+        // Add scan metadata
+        firstDetected: firstDetected,
+        lastDetected: lastDetected,
+        resultsSamples: resultsSamples,
+        hasScanData: !!scanSummary
     };
     
-    const assetCount = poam.totalAffectedAssets || extractedAssets.length || 0;
+    const assetCount = scanSummary ? scanSummary.totalAffectedAssets : (poam.totalAffectedAssets || affectedAssets.length || 0);
     
     detailContainer.innerHTML = `
         <!-- Modal Background -->

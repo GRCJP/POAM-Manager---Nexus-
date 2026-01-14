@@ -50,6 +50,21 @@ class POAMDatabase {
                     milestoneStore.createIndex('targetDate', 'targetDate', { unique: false });
                 }
                 
+                // Create ScanRun object store for scan snapshots
+                if (!db.objectStoreNames.contains('scanRuns')) {
+                    const scanRunStore = db.createObjectStore('scanRuns', { keyPath: 'scanId' });
+                    scanRunStore.createIndex('importedAt', 'importedAt', { unique: false });
+                    scanRunStore.createIndex('source', 'source', { unique: false });
+                }
+                
+                // Create PoamScanSummary object store for POAM-scan relationships
+                if (!db.objectStoreNames.contains('poamScanSummaries')) {
+                    const summaryStore = db.createObjectStore('poamScanSummaries', { keyPath: 'id', autoIncrement: true });
+                    summaryStore.createIndex('poamId', 'poamId', { unique: false });
+                    summaryStore.createIndex('scanId', 'scanId', { unique: false });
+                    summaryStore.createIndex('poamScanId', ['poamId', 'scanId'], { unique: true });
+                }
+                
                 // Create comments object store
                 if (!db.objectStoreNames.contains('comments')) {
                     const commentStore = db.createObjectStore('comments', { keyPath: 'id', autoIncrement: true });
@@ -449,6 +464,136 @@ class POAMDatabase {
                 comments.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
                 resolve(comments);
             };
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // SCAN RUN MANAGEMENT
+    // ═══════════════════════════════════════════════════════════════
+
+    async saveScanRun(scanRun) {
+        if (!this.db) {
+            await this.init();
+        }
+        
+        const transaction = this.db.transaction(['scanRuns'], 'readwrite');
+        const store = transaction.objectStore('scanRuns');
+        
+        return new Promise((resolve, reject) => {
+            const request = store.put(scanRun);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async getScanRun(scanId) {
+        if (!this.db) {
+            await this.init();
+        }
+        
+        const transaction = this.db.transaction(['scanRuns'], 'readonly');
+        const store = transaction.objectStore('scanRuns');
+        
+        return new Promise((resolve, reject) => {
+            const request = store.get(scanId);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async getAllScanRuns() {
+        if (!this.db) {
+            await this.init();
+        }
+        
+        const transaction = this.db.transaction(['scanRuns'], 'readonly');
+        const store = transaction.objectStore('scanRuns');
+        
+        return new Promise((resolve, reject) => {
+            const request = store.getAll();
+            request.onsuccess = () => {
+                const scanRuns = request.result;
+                // Sort by importedAt descending
+                scanRuns.sort((a, b) => new Date(b.importedAt) - new Date(a.importedAt));
+                resolve(scanRuns);
+            };
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // POAM SCAN SUMMARY MANAGEMENT
+    // ═══════════════════════════════════════════════════════════════
+
+    async savePoamScanSummary(summary) {
+        if (!this.db) {
+            await this.init();
+        }
+        
+        const transaction = this.db.transaction(['poamScanSummaries'], 'readwrite');
+        const store = transaction.objectStore('poamScanSummaries');
+        
+        return new Promise((resolve, reject) => {
+            const request = store.put(summary);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async getPoamScanSummary(poamId, scanId) {
+        if (!this.db) {
+            await this.init();
+        }
+        
+        const transaction = this.db.transaction(['poamScanSummaries'], 'readonly');
+        const store = transaction.objectStore('poamScanSummaries');
+        const index = store.index('poamScanId');
+        
+        return new Promise((resolve, reject) => {
+            const request = index.get([poamId, scanId]);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async getLatestPoamScanSummary(poamId) {
+        if (!this.db) {
+            await this.init();
+        }
+        
+        const transaction = this.db.transaction(['poamScanSummaries'], 'readonly');
+        const store = transaction.objectStore('poamScanSummaries');
+        const index = store.index('poamId');
+        
+        return new Promise((resolve, reject) => {
+            const request = index.getAll(poamId);
+            request.onsuccess = () => {
+                const summaries = request.result;
+                if (summaries.length === 0) {
+                    resolve(null);
+                    return;
+                }
+                // Get the latest summary by scanId (assuming scanIds are chronological)
+                const latest = summaries.sort((a, b) => b.scanId.localeCompare(a.scanId))[0];
+                resolve(latest);
+            };
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async getAllPoamScanSummariesForScan(scanId) {
+        if (!this.db) {
+            await this.init();
+        }
+        
+        const transaction = this.db.transaction(['poamScanSummaries'], 'readonly');
+        const store = transaction.objectStore('poamScanSummaries');
+        const index = store.index('scanId');
+        
+        return new Promise((resolve, reject) => {
+            const request = index.getAll(scanId);
+            request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
         });
     }
