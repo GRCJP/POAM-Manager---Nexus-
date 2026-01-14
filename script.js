@@ -192,23 +192,7 @@ function contactSecurityTeam() {
     alert(`Security team contact for ${applicationData[currentApplication].name}:\n\nEmail: security@company.com\nPhone: x1234\nSlack: #security-help\n\nHours: Monday-Friday 9AM-5PM`);
 }
 
-function updatePOAMStatus(poamId) {
-    const newStatus = prompt('Update POAM status:', 'open');
-    if (newStatus && ['open', 'in_progress', 'completed'].includes(newStatus)) {
-        // Update POAM status in localStorage
-        const allPOAMs = JSON.parse(localStorage.getItem('poamData') || '{}');
-        if (allPOAMs[poamId]) {
-            allPOAMs[poamId].status = newStatus;
-            localStorage.setItem('poamData', JSON.stringify(allPOAMs));
-            
-            // Refresh the view
-            loadApplicationDashboard();
-            loadApplicationPOAMList();
-            
-            alert(`POAM ${poamId} status updated to ${newStatus}`);
-        }
-    }
-}
+// updatePOAMStatus function moved to vulnerability-tracking.js (IndexedDB-based)
 
 // Application Management Functions
 let currentApplication = null;
