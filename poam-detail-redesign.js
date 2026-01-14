@@ -33,10 +33,16 @@ async function showPOAMDetails(poamId) {
     console.log('🔍 POAM.affectedAssets:', poam.affectedAssets);
     console.log('🔍 POAM.assets:', poam.assets);
     console.log('🔍 Available fields:', Object.keys(poam));
+    console.log('🔍 POAM.rawFindings:', poam.rawFindings);
+    console.log('🔍 POAM.rawData:', poam.rawData);
     
     // Check if this is an old POAM vs new POAM
     const hasNewStructure = poam.affectedAssets && Array.isArray(poam.affectedAssets);
     console.log('🔍 Has new POAM structure:', hasNewStructure ? 'YES' : 'NO (old POAM)');
+    
+    // Check if we have raw scan data to extract from
+    const hasRawData = poam.rawFindings || poam.rawData;
+    console.log('🔍 Has raw scan data:', hasRawData ? 'YES' : 'NO');
     
     currentPOAMDetail = poam;
     
@@ -72,20 +78,41 @@ function renderFocusedPOAMDetailPage(poam) {
         return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD format
     };
     
-    // For old POAMs, extract assets from the description if no separate assets field
+    // For old POAMs, extract assets from raw scan data if available
     let extractedAssets = poam.affectedAssets || poam.assets || [];
     
-    // If this is an old POAM with no separate assets, try to extract from description
-    if ((!extractedAssets || extractedAssets.length === 0) && poam.findingDescription) {
-        const assetLines = poam.findingDescription.split('\n').filter(line => 
-            line.includes('Affected Assets:') || line.includes('Affected Host:') || 
-            line.includes('Host:') || line.includes('Server:')
-        );
-        if (assetLines.length > 0) {
-            // Extract asset names from the lines
-            extractedAssets = assetLines.flatMap(line => 
-                line.split(':')[1]?.split(',').map(asset => asset.trim()).filter(Boolean) || []
+    // If this is an old POAM with no separate assets, try to extract from raw scan data
+    if ((!extractedAssets || extractedAssets.length === 0)) {
+        // First try raw findings data
+        if (poam.rawFindings && Array.isArray(poam.rawFindings) && poam.rawFindings.length > 0) {
+            console.log('🔍 Extracting assets from rawFindings:', poam.rawFindings.length, 'findings');
+            extractedAssets = [];
+            const assetSet = new Set();
+            
+            poam.rawFindings.forEach(finding => {
+                if (finding.asset) assetSet.add(finding.asset);
+                if (finding.host) assetSet.add(finding.host);
+                if (finding.ip && finding.ip !== 'N/A') {
+                    assetSet.add(`${finding.ip} (${finding.asset || finding.host || 'Unknown'})`);
+                }
+            });
+            
+            extractedAssets = Array.from(assetSet).slice(0, 10);
+            console.log('🔍 Extracted assets from rawFindings:', extractedAssets);
+        }
+        // Fallback: try to extract from description (old format)
+        else if (poam.findingDescription) {
+            console.log('🔍 No rawFindings, trying to extract from description');
+            const assetLines = poam.findingDescription.split('\n').filter(line => 
+                line.includes('Affected Assets:') || line.includes('Affected Host:') || 
+                line.includes('Host:') || line.includes('Server:')
             );
+            if (assetLines.length > 0) {
+                extractedAssets = assetLines.flatMap(line => 
+                    line.split(':')[1]?.split(',').map(asset => asset.trim()).filter(Boolean) || []
+                );
+                console.log('🔍 Extracted assets from description:', extractedAssets);
+            }
         }
     }
     
