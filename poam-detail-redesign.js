@@ -72,6 +72,23 @@ function renderFocusedPOAMDetailPage(poam) {
         return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD format
     };
     
+    // For old POAMs, extract assets from the description if no separate assets field
+    let extractedAssets = poam.affectedAssets || poam.assets || [];
+    
+    // If this is an old POAM with no separate assets, try to extract from description
+    if ((!extractedAssets || extractedAssets.length === 0) && poam.findingDescription) {
+        const assetLines = poam.findingDescription.split('\n').filter(line => 
+            line.includes('Affected Assets:') || line.includes('Affected Host:') || 
+            line.includes('Host:') || line.includes('Server:')
+        );
+        if (assetLines.length > 0) {
+            // Extract asset names from the lines
+            extractedAssets = assetLines.flatMap(line => 
+                line.split(':')[1]?.split(',').map(asset => asset.trim()).filter(Boolean) || []
+            );
+        }
+    }
+    
     // Map formal fields to display fields
     const displayPOAM = {
         ...poam,
@@ -88,11 +105,11 @@ function renderFocusedPOAMDetailPage(poam) {
         mitigation: poam.mitigation || '',
         resourcesRequired: poam.resourcesRequired || '',
         notes: poam.notes || '',
-        // Map affectedAssets to assets for display compatibility
-        assets: poam.affectedAssets || poam.assets || []
+        // Use extracted assets for display
+        assets: extractedAssets
     };
     
-    const assetCount = poam.totalAffectedAssets || poam.affectedAssets?.length || poam.assets?.length || 0;
+    const assetCount = poam.totalAffectedAssets || extractedAssets.length || 0;
     
     detailContainer.innerHTML = `
         <!-- Modal Background -->
