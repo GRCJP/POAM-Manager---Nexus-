@@ -74,6 +74,35 @@
                         <span>Dashboard</span>
                     </a>
 
+                    <!-- Vulnerability Management -->
+                    <div class="sidebar-section" id="vulnerability-section">
+                        <button onclick="toggleSidebarSection('vulnerability-menu')" class="sidebar-section-toggle w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-shield-alt w-5"></i>
+                                <span>Vulnerability Management</span>
+                                <span class="ml-2 px-2 py-0.5 bg-indigo-600 text-white text-xs rounded-full">3</span>
+                            </div>
+                            <i class="fas fa-chevron-down text-xs transition-transform"></i>
+                        </button>
+                        <div id="vulnerability-menu" class="sidebar-submenu ml-8 mt-1 space-y-1 hidden">
+                            <a href="#" onclick="showModule('vulnerability-tracking')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
+                                <i class="fas fa-bug text-xs w-4 text-blue-400"></i>
+                                <span>Vulnerability Tracker</span>
+                                <span class="ml-auto text-xs text-blue-400">Active</span>
+                            </a>
+                            <a href="#" onclick="showModule('security-controls')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
+                                <i class="fas fa-shield-virus text-xs w-4 text-purple-400"></i>
+                                <span>Security Control POAMs</span>
+                                <span class="ml-auto text-xs text-purple-400">New</span>
+                            </a>
+                            <a href="#" onclick="showModule('systems-assets')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
+                                <i class="fas fa-server text-xs w-4 text-green-400"></i>
+                                <span>Systems & Assets</span>
+                                <span class="ml-auto text-xs text-green-400">New</span>
+                            </a>
+                        </div>
+                    </div>
+
                     <!-- Systems (Admin/Security Team Only) -->
                     <div class="sidebar-section" id="systems-section">
                         <button onclick="toggleSidebarSection('systems-menu')" class="sidebar-section-toggle w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
@@ -2431,6 +2460,53 @@
                     </div>
                 </div>
             </form>
+        </div>
+    </div>
+
+        <!-- Security Control POAMs Module -->
+        <div id="security-controls-module" class="module hidden">
+            <div class="mb-8">
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Security Control POAMs</h1>
+                <p class="text-slate-500 mt-1">Manage POAMs organized by security control families and compliance frameworks</p>
+            </div>
+
+            <!-- Security Control Content -->
+            <div class="text-center py-12">
+                <i class="fas fa-shield-virus text-6xl text-slate-300 mb-4"></i>
+                <h3 class="text-xl font-semibold text-slate-700 mb-2">Security Control Analysis</h3>
+                <p class="text-slate-500 mb-6">View and manage POAMs by security control families, NIST controls, and compliance frameworks.</p>
+                <div class="flex justify-center gap-4">
+                    <button class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                        <i class="fas fa-filter mr-2"></i>Filter by Control Family
+                    </button>
+                    <button class="px-6 py-3 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors">
+                        <i class="fas fa-clipboard-check mr-2"></i>Compliance Dashboard
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Systems & Assets Module -->
+        <div id="systems-assets-module" class="module hidden">
+            <div class="mb-8">
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Systems & Assets</h1>
+                <p class="text-slate-500 mt-1">System-level vulnerability analysis and asset management</p>
+            </div>
+
+            <!-- Systems Content -->
+            <div class="text-center py-12">
+                <i class="fas fa-server text-6xl text-slate-300 mb-4"></i>
+                <h3 class="text-xl font-semibold text-slate-700 mb-2">System Asset Management</h3>
+                <p class="text-slate-500 mb-6">Track vulnerabilities by system, asset group, and infrastructure components.</p>
+                <div class="flex justify-center gap-4">
+                    <button class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                        <i class="fas fa-network-wired mr-2"></i>Asset Inventory
+                    </button>
+                    <button class="px-6 py-3 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors">
+                        <i class="fas fa-chart-pie mr-2"></i>System Risk Analysis
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 

@@ -69,6 +69,19 @@ function showModule(moduleName) {
     } else if (moduleName === 'admin') {
         // Show default admin tab (users)
         showAdminTab('users');
+    } else if (moduleName === 'vulnerability-tracking') {
+        // Load vulnerability tracking data
+        if (typeof updateVulnerabilityModuleMetrics === 'function') {
+            updateVulnerabilityModuleMetrics();
+        }
+    } else if (moduleName === 'security-controls') {
+        // Load security controls data
+        console.log('🛡️ Loading Security Control POAMs module');
+        // TODO: Add security controls specific loading
+    } else if (moduleName === 'systems-assets') {
+        // Load systems and assets data
+        console.log('🖥️ Loading Systems & Assets module');
+        // TODO: Add systems assets specific loading
     }
     
     // Close mobile sidebar after selection
