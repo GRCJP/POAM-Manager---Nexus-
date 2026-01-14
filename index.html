@@ -917,7 +917,7 @@
                 <!-- KPI Card Row -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     <!-- Total POAM Items -->
-                    <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                    <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all" onclick="filterPOAMsByMetric('all')">
                         <div class="flex items-center justify-between mb-4">
                             <div class="p-2 bg-indigo-50 rounded-lg">
                                 <i class="fas fa-clipboard-list text-indigo-600 text-lg"></i>
@@ -930,7 +930,7 @@
                     </div>
 
                     <!-- Overdue Milestones -->
-                    <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                    <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm cursor-pointer hover:border-red-400 hover:shadow-md transition-all" onclick="filterPOAMsByMetric('overdue')">
                         <div class="flex items-center justify-between mb-4">
                             <div class="p-2 bg-red-50 rounded-lg">
                                 <i class="fas fa-calendar-times text-red-600 text-lg"></i>
@@ -942,8 +942,21 @@
                         <p class="text-xs text-slate-500 mt-2" id="overdue-milestones-tooltip">Milestones not configured</p>
                     </div>
 
+                    <!-- High POAM Items -->
+                    <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm cursor-pointer hover:border-orange-400 hover:shadow-md transition-all" onclick="filterPOAMsByMetric('high')">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="p-2 bg-orange-50 rounded-lg">
+                                <i class="fas fa-exclamation-circle text-orange-600 text-lg"></i>
+                            </div>
+                            <span class="text-xs text-slate-500 font-medium">HIGH</span>
+                        </div>
+                        <p class="text-3xl font-bold text-slate-900 mb-1" id="high-poams-count">0</p>
+                        <p class="text-sm text-slate-600">High POAM Items</p>
+                        <p class="text-xs text-slate-500 mt-2">Elevated priority items</p>
+                    </div>
+
                     <!-- Critical Findings -->
-                    <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                    <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm cursor-pointer hover:border-rose-400 hover:shadow-md transition-all" onclick="filterPOAMsByMetric('critical')">
                         <div class="flex items-center justify-between mb-4">
                             <div class="p-2 bg-rose-50 rounded-lg">
                                 <i class="fas fa-exclamation-triangle text-rose-600 text-lg"></i>
@@ -953,19 +966,6 @@
                         <p class="text-3xl font-bold text-slate-900 mb-1" id="critical-poams-count">0</p>
                         <p class="text-sm text-slate-600">Critical Findings</p>
                         <p class="text-xs text-slate-500 mt-2">Requires immediate action</p>
-                    </div>
-
-                    <!-- System Confidence -->
-                    <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="p-2 bg-emerald-50 rounded-lg">
-                                <i class="fas fa-shield-alt text-emerald-600 text-lg"></i>
-                            </div>
-                            <span class="text-xs text-slate-500 font-medium">HEALTH</span>
-                        </div>
-                        <p class="text-3xl font-bold text-slate-900 mb-1" id="system-confidence">N/A</p>
-                        <p class="text-sm text-slate-600">System Confidence</p>
-                        <p class="text-xs text-slate-500 mt-2" id="confidence-tooltip">Confidence data not available</p>
                     </div>
                 </div>
 
