@@ -490,9 +490,12 @@ function getRiskBadge(risk) {
 
 function getStatusOptions(currentStatus) {
     const statuses = ['Open', 'In Progress', 'Completed', 'Closed', 'Risk Accepted'];
-    return statuses.map(status => 
-        `<option value="${status.toLowerCase().replace(' ', '-')}" ${currentStatus.toLowerCase() === status.toLowerCase() ? 'selected' : ''}>${status}</option>`
-    ).join('');
+    return statuses.map(status => {
+        const value = status.toLowerCase().replace(' ', '-').replace('risk-accepted', 'risk-accepted');
+        const isSelected = currentStatus.toLowerCase() === status.toLowerCase() || 
+                          (status === 'Risk Accepted' && currentStatus.toLowerCase() === 'risk-accepted');
+        return `<option value="${value}" ${isSelected ? 'selected' : ''}>${status}</option>`;
+    }).join('');
 }
 
 function getAssetStatusColor(status) {
