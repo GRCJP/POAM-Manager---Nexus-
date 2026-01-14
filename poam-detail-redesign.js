@@ -67,6 +67,9 @@ async function showPOAMDetails(poamId) {
     console.log('🔍 Final finding description:', findingDescription.substring(0, 100) + '...');
     console.log('🔍 Final affected assets:', affectedAssets.length, 'assets');
     
+    // Calculate asset count for display
+    const assetCount = scanSummary ? scanSummary.totalAffectedAssets : (poam.totalAffectedAssets || affectedAssets.length || 0);
+    
     currentPOAMDetail = poam;
     
     // Load milestones and comments
@@ -135,7 +138,7 @@ function renderFocusedPOAMDetailPage(poam, scanData) {
         hasScanData: !!scanData.scanSummary
     };
     
-    const assetCount = scanData.scanSummary ? scanData.scanSummary.totalAffectedAssets : (poam.totalAffectedAssets || scanData.affectedAssets.length || 0);
+    const assetCount = scanData.assetCount; // Use the assetCount passed as parameter
     
     detailContainer.innerHTML = `
         <!-- Modal Background -->
