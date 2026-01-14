@@ -53,6 +53,14 @@ function renderFocusedPOAMDetailPage(poam) {
     const detailContainer = document.getElementById('poam-detail-page');
     if (!detailContainer) return;
     
+    // Helper function to format date for HTML input
+    const formatDateForInput = (dateValue) => {
+        if (!dateValue) return '';
+        const date = new Date(dateValue);
+        if (isNaN(date.getTime())) return '';
+        return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD format
+    };
+    
     // Map formal fields to display fields
     const displayPOAM = {
         ...poam,
@@ -60,12 +68,12 @@ function renderFocusedPOAMDetailPage(poam) {
         status: poam.findingStatus || poam.status || 'Open',
         vulnerability: poam.vulnerabilityName || poam.vulnerability || poam.title || 'Unknown',
         description: poam.description || poam.findingDescription || '', // Prioritize scan description (Column B)
-        dueDate: poam.updatedScheduledCompletionDate || poam.dueDate || '',
+        dueDate: formatDateForInput(poam.updatedScheduledCompletionDate || poam.dueDate),
         poc: poam.poc || 'Unassigned',
         controlFamily: poam.controlFamily || 'CM',
         findingSource: poam.findingSource || 'Vulnerability Scan',
-        initialScheduledCompletionDate: poam.initialScheduledCompletionDate || '',
-        actualCompletionDate: poam.actualCompletionDate || '',
+        initialScheduledCompletionDate: formatDateForInput(poam.initialScheduledCompletionDate),
+        actualCompletionDate: formatDateForInput(poam.actualCompletionDate),
         mitigation: poam.mitigation || '',
         resourcesRequired: poam.resourcesRequired || '',
         notes: poam.notes || ''
