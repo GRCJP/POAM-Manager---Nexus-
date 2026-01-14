@@ -7,13 +7,13 @@ console.log('📦 poam-database.js loading...');
 class POAMDatabase {
     constructor() {
         this.dbName = 'POAMVulnerabilityDB';
-        this.version = 2;
+        this.version = 3; // Increment to trigger schema upgrade for scan snapshots
         this.db = null;
     }
 
     async init() {
         return new Promise((resolve, reject) => {
-            const request = indexedDB.open('POAMDatabase', 2);
+            const request = indexedDB.open('POAMDatabase', 3);
             
             request.onerror = () => reject(request.error);
             request.onsuccess = () => {
@@ -546,15 +546,26 @@ class POAMDatabase {
             await this.init();
         }
         
-        const transaction = this.db.transaction(['poamScanSummaries'], 'readonly');
-        const store = transaction.objectStore('poamScanSummaries');
-        const index = store.index('poamScanId');
+        // Check if poamScanSummaries store exists
+        if (!this.db.objectStoreNames.contains('poamScanSummaries')) {
+            console.log('📸 poamScanSummaries store not found - database needs upgrade');
+            return null;
+        }
         
-        return new Promise((resolve, reject) => {
-            const request = index.get([poamId, scanId]);
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
-        });
+        try {
+            const transaction = this.db.transaction(['poamScanSummaries'], 'readonly');
+            const store = transaction.objectStore('poamScanSummaries');
+            const index = store.index('poamScanId');
+            
+            return new Promise((resolve, reject) => {
+                const request = index.get([poamId, scanId]);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        } catch (error) {
+            console.log('📸 Error accessing poamScanSummaries store:', error.message);
+            return null;
+        }
     }
 
     async getLatestPoamScanSummary(poamId) {
@@ -562,24 +573,35 @@ class POAMDatabase {
             await this.init();
         }
         
-        const transaction = this.db.transaction(['poamScanSummaries'], 'readonly');
-        const store = transaction.objectStore('poamScanSummaries');
-        const index = store.index('poamId');
+        // Check if poamScanSummaries store exists
+        if (!this.db.objectStoreNames.contains('poamScanSummaries')) {
+            console.log('📸 poamScanSummaries store not found - database needs upgrade');
+            return null;
+        }
         
-        return new Promise((resolve, reject) => {
-            const request = index.getAll(poamId);
-            request.onsuccess = () => {
-                const summaries = request.result;
-                if (summaries.length === 0) {
-                    resolve(null);
-                    return;
-                }
-                // Get the latest summary by scanId (assuming scanIds are chronological)
-                const latest = summaries.sort((a, b) => b.scanId.localeCompare(a.scanId))[0];
-                resolve(latest);
-            };
-            request.onerror = () => reject(request.error);
-        });
+        try {
+            const transaction = this.db.transaction(['poamScanSummaries'], 'readonly');
+            const store = transaction.objectStore('poamScanSummaries');
+            const index = store.index('poamId');
+            
+            return new Promise((resolve, reject) => {
+                const request = index.getAll(poamId);
+                request.onsuccess = () => {
+                    const summaries = request.result;
+                    if (summaries.length === 0) {
+                        resolve(null);
+                        return;
+                    }
+                    // Get the latest summary by scanId (assuming scanIds are chronological)
+                    const latest = summaries.sort((a, b) => b.scanId.localeCompare(a.scanId))[0];
+                    resolve(latest);
+                };
+                request.onerror = () => reject(request.error);
+            });
+        } catch (error) {
+            console.log('📸 Error accessing poamScanSummaries store:', error.message);
+            return null;
+        }
     }
 
     async getAllPoamScanSummariesForScan(scanId) {
