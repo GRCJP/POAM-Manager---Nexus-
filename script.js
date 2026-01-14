@@ -1737,8 +1737,20 @@ async function initializeModule(moduleName) {
         module.classList.add('hidden');
     });
     
-    // Show selected module
-    document.getElementById(moduleName + '-module').classList.remove('hidden');
+    // Show selected module with error handling
+    const targetModule = document.getElementById(moduleName + '-module');
+    if (targetModule) {
+        targetModule.classList.remove('hidden');
+    } else {
+        console.warn(`Module '${moduleName}' not found, defaulting to dashboard`);
+        // Default to dashboard if requested module doesn't exist
+        const dashboardModule = document.getElementById('dashboard-module');
+        if (dashboardModule) {
+            dashboardModule.classList.remove('hidden');
+        }
+        // Clear the invalid module from localStorage
+        localStorage.removeItem('currentModule');
+    }
     
     // Load module-specific data
     if (moduleName === 'dashboard') {
@@ -1750,9 +1762,15 @@ async function initializeModule(moduleName) {
         // Load POAM ID configuration when POAM Repository is shown
         loadPOAMIdConfig();
         updateApplicationPOAMCounts();
-    } else if (moduleName === 'vulnerability') {
+    } else if (moduleName === 'vulnerability' || moduleName === 'vulnerability-tracking') {
         // Initialize vulnerability tracking
-        showVulnerabilityTab('upload');
+        if (typeof showVulnerabilityTab === 'function') {
+            showVulnerabilityTab('upload');
+        }
+        // Load vulnerability module metrics
+        if (typeof updateVulnerabilityModuleMetrics === 'function') {
+            updateVulnerabilityModuleMetrics();
+        }
         // updateSLAMetrics(); // Disabled - using new Security Posture Overview instead
     } else if (moduleName === 'evidence') {
         // Load evidence vault data
