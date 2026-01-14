@@ -48,11 +48,19 @@ function showModule(moduleName) {
         loadPOAMIdConfig();
     }
     
-    // Highlight active nav link
+    // Highlight active sidebar link
+    // First remove highlight from all sidebar links
+    const allSidebarLinks = document.querySelectorAll('.sidebar-link');
+    allSidebarLinks.forEach(link => {
+        link.classList.remove('bg-indigo-600', 'text-white');
+        link.classList.add('text-slate-400');
+    });
+    
+    // Then add highlight to the active module link
     const activeLink = document.querySelector(`[onclick="showModule('${moduleName}')"]`);
-    if (activeLink && activeLink.classList.contains('nav-link')) {
-        activeLink.classList.remove('text-slate-600');
-        activeLink.classList.add('text-indigo-600');
+    if (activeLink && activeLink.classList.contains('sidebar-link')) {
+        activeLink.classList.remove('text-slate-400');
+        activeLink.classList.add('bg-indigo-600', 'text-white');
     }
 }
 
