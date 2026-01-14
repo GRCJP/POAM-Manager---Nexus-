@@ -156,7 +156,8 @@ class POAMDatabase {
             raw: asset.raw || asset.rawData || 'No raw scan data available',
             ip: asset.ip || '',
             port: asset.port || '',
-            protocol: asset.protocol || ''
+            protocol: asset.protocol || '',
+            operatingSystem: asset.operatingSystem || asset.os || 'Unknown'
         }));
     }
 
