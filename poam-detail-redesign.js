@@ -343,14 +343,17 @@ function renderAssetsList(assets) {
     `;
     
     assets.forEach((asset, index) => {
-        const assetId = asset.id || asset.name || `asset-${index}`;
+        // Handle both old format (name/assetId) and new format (hostname/ip)
+        const assetName = asset.hostname || asset.name || asset.assetId || `asset-${index}`;
+        const assetIP = asset.ip || '';
+        const displayName = assetIP ? `${assetName} (${assetIP})` : assetName;
         
         html += `
             <tr class="hover:bg-slate-50">
                 <td class="px-4 py-3 font-medium text-slate-900">
                     <div class="flex items-center gap-2">
                         <i class="fas fa-server text-slate-400"></i>
-                        ${asset.name || asset.assetId || 'Unknown'}
+                        ${displayName}
                     </div>
                 </td>
                 <td class="px-4 py-3">
@@ -358,7 +361,7 @@ function renderAssetsList(assets) {
                         ${asset.status || 'affected'}
                     </span>
                 </td>
-                <td class="px-4 py-3 text-slate-600">${asset.operatingSystem || asset.os || 'Unknown'}</td>
+                <td class="px-4 py-3 text-slate-600">${asset.os || asset.operatingSystem || 'Unknown'}</td>
                 <td class="px-4 py-3 text-slate-600">${asset.firstDetected || 'N/A'}</td>
                 <td class="px-4 py-3 text-slate-600">${asset.lastDetected || 'N/A'}</td>
             </tr>
