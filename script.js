@@ -169,9 +169,7 @@ function loadApplicationPOAMList() {
                         <button onclick="viewPOAMDetails('${poam.poam_id}')" class="text-slate-600 hover:text-slate-800 p-2" title="View Details">
                             <i class="fas fa-eye"></i>
                         </button>
-                        <button onclick="updatePOAMStatus('${poam.poam_id}')" class="text-blue-600 hover:text-blue-800 p-2" title="Update Status">
-                            <i class="fas fa-edit"></i>
-                        </button>
+                        <!-- Status update removed - use vulnerability tracker for status changes -->
                     </div>
                 </div>
             </div>
