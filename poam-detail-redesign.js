@@ -12,10 +12,23 @@ let expandedAssets = new Set();
 async function showPOAMDetails(poamId) {
     console.log(`🔍 Loading POAM details for: ${poamId}`);
     
+    // Ensure database is initialized
+    if (!poamDB || !poamDB.db) {
+        console.log('⏳ Waiting for database to initialize...');
+        try {
+            await poamDB.init();
+        } catch (error) {
+            console.error('Failed to initialize database:', error);
+            alert('Database not ready. Please refresh the page and try again.');
+            return;
+        }
+    }
+    
     // Get POAM from IndexedDB
     const poam = await poamDB.getPOAM(poamId);
     if (!poam) {
         console.error('POAM not found:', poamId);
+        alert('POAM not found. It may have been deleted.');
         return;
     }
     
@@ -28,9 +41,26 @@ async function showPOAMDetails(poamId) {
     // Render the page
     renderPOAMDetailPage(poam);
     
-    // Show the detail page
+    // Show the detail modal
     document.getElementById('poam-detail-page').classList.remove('hidden');
-    document.getElementById('vulnerability-tracking-module').classList.add('hidden');
+    document.body.style.overflow = 'hidden'; // Prevent background scroll
+    
+    // Add click outside to close functionality
+    const modal = document.getElementById('poam-detail-page');
+    modal.onclick = function(event) {
+        if (event.target === modal) {
+            closePOAMDetail();
+        }
+    };
+    
+    // Add ESC key to close modal
+    const escHandler = function(event) {
+        if (event.key === 'Escape') {
+            closePOAMDetail();
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -82,7 +112,7 @@ function renderPOAMDetailPage(poam) {
                         <h2 class="text-lg text-slate-700 font-medium">${poam.title || poam.vulnerability}</h2>
                     </div>
                     
-                    <!-- Right: Key Metrics -->
+                    <!-- Right: Key Metrics + Close -->
                     <div class="flex items-center gap-6 text-sm">
                         <div class="text-center">
                             <div class="text-2xl font-bold text-indigo-600">${poam.totalAffectedAssets || poam.assetCount || 0}</div>
@@ -96,6 +126,9 @@ function renderPOAMDetailPage(poam) {
                             <div class="text-lg font-semibold text-slate-700">${poam.dueDate || 'N/A'}</div>
                             <div class="text-xs text-slate-600">Due Date</div>
                         </div>
+                        <button onclick="closePOAMDetail()" class="ml-4 text-slate-400 hover:text-slate-600 transition-colors" title="Close">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
                     </div>
                 </div>
                 
@@ -596,6 +629,11 @@ function jumpToAsset(asset) {
 
 async function updatePOAMField(poamId, field, value) {
     try {
+        // Ensure database is initialized
+        if (!poamDB || !poamDB.db) {
+            await poamDB.init();
+        }
+        
         const poam = await poamDB.getPOAM(poamId);
         if (!poam) return;
         
@@ -619,6 +657,11 @@ async function savePOAMNotes(poamId) {
     if (!noteText) return;
     
     try {
+        // Ensure database is initialized
+        if (!poamDB || !poamDB.db) {
+            await poamDB.init();
+        }
+        
         const poam = await poamDB.getPOAM(poamId);
         if (!poam) return;
         
@@ -640,8 +683,12 @@ async function savePOAMNotes(poamId) {
 
 function closePOAMDetail() {
     document.getElementById('poam-detail-page').classList.add('hidden');
-    document.getElementById('vulnerability-tracking-module').classList.remove('hidden');
+    document.body.style.overflow = ''; // Restore body scroll
     expandedAssets.clear();
+    
+    // Remove click event listener
+    const modal = document.getElementById('poam-detail-page');
+    modal.onclick = null;
 }
 
 function filterRawVulnerabilities(searchTerm) {

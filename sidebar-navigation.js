@@ -55,6 +55,10 @@ function showModule(moduleName) {
     } else if (moduleName === 'vulnerability') {
         showVulnerabilityTab('upload');
         updateSLAMetrics();
+        // Update vulnerability module metrics
+        if (typeof updateVulnerabilityModuleMetrics === 'function') {
+            updateVulnerabilityModuleMetrics();
+        }
     } else if (moduleName === 'evidence') {
         loadEvidenceFiles();
     } else if (moduleName === 'reporting') {
