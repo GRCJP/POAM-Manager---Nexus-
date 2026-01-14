@@ -1,0 +1,4 @@
+title,severity,description,source
+Critical App Finding,Critical,Critical security vulnerability in application layer,qualys
+High Risk Issue,High,High risk authentication bypass found,nessus
+Medium Risk Finding,Medium,Medium risk configuration issue,manual

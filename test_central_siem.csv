@@ -1,0 +1,6 @@
+title,severity,description,cve,cvss_score,host,scanner_type
+Apache Struts RCE,Critical,Remote code execution vulnerability in Apache Struts,CVE-2017-5638,10.0,web01.example.com,qualys
+OpenSSL Heartbleed,Critical,Heartbleed vulnerability allows data leak,CVE-2014-0160,9.8,ssl01.example.com,nessus
+WordPress Plugin XSS,High,Cross-site scripting in outdated WordPress plugin,CVE-2023-1234,7.5,wp01.example.com,wiz
+Outdated Java Version,Medium,Java 8 with known vulnerabilities,CVE-2021-44228,6.4,app01.example.com,qualys
+Weak SSH Configuration,Low,Weak SSH cipher suites enabled,,3.1,ssh01.example.com,nessus

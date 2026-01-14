@@ -1,0 +1,5 @@
+Plugin Name,Severity,CVSS,Host,Description,Solution
+OpenSSH Vulnerability,Critical,9.8,ssh-server-01.example.com,OpenSSH version 7.4 contains multiple critical vulnerabilities including remote code execution,Upgrade to OpenSSH 8.0 or later
+WordPress Core Outdated,High,7.5,wp-site.example.com,WordPress version 5.2 is outdated with multiple security issues,Update WordPress to latest version
+Weak Password Policy,Medium,5.3,domain-controller.example.com,Password policy does not enforce complexity requirements,Implement strong password policy with minimum 12 characters, complexity, and rotation
+Excessive Permissions,Low,3.8,file-server.example.com,User account has excessive read/write permissions on shared folders,Review and restrict user permissions to principle of least privilege

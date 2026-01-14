@@ -1,0 +1,2121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>POAM Nexus | Management Dashboard</title>
+</head>
+<body class="bg-slate-50 font-sans antialiased text-slate-900">
+    <script src="evidence-functions.js"></script>
+    <script src="sidebar-navigation.js"></script>
+    <script src="vulnerability-tracking.js"></script>
+
+    <!-- Top Header Bar -->
+    <header class="bg-white border-b border-slate-200 px-6 py-3 flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-4">
+            <button id="sidebar-toggle" class="lg:hidden text-slate-600 hover:text-slate-900">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-indigo-600 rounded flex items-center justify-center text-white font-bold">P</div>
+                <span class="text-xl font-bold tracking-tight uppercase text-slate-800">POAM<span class="text-indigo-600">Nexus</span></span>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <button class="text-slate-600 hover:text-slate-900 hidden sm:block">
+                <i class="fas fa-bell text-lg"></i>
+            </button>
+            <button class="text-slate-600 hover:text-slate-900 hidden sm:block">
+                <i class="fas fa-question-circle text-lg"></i>
+            </button>
+            <div class="flex items-center gap-3 pl-4 border-l border-slate-200">
+                <div class="text-right hidden sm:block">
+                    <p class="text-xs font-bold">Admin User</p>
+                    <p class="text-[10px] text-slate-500">Security Operations</p>
+                </div>
+                <div class="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full border-2 border-white shadow-sm flex items-center justify-center text-white text-sm font-bold">
+                    AU
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="w-64 bg-slate-900 text-slate-100 flex flex-col fixed lg:static inset-y-0 left-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out z-40 pt-16 lg:pt-0">
+            <div class="flex-1 overflow-y-auto py-6 px-3">
+                <!-- Main Navigation -->
+                <nav class="space-y-1">
+                    <!-- Dashboard -->
+                    <a href="#" onclick="showModule('dashboard')" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
+                        <i class="fas fa-home w-5"></i>
+                        <span>Dashboard</span>
+                    </a>
+
+                    <div class="border-t border-slate-700 my-4"></div>
+
+                    <!-- Reports & Analytics -->
+                    <div class="sidebar-section">
+                        <button onclick="toggleSidebarSection('reports-section')" class="sidebar-section-toggle w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-chart-bar w-5"></i>
+                                <span>Reports & Analytics</span>
+                            </div>
+                            <i class="fas fa-chevron-down text-xs transition-transform"></i>
+                        </button>
+                        <div id="reports-section" class="sidebar-submenu ml-8 mt-1 space-y-1 hidden">
+                            <a href="#" onclick="showModule('reports')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors">
+                                <i class="fas fa-chart-line text-xs w-4"></i>
+                                <span>Analytics Dashboard</span>
+                            </a>
+                            <a href="#" onclick="showModule('reporting')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors">
+                                <i class="fas fa-file-alt text-xs w-4"></i>
+                                <span>Executive Reports</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Audit Logs -->
+                    <a href="#" onclick="showModule('audit')" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
+                        <i class="fas fa-history w-5"></i>
+                        <span>Audit Logs</span>
+                    </a>
+
+                    <div class="border-t border-slate-700 my-4"></div>
+
+                    <!-- Settings -->
+                    <div class="sidebar-section">
+                        <button onclick="toggleSidebarSection('settings-section')" class="sidebar-section-toggle w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-cog w-5"></i>
+                                <span>Settings</span>
+                            </div>
+                            <i class="fas fa-chevron-down text-xs transition-transform"></i>
+                        </button>
+                        <div id="settings-section" class="sidebar-submenu ml-8 mt-1 space-y-1 hidden">
+                            <a href="#" onclick="showSettingsTab('sla')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors">
+                                <i class="fas fa-clock text-xs w-4"></i>
+                                <span>SLA Configuration</span>
+                            </a>
+                            <a href="#" onclick="showSettingsTab('risk-framework')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors">
+                                <i class="fas fa-shield-alt text-xs w-4"></i>
+                                <span>Risk Framework</span>
+                            </a>
+                            <a href="#" onclick="showSettingsTab('poam-id')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors">
+                                <i class="fas fa-hashtag text-xs w-4"></i>
+                                <span>POAM ID Structure</span>
+                            </a>
+                            <a href="#" onclick="showSettingsTab('api-config')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors">
+                                <i class="fas fa-sync-alt text-xs w-4"></i>
+                                <span>API Configuration</span>
+                            </a>
+                            <a href="#" onclick="showSettingsTab('preferences')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors">
+                                <i class="fas fa-sliders-h text-xs w-4"></i>
+                                <span>User Preferences</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Administration -->
+                    <div class="sidebar-section">
+                        <button onclick="toggleSidebarSection('admin-section')" class="sidebar-section-toggle w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-users-cog w-5"></i>
+                                <span>Administration</span>
+                            </div>
+                            <i class="fas fa-chevron-down text-xs transition-transform"></i>
+                        </button>
+                        <div id="admin-section" class="sidebar-submenu ml-8 mt-1 space-y-1 hidden">
+                            <a href="#" onclick="showAdminTab('users')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors">
+                                <i class="fas fa-user text-xs w-4"></i>
+                                <span>User Management</span>
+                            </a>
+                            <a href="#" onclick="showAdminTab('organization')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors">
+                                <i class="fas fa-building text-xs w-4"></i>
+                                <span>Organization</span>
+                            </a>
+                            <a href="#" onclick="showAdminTab('roles')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors">
+                                <i class="fas fa-user-shield text-xs w-4"></i>
+                                <span>Roles & Permissions</span>
+                            </a>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+
+            <!-- Sidebar Footer -->
+            <div class="border-t border-slate-700 p-4">
+                <div class="flex items-center gap-3 text-xs">
+                    <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span class="text-slate-400">System Online</span>
+                </div>
+                <div class="mt-2 text-xs text-slate-500">
+                    Version 2.1.0
+                </div>
+            </div>
+        </aside>
+
+        <!-- Sidebar Overlay for Mobile -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden hidden" onclick="toggleSidebar()"></div>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-y-auto bg-slate-50">
+            <div class="max-w-7xl mx-auto p-6 lg:p-10">
+        
+        <!-- Dashboard Module -->
+        <div id="dashboard-module" class="module">
+            <div class="mb-10">
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">System Security Posture</h1>
+                <p class="text-slate-500 mt-1">Reviewing POA&M milestones for <span class="font-semibold text-slate-700 underline decoration-indigo-300">Enclave Alpha</span></p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                            <i class="fas fa-clipboard-list"></i>
+                        </span>
+                        <span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded">TOTAL</span>
+                    </div>
+                    <h3 class="text-3xl font-bold tracking-tight">284</h3>
+                    <p class="text-sm text-slate-500 font-medium">Open Findings</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="p-2 bg-rose-50 text-rose-600 rounded-lg">
+                            <i class="fas fa-clock"></i>
+                        </span>
+                        <span class="text-[10px] font-bold text-rose-400 bg-rose-50 px-2 py-1 rounded">CRITICAL</span>
+                    </div>
+                    <h3 class="text-3xl font-bold tracking-tight text-rose-600">14</h3>
+                    <p class="text-sm text-slate-500 font-medium">Past Scheduled Date</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="p-2 bg-amber-50 text-amber-600 rounded-lg">
+                            <i class="fas fa-chart-line"></i>
+                        </span>
+                        <span class="text-[10px] font-bold text-amber-400 bg-amber-50 px-2 py-1 rounded">AVG SCORE</span>
+                    </div>
+                    <h3 class="text-3xl font-bold tracking-tight">Med High</h3>
+                    <p class="text-sm text-slate-500 font-medium">Aggregate Risk Level</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                            <i class="fas fa-check-circle"></i>
+                        </span>
+                    </div>
+                    <h3 class="text-3xl font-bold tracking-tight text-emerald-600">72%</h3>
+                    <p class="text-sm text-slate-500 font-medium">Remediation Goal</p>
+                </div>
+            </div>
+
+            <h2 class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                <span class="w-2 h-6 bg-indigo-600 rounded-full"></span>
+                Management Modules
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="group relative bg-white border border-slate-200 p-8 rounded-2xl hover:border-indigo-500 transition-all cursor-pointer shadow-sm hover:shadow-xl" onclick="showModule('poam')">
+                    <h3 class="text-xl font-bold mb-2 group-hover:text-indigo-600">POAM Repository</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed mb-6">Access the full list of weaknesses, scheduled completion dates, and resource requirements.</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-indigo-600 uppercase tracking-widest">Go to Data →</span>
+                        <span class="text-[10px] bg-slate-100 px-2 py-1 rounded uppercase font-bold text-slate-400 italic">Editor Access Required</span>
+                    </div>
+                </div>
+
+                <div class="group relative bg-white border border-slate-200 p-8 rounded-2xl hover:border-indigo-500 transition-all cursor-pointer shadow-sm hover:shadow-xl" onclick="showModule('vulnerability')">
+                    <h3 class="text-xl font-bold mb-2 group-hover:text-indigo-600">Vulnerability Tracking</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed mb-6">Advanced scan processing with Qualys, Tenable, Wiz integration, automated POAM generation, and enterprise reporting.</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-indigo-600 uppercase tracking-widest">Track Vulnerabilities →</span>
+                        <span class="text-[10px] bg-purple-50 px-2 py-1 rounded uppercase font-bold text-purple-400">Enterprise</span>
+                    </div>
+                </div>
+
+                <div class="group relative bg-white border border-slate-200 p-8 rounded-2xl hover:border-indigo-500 transition-all cursor-pointer shadow-sm hover:shadow-xl" onclick="showModule('evidence')">
+                    <h3 class="text-xl font-bold mb-2 group-hover:text-indigo-600">Evidence Vault</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed mb-6">Upload and link screenshots, configuration files, and policy documents to specific milestones.</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-indigo-600 uppercase tracking-widest">Open Vault →</span>
+                    </div>
+                </div>
+
+                <div class="group relative bg-white border border-slate-200 p-8 rounded-2xl hover:border-indigo-500 transition-all cursor-pointer shadow-sm hover:shadow-xl overflow-hidden" onclick="showModule('reporting')">
+                    <h3 class="text-xl font-bold mb-2 group-hover:text-indigo-600">Executive Reporting</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed mb-6">Generate high-level compliance exports for C-Suite and Regulatory review.</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-indigo-600 uppercase tracking-widest">Export Suite →</span>
+                        <span class="text-[10px] bg-red-50 px-2 py-1 rounded uppercase font-bold text-red-400">Restricted</span>
+                    </div>
+                    <div class="absolute top-4 right-4 text-slate-200">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- POAM Repository Module -->
+        <div id="poam-module" class="module hidden">
+            <div class="mb-8">
+                <button onclick="showModule('dashboard')" class="text-indigo-600 hover:text-indigo-800 mb-4">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                </button>
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">POAM Repository</h1>
+                <p class="text-slate-500 mt-1">Manage and track all Plan of Action and Milestones</p>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+                <!-- Application/System Selection -->
+                <div class="bg-slate-50 rounded-xl p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center">
+                        <i class="fas fa-server text-slate-600 mr-2"></i>
+                        Select Application/System
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="application-card bg-white border-2 border-slate-200 rounded-lg p-4 cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition-all" onclick="selectApplication('hr-system')">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-users text-blue-600 mr-2"></i>
+                                <h4 class="font-semibold text-slate-800">HR System</h4>
+                            </div>
+                            <p class="text-sm text-slate-600">Employee management and payroll</p>
+                            <div class="mt-2 text-xs text-slate-500">
+                                <span class="poam-count" data-app="hr-system">0</span> POAMs
+                            </div>
+                        </div>
+                        <div class="application-card bg-white border-2 border-slate-200 rounded-lg p-4 cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition-all" onclick="selectApplication('financial-system')">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-dollar-sign text-green-600 mr-2"></i>
+                                <h4 class="font-semibold text-slate-800">Financial System</h4>
+                            </div>
+                            <p class="text-sm text-slate-600">Accounting and financial reporting</p>
+                            <div class="mt-2 text-xs text-slate-500">
+                                <span class="poam-count" data-app="financial-system">0</span> POAMs
+                            </div>
+                        </div>
+                        <div class="application-card bg-white border-2 border-slate-200 rounded-lg p-4 cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition-all" onclick="selectApplication('crm-system')">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-address-book text-purple-600 mr-2"></i>
+                                <h4 class="font-semibold text-slate-800">CRM System</h4>
+                            </div>
+                            <p class="text-sm text-slate-600">Customer relationship management</p>
+                            <div class="mt-2 text-xs text-slate-500">
+                                <span class="poam-count" data-app="crm-system">0</span> POAMs
+                            </div>
+                        </div>
+                        <div class="application-card bg-white border-2 border-slate-200 rounded-lg p-4 cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition-all" onclick="selectApplication('infrastructure')">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-network-wired text-orange-600 mr-2"></i>
+                                <h4 class="font-semibold text-slate-800">Infrastructure</h4>
+                            </div>
+                            <p class="text-sm text-slate-600">Network and servers</p>
+                            <div class="mt-2 text-xs text-slate-500">
+                                <span class="poam-count" data-app="infrastructure">0</span> POAMs
+                            </div>
+                        </div>
+                        <div class="application-card bg-white border-2 border-slate-200 rounded-lg p-4 cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition-all" onclick="selectApplication('web-applications')">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-globe text-indigo-600 mr-2"></i>
+                                <h4 class="font-semibold text-slate-800">Web Applications</h4>
+                            </div>
+                            <p class="text-sm text-slate-600">Public and internal websites</p>
+                            <div class="mt-2 text-xs text-slate-500">
+                                <span class="poam-count" data-app="web-applications">0</span> POAMs
+                            </div>
+                        </div>
+                        <div class="application-card bg-white border-2 border-slate-200 rounded-lg p-4 cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition-all" onclick="selectApplication('databases')">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-database text-red-600 mr-2"></i>
+                                <h4 class="font-semibold text-slate-800">Databases</h4>
+                            </div>
+                            <p class="text-sm text-slate-600">Data storage and management</p>
+                            <div class="mt-2 text-xs text-slate-500">
+                                <span class="poam-count" data-app="databases">0</span> POAMs
+                            </div>
+                        </div>
+                        <div class="application-card bg-white border-2 border-slate-200 rounded-lg p-4 cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition-all" onclick="selectApplication('api-services')">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-plug text-teal-600 mr-2"></i>
+                                <h4 class="font-semibold text-slate-800">API Services</h4>
+                            </div>
+                            <p class="text-sm text-slate-600">REST APIs and microservices</p>
+                            <div class="mt-2 text-xs text-slate-500">
+                                <span class="poam-count" data-app="api-services">0</span> POAMs
+                            </div>
+                        </div>
+                        <div class="application-card bg-white border-2 border-slate-200 rounded-lg p-4 cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition-all" onclick="selectApplication('add-application')">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-plus text-slate-600 mr-2"></i>
+                                <h4 class="font-semibold text-slate-800">Add Application</h4>
+                            </div>
+                            <p class="text-sm text-slate-600">Create new system category</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Current Selection -->
+                    <div class="mt-6 p-4 bg-white rounded-lg border border-slate-200" id="current-selection" style="display: none;">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="font-semibold text-slate-800">Currently Viewing: <span id="selected-app-name" class="text-indigo-600"></span></h4>
+                                <p class="text-sm text-slate-600" id="selected-app-description"></p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button onclick="toggleViewMode()" class="text-sm px-3 py-1 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors" id="view-mode-toggle">
+                                    <i class="fas fa-exchange-alt mr-1"></i>Switch to App View
+                                </button>
+                                <button onclick="resetApplicationSelection()" class="text-slate-500 hover:text-slate-700">
+                                    <i class="fas fa-times mr-1"></i>Clear Selection
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Governance View (Default) -->
+                <div id="governance-view" class="poam-view">
+                    <!-- POAM Table (Hidden until application selected) -->
+                    <div id="poam-table-container" style="display: none;">
+                        <div class="flex justify-between items-center mb-6">
+                            <div class="flex gap-3 flex-wrap">
+                                <input type="text" placeholder="Search findings..." class="px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <select class="px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option>All Risk Levels</option>
+                                    <option>Critical</option>
+                                    <option>High</option>
+                                    <option>Medium</option>
+                                    <option>Low</option>
+                                </select>
+                                <select class="px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option>All Status</option>
+                                    <option>Open</option>
+                                    <option>In Progress</option>
+                                    <option>Completed</option>
+                                    <option>Overdue</option>
+                                </select>
+                                <select class="px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option>All Sources</option>
+                                    <option>Scan</option>
+                                    <option>Manual</option>
+                                    <option>Control</option>
+                                </select>
+                                <select class="px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option>All Controls</option>
+                                    <option>AC-2</option>
+                                    <option>AC-3</option>
+                                    <option>SC-8</option>
+                                    <option>SI-2</option>
+                                    <option>RA-5</option>
+                                </select>
+                            </div>
+                            <button onclick="openNewPOAMModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                                <i class="fas fa-plus mr-2"></i>New POAM
+                            </button>
+                        </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[1000px]">
+                        <thead>
+                            <tr class="border-b border-slate-200">
+                                <th class="text-left py-3 px-4 font-semibold text-slate-700">POAM ID</th>
+                                <th class="text-left py-3 px-4 font-semibold text-slate-700">Finding Description</th>
+                                <th class="text-left py-3 px-4 font-semibold text-slate-700">Risk Level</th>
+                                <th class="text-left py-3 px-4 font-semibold text-slate-700">Source</th>
+                                <th class="text-left py-3 px-4 font-semibold text-slate-700" id="framework-controls-header">NIST Controls</th>
+                                <th class="text-left py-3 px-4 font-semibold text-slate-700">Point of Contact</th>
+                                <th class="text-left py-3 px-4 font-semibold text-slate-700">Scheduled Date</th>
+                                <th class="text-left py-3 px-4 font-semibold text-slate-700">Status</th>
+                                <th class="text-left py-3 px-4 font-semibold text-slate-700">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="poam-table-body">
+                            <tr class="border-b border-slate-100 hover:bg-slate-50">
+                                <td class="py-3 px-4 font-mono text-sm">V-001234</td>
+                                <td class="py-3 px-4 max-w-xs">
+                                    <div class="truncate" title="Unencrypted sensitive data transmission over network channels">
+                                        Unencrypted sensitive data transmission over network channels
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4"><span class="px-2 py-1 bg-rose-100 text-rose-700 rounded text-xs font-semibold">High</span></td>
+                                <td class="py-3 px-4"><span class="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-semibold">Manual</span></td>
+                                <td class="py-3 px-4">
+                                    <div class="flex flex-wrap gap-1">
+                                        <span class="px-1 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">SC-8</span>
+                                        <span class="px-1 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">SC-12</span>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <div class="text-sm">
+                                        <div class="font-medium">Security Team</div>
+                                        <div class="text-slate-500">sec-team@company.com</div>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">2024-02-15</td>
+                                <td class="py-3 px-4"><span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-semibold">In Progress</span></td>
+                                <td class="py-3 px-4">
+                                    <button class="text-indigo-600 hover:text-indigo-800 mr-2" title="Edit"><i class="fas fa-edit"></i></button>
+                                    <button class="text-slate-600 hover:text-slate-800 mr-2" title="View Details"><i class="fas fa-eye"></i></button>
+                                    <button class="text-green-600 hover:text-green-800" title="Add Evidence"><i class="fas fa-paperclip"></i></button>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-slate-100 hover:bg-slate-50">
+                                <td class="py-3 px-4 font-mono text-sm">V-001235</td>
+                                <td class="py-3 px-4 max-w-xs">
+                                    <div class="truncate" title="Missing security patches on web servers exposing critical vulnerabilities">
+                                        Missing security patches on web servers exposing critical vulnerabilities
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4"><span class="px-2 py-1 bg-rose-100 text-rose-700 rounded text-xs font-semibold">Critical</span></td>
+                                <td class="py-3 px-4"><span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Scan</span></td>
+                                <td class="py-3 px-4">
+                                    <div class="flex flex-wrap gap-1">
+                                        <span class="px-1 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">SI-2</span>
+                                        <span class="px-1 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">RA-5</span>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <div class="text-sm">
+                                        <div class="font-medium">IT Operations</div>
+                                        <div class="text-slate-500">it-ops@company.com</div>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">2024-01-30</td>
+                                <td class="py-3 px-4"><span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold">Overdue</span></td>
+                                <td class="py-3 px-4">
+                                    <button class="text-indigo-600 hover:text-indigo-800 mr-2" title="Edit"><i class="fas fa-edit"></i></button>
+                                    <button class="text-slate-600 hover:text-slate-800 mr-2" title="View Details"><i class="fas fa-eye"></i></button>
+                                    <button class="text-green-600 hover:text-green-800" title="Add Evidence"><i class="fas fa-paperclip"></i></button>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-slate-100 hover:bg-slate-50">
+                                <td class="py-3 px-4 font-mono text-sm">V-001236</td>
+                                <td class="py-3 px-4 max-w-xs">
+                                    <div class="truncate" title="Insufficient access control mechanisms in application layer">
+                                        Insufficient access control mechanisms in application layer
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4"><span class="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-semibold">Medium</span></td>
+                                <td class="py-3 px-4"><span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">Control</span></td>
+                                <td class="py-3 px-4">
+                                    <div class="flex flex-wrap gap-1">
+                                        <span class="px-1 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">AC-2</span>
+                                        <span class="px-1 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">AC-3</span>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <div class="text-sm">
+                                        <div class="font-medium">App Development</div>
+                                        <div class="text-slate-500">app-dev@company.com</div>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">2024-03-01</td>
+                                <td class="py-3 px-4"><span class="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-semibold">Open</span></td>
+                                <td class="py-3 px-4">
+                                    <button class="text-indigo-600 hover:text-indigo-800 mr-2" title="Edit"><i class="fas fa-edit"></i></button>
+                                    <button class="text-slate-600 hover:text-slate-800 mr-2" title="View Details"><i class="fas fa-eye"></i></button>
+                                    <button class="text-green-600 hover:text-green-800" title="Add Evidence"><i class="fas fa-paperclip"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+                <!-- Application View (Simplified for App Teams) -->
+                <div id="application-view" class="poam-view" style="display: none;">
+                    <!-- Application Dashboard -->
+                    <div id="app-dashboard" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-white rounded-xl p-6 border border-slate-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-sm font-medium text-slate-600">Total POAMs</h3>
+                                <i class="fas fa-list text-blue-500"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-slate-900" id="app-total-poams">0</p>
+                            <p class="text-xs text-slate-500 mt-1">All findings</p>
+                        </div>
+                        <div class="bg-white rounded-xl p-6 border border-slate-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-sm font-medium text-slate-600">Critical Risk</h3>
+                                <i class="fas fa-exclamation-triangle text-red-500"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-red-600" id="app-critical-poams">0</p>
+                            <p class="text-xs text-slate-500 mt-1">Requires immediate action</p>
+                        </div>
+                        <div class="bg-white rounded-xl p-6 border border-slate-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-sm font-medium text-slate-600">Open Items</h3>
+                                <i class="fas fa-clock text-orange-500"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-orange-600" id="app-open-poams">0</p>
+                            <p class="text-xs text-slate-500 mt-1">Pending resolution</p>
+                        </div>
+                        <div class="bg-white rounded-xl p-6 border border-slate-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-sm font-medium text-slate-600">Completed</h3>
+                                <i class="fas fa-check-circle text-green-500"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-green-600" id="app-completed-poams">0</p>
+                            <p class="text-xs text-slate-500 mt-1">Resolved this month</p>
+                        </div>
+                    </div>
+
+                    <!-- Simplified POAM List -->
+                    <div class="bg-white rounded-xl border border-slate-200">
+                        <div class="p-6 border-b border-slate-200">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold text-slate-800">Your Security Findings</h3>
+                                <div class="flex items-center gap-3">
+                                    <input type="text" placeholder="Quick search..." class="px-3 py-1 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <select class="px-3 py-1 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <option>All Status</option>
+                                        <option>Open</option>
+                                        <option>In Progress</option>
+                                        <option>Completed</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="app-poam-list" class="divide-y divide-slate-100">
+                            <!-- Simplified POAM items will be loaded here -->
+                            <div class="p-8 text-center text-slate-500">
+                                <i class="fas fa-shield-alt text-4xl mb-3"></i>
+                                <p class="font-medium">No security findings found</p>
+                                <p class="text-sm mt-1">Your application is in good standing!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="mt-6 bg-blue-50 rounded-xl p-6 border border-blue-200">
+                        <h3 class="text-lg font-semibold text-blue-900 mb-4">Quick Actions</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <button onclick="requestSecurityScan()" class="bg-white p-4 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors text-left">
+                                <i class="fas fa-search text-blue-600 mb-2"></i>
+                                <h4 class="font-medium text-blue-900">Request Security Scan</h4>
+                                <p class="text-sm text-blue-700">Schedule a security assessment</p>
+                            </button>
+                            <button onclick="uploadEvidence()" class="bg-white p-4 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors text-left">
+                                <i class="fas fa-upload text-blue-600 mb-2"></i>
+                                <h4 class="font-medium text-blue-900">Upload Evidence</h4>
+                                <p class="text-sm text-blue-700">Provide remediation proof</p>
+                            </button>
+                            <button onclick="contactSecurityTeam()" class="bg-white p-4 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors text-left">
+                                <i class="fas fa-comments text-blue-600 mb-2"></i>
+                                <h4 class="font-medium text-blue-900">Contact Security Team</h4>
+                                <p class="text-sm text-blue-700">Get help with findings</p>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Evidence Vault Module -->
+        <div id="evidence-module" class="module hidden">
+            <div class="mb-8">
+                <button onclick="showModule('dashboard')" class="text-indigo-600 hover:text-indigo-800 mb-4">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                </button>
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Evidence Vault</h1>
+                <p class="text-slate-500 mt-1">Upload and manage evidence documents with POAM integration and chain of custody tracking</p>
+            </div>
+
+            <!-- Evidence Upload Form -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+                <h3 class="text-lg font-semibold text-slate-800 mb-6 flex items-center">
+                    <i class="fas fa-upload text-indigo-600 mr-2"></i>
+                    Upload Evidence with Chain of Custody
+                </h3>
+
+                <!-- POAM Selection -->
+                <div class="bg-indigo-50 rounded-xl p-4 mb-6">
+                    <h4 class="text-sm font-semibold text-slate-800 mb-3 flex items-center">
+                        <i class="fas fa-link text-indigo-600 mr-2"></i>
+                        Link to POAM (Required)
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Select POAM *</label>
+                            <select id="evidence-poam-select" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" onchange="updateSelectedPOAMInfo()" required>
+                                <option value="">Choose a POAM to link evidence...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Evidence Category *</label>
+                            <select id="evidence-type-select" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" required>
+                                <option value="">Select category...</option>
+                                <option value="remediation">Remediation Proof</option>
+                                <option value="validation">Validation Report</option>
+                                <option value="screenshot">Screenshot Evidence</option>
+                                <option value="configuration">Configuration File</option>
+                                <option value="policy">Policy Document</option>
+                                <option value="scan">Scan Results</option>
+                                <option value="approval">Management Approval</option>
+                                <option value="other">Other Evidence</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Selected POAM Info Display -->
+                    <div id="selected-poam-info" class="mt-4 bg-white rounded-lg p-4 border border-indigo-200" style="display: none;">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-semibold" id="selected-poam-id"></span>
+                                    <span class="px-2 py-1 rounded text-xs font-semibold" id="selected-poam-status-badge"></span>
+                                </div>
+                                <p class="text-sm text-slate-800 font-medium" id="selected-poam-description"></p>
+                                <div class="mt-2 text-xs text-slate-600">
+                                    <span><strong>Risk:</strong> <span id="selected-poam-risk"></span></span>
+                                    <span class="mx-2">•</span>
+                                    <span><strong>Due:</strong> <span id="selected-poam-due"></span></span>
+                                </div>
+                            </div>
+                            <button onclick="clearPOAMSelection()" class="text-slate-500 hover:text-slate-700">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chain of Custody Information -->
+                <div class="bg-slate-50 rounded-xl p-4 mb-6">
+                    <h4 class="text-sm font-semibold text-slate-800 mb-3 flex items-center">
+                        <i class="fas fa-user-shield text-slate-600 mr-2"></i>
+                        Chain of Custody
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Artifact Owner *</label>
+                            <input type="text" id="evidence-owner" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g., John Smith" required>
+                            <p class="text-xs text-slate-500 mt-1">Person responsible for the artifact</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Submitted By *</label>
+                            <input type="text" id="evidence-submitter" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g., Jane Doe" required>
+                            <p class="text-xs text-slate-500 mt-1">Person uploading the evidence</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Submission Date *</label>
+                            <input type="date" id="evidence-date" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                            <p class="text-xs text-slate-500 mt-1">Date evidence was provided</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Evidence Reference ID</label>
+                            <input type="text" id="evidence-reference" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Auto-generated if empty">
+                            <p class="text-xs text-slate-500 mt-1">Unique identifier for tracking</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Contact Email</label>
+                            <input type="email" id="evidence-email" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="owner@example.com">
+                            <p class="text-xs text-slate-500 mt-1">For follow-up questions</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Evidence Description -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Evidence Description *</label>
+                    <textarea id="evidence-description" class="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3" placeholder="Describe what this evidence demonstrates and how it addresses the POAM finding..." required></textarea>
+                </div>
+
+                <!-- Auto-Close POAM Option -->
+                <div class="bg-green-50 rounded-xl p-4 mb-6 border border-green-200">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" id="evidence-auto-close" class="mt-1" checked>
+                        <div class="flex-1">
+                            <label for="evidence-auto-close" class="text-sm font-semibold text-green-900 cursor-pointer flex items-center">
+                                <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                                Auto-Close POAM Upon Evidence Submission
+                            </label>
+                            <p class="text-xs text-green-700 mt-1">When enabled, submitting this evidence will automatically mark the linked POAM as "Completed" and update its status. The POAM owner will be notified of the closure.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File Upload Area -->
+                <div class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-indigo-400 transition-colors cursor-pointer" onclick="document.getElementById('evidence-file-upload').click()">
+                    <i class="fas fa-cloud-upload-alt text-4xl text-slate-400 mb-4"></i>
+                    <h3 class="text-lg font-semibold text-slate-700 mb-2">Upload Evidence Files</h3>
+                    <p class="text-slate-500 mb-4">Drag and drop files here or click to browse</p>
+                    <p class="text-xs text-slate-400">Supported: PDF, Images, Documents, Spreadsheets (Max 50MB per file)</p>
+                    <input type="file" id="evidence-file-upload" class="hidden" multiple onchange="handleEvidenceUpload(event)">
+                    <button type="button" class="mt-4 bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                        <i class="fas fa-folder-open mr-2"></i>Choose Files
+                    </button>
+                </div>
+
+                <!-- Selected Files Preview -->
+                <div id="selected-files-preview" class="mt-4" style="display: none;">
+                    <h4 class="text-sm font-semibold text-slate-800 mb-2">Selected Files:</h4>
+                    <div id="selected-files-list" class="space-y-2"></div>
+                </div>
+            </div>
+
+            <!-- Evidence Repository -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Evidence Repository</h2>
+                        <p class="text-sm text-slate-500 mt-1">All uploaded evidence with POAM linkage and chain of custody</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="filterEvidence('all')" class="px-3 py-1 text-sm bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors" id="filter-all">
+                            <i class="fas fa-list mr-1"></i>All
+                        </button>
+                        <button onclick="filterEvidence('linked')" class="px-3 py-1 text-sm bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors" id="filter-linked">
+                            <i class="fas fa-link mr-1"></i>Linked
+                        </button>
+                        <button onclick="filterEvidence('unlinked')" class="px-3 py-1 text-sm bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors" id="filter-unlinked">
+                            <i class="fas fa-unlink mr-1"></i>Unlinked
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Search and Sort -->
+                <div class="flex gap-3 mb-4">
+                    <div class="flex-1">
+                        <input type="text" id="evidence-search" placeholder="Search evidence by POAM ID, owner, or description..." class="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" onkeyup="searchEvidence()">
+                    </div>
+                    <select id="evidence-sort" class="px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" onchange="sortEvidence()">
+                        <option value="date-desc">Newest First</option>
+                        <option value="date-asc">Oldest First</option>
+                        <option value="poam">By POAM ID</option>
+                        <option value="type">By Category</option>
+                    </select>
+                </div>
+
+                <div id="evidence-list" class="space-y-3">
+                    <!-- Evidence items will be populated here -->
+                    <div class="text-center py-12 text-slate-400">
+                        <i class="fas fa-folder-open text-5xl mb-4"></i>
+                        <p class="text-lg font-medium">No evidence uploaded yet</p>
+                        <p class="text-sm mt-1">Upload evidence files to link them to POAMs</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vulnerability Tracking Module -->
+        <div id="vulnerability-module" class="module hidden">
+            <div class="mb-8 flex justify-between items-center">
+                <div>
+                    <button onclick="showModule('dashboard')" class="text-indigo-600 hover:text-indigo-800 mb-4">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                    </button>
+                    <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Vulnerability Tracking</h1>
+                    <p class="text-slate-500 mt-1">Upload scans and manage generated POAMs</p>
+                </div>
+                <button onclick="exportPOAMReport()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+                    <i class="fas fa-download"></i>
+                    <span>Export POAMs</span>
+                </button>
+            </div>
+
+            <!-- Key Metrics Dashboard -->
+            <div class="bg-purple-50 rounded-xl p-6 mb-6 border border-purple-200">
+                <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center">
+                    <i class="fas fa-chart-pie text-purple-600 mr-2"></i>
+                    POAM Metrics Overview
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <div class="bg-white rounded-lg p-4 border border-slate-200">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-semibold text-slate-800">Total POAMs</h4>
+                            <i class="fas fa-clipboard-list text-blue-500"></i>
+                        </div>
+                        <p class="text-2xl font-bold text-blue-600" id="total-poams-count">0</p>
+                        <p class="text-xs text-slate-500">All POAM items</p>
+                    </div>
+                    <div class="bg-white rounded-lg p-4 border border-slate-200">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-semibold text-slate-800">Critical POAMs</h4>
+                            <i class="fas fa-exclamation-triangle text-red-500"></i>
+                        </div>
+                        <p class="text-2xl font-bold text-red-600" id="critical-poams-count">0</p>
+                        <p class="text-xs text-slate-500">Critical severity</p>
+                    </div>
+                    <div class="bg-white rounded-lg p-4 border border-slate-200">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-semibold text-slate-800">Risk Accepted</h4>
+                            <i class="fas fa-shield-alt text-purple-500"></i>
+                        </div>
+                        <p class="text-2xl font-bold text-purple-600" id="risk-accepted-count">0</p>
+                        <p class="text-xs text-slate-500">Accepted risks</p>
+                    </div>
+                    <div class="bg-white rounded-lg p-4 border border-slate-200">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-semibold text-slate-800">Overdue POAMs</h4>
+                            <i class="fas fa-calendar-times text-orange-500"></i>
+                        </div>
+                        <p class="text-2xl font-bold text-orange-600" id="overdue-poams-count">0</p>
+                        <p class="text-xs text-slate-500">Past due date</p>
+                    </div>
+                </div>
+                
+                <!-- Upcoming Due Dates -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div class="bg-white rounded-lg p-4 border border-slate-200">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-semibold text-slate-800">Due in 30 Days</h4>
+                            <i class="fas fa-clock text-yellow-500"></i>
+                        </div>
+                        <p class="text-2xl font-bold text-yellow-600" id="due-30-days-count">0</p>
+                        <p class="text-xs text-slate-500">Approaching deadline</p>
+                    </div>
+                    <div class="bg-white rounded-lg p-4 border border-slate-200">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-semibold text-slate-800">Due in 60 Days</h4>
+                            <i class="fas fa-calendar text-blue-500"></i>
+                        </div>
+                        <p class="text-2xl font-bold text-blue-600" id="due-60-days-count">0</p>
+                        <p class="text-xs text-slate-500">Planning required</p>
+                    </div>
+                    <div class="bg-white rounded-lg p-4 border border-slate-200">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-semibold text-slate-800">Due in 90 Days</h4>
+                            <i class="fas fa-calendar-alt text-green-500"></i>
+                        </div>
+                        <p class="text-2xl font-bold text-green-600" id="due-90-days-count">0</p>
+                        <p class="text-xs text-slate-500">Future planning</p>
+                    </div>
+                </div>
+                
+                <!-- Most POAMs by OS -->
+                <div class="bg-white rounded-lg p-4 border border-slate-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="font-semibold text-slate-800">Top Operating Systems</h4>
+                            <p class="text-sm text-slate-600" id="os-breakdown">No POAM data available</p>
+                        </div>
+                        <i class="fas fa-desktop text-slate-400 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scan Upload Section -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Upload Area -->
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
+                            <i class="fas fa-upload text-indigo-600 mr-2"></i>
+                            Upload Vulnerability Scan
+                        </h3>
+                        <div class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-indigo-400 transition-colors cursor-pointer" onclick="document.getElementById('scan-file-input').click()">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-slate-400 mb-4"></i>
+                            <h4 class="text-lg font-semibold text-slate-700 mb-2">Drop CSV file here</h4>
+                            <p class="text-slate-500 mb-4">or click to browse</p>
+                            <input type="file" id="scan-file-input" class="hidden" accept=".csv" onchange="handleVulnerabilityUpload(event)">
+                            <button class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                                <i class="fas fa-folder-open mr-2"></i>Choose File
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Last Scan Info -->
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
+                            <i class="fas fa-history text-green-600 mr-2"></i>
+                            Scan History
+                        </h3>
+                        <div id="last-scan-info" class="bg-green-50 rounded-lg p-6 border border-green-200">
+                            <h4 class="text-sm font-semibold text-green-900 mb-3">Last Scan Processed</h4>
+                            <div class="space-y-2 text-sm">
+                                <p class="text-green-800"><strong>Date:</strong> <span id="last-scan-date">No scans processed yet</span></p>
+                                <p class="text-green-800"><strong>POAMs Created:</strong> <span id="last-scan-poams">0</span></p>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-green-200">
+                                <button onclick="showSettingsTab('api-config')" class="text-sm text-green-700 hover:text-green-900 font-medium">
+                                    <i class="fas fa-cog mr-1"></i>Configure API Pulls
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- POAM Tracker List -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-slate-800">Generated POAMs</h3>
+                        <p class="text-sm text-slate-500 mt-1">POAMs created from vulnerability scans</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-sm text-slate-600">
+                            <span class="font-semibold">Showing:</span>
+                            <select id="poams-per-page" class="ml-2 px-3 py-1 border border-slate-300 rounded-lg" onchange="updatePOAMPagination()">
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                                <option value="200">200</option>
+                            </select>
+                            <span class="ml-2">per page</span>
+                        </div>
+                        <div class="text-sm text-slate-600">
+                            <span id="poam-count-display">0-0 of 0 POAMs</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- POAM List Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-slate-50 border-b border-slate-200">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">POAM ID</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Vulnerability</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Asset</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Risk</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Status</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Due Date</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">POC</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vulnerability-poam-list" class="divide-y divide-slate-100">
+                            <!-- POAM rows will be populated here -->
+                            <tr>
+                                <td colspan="7" class="px-4 py-12 text-center text-slate-500">
+                                    <i class="fas fa-inbox text-4xl mb-3"></i>
+                                    <p class="font-medium">No POAMs generated yet</p>
+                                    <p class="text-sm mt-1">Upload a vulnerability scan to generate POAMs</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination Controls -->
+                <div class="flex justify-between items-center mt-6 pt-4 border-t border-slate-200">
+                    <button id="prev-page-btn" onclick="previousPOAMPage()" class="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        <i class="fas fa-chevron-left mr-2"></i>Previous
+                    </button>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-slate-600">Page</span>
+                        <span id="current-page-display" class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded font-semibold">1</span>
+                        <span class="text-sm text-slate-600">of</span>
+                        <span id="total-pages-display" class="text-sm font-semibold text-slate-700">1</span>
+                    </div>
+                    <button id="next-page-btn" onclick="nextPOAMPage()" class="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        Next<i class="fas fa-chevron-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- POAM Details Modal (for clicking on POAM rows) -->
+        <div id="poam-details-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+            <div class="bg-white rounded-2xl p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-slate-900">POAM Details</h2>
+                    <button onclick="closePOAMDetailsModal()" class="text-slate-400 hover:text-slate-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div id="poam-details-content">
+                    <!-- Details will be populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Old vulnerability content below (keep for backward compatibility but hidden) -->
+        <div style="display: none;">
+            <div id="upload-content" class="vulnerability-content">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 mb-6">
+                    <div class="bg-purple-50 rounded-xl p-6 mb-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                            <div class="bg-white rounded-lg p-4 border border-slate-200">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="font-semibold text-slate-800">Due in 90 Days</h4>
+                                    <i class="fas fa-calendar-alt text-green-500"></i>
+                                </div>
+                                <p class="text-2xl font-bold text-green-600" id="due-90-days-count">0</p>
+                                <p class="text-xs text-slate-500">Future planning</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Most POAMs by OS -->
+                        <div class="bg-white rounded-lg p-4 border border-slate-200">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-semibold text-slate-800">Top Operating Systems</h4>
+                                    <p class="text-sm text-slate-600" id="os-breakdown">No POAM data available</p>
+                                </div>
+                                <button onclick="configureSLA()" class="text-sm px-3 py-1 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors">
+                                    <i class="fas fa-cog mr-1"></i>SLA Settings
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mb-8">
+                        <div class="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-clipboard-list text-purple-600 text-2xl"></i>
+                        </div>
+                        <h2 class="text-xl font-bold text-slate-900 mb-2">Process Scan Data for POAM Creation</h2>
+                        <p class="text-slate-500">Identify SLA-exceeded vulnerabilities and generate POAM items with predefined POC assignments</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-purple-400 transition-colors cursor-pointer" onclick="document.getElementById('scan-file-input').click()">
+                            <input type="file" id="scan-file-input" class="hidden" accept=".csv" onchange="handleVulnerabilityUpload(event)">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-slate-400 mb-4"></i>
+                            <h3 class="text-lg font-semibold text-slate-700 mb-2">Drop CSV file here</h3>
+                            <p class="text-slate-500 mb-4">or click to browse</p>
+                            <button class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                                <i class="fas fa-folder-open mr-2"></i>Choose File
+                            </button>
+                        </div>
+
+                        <div class="bg-slate-50 rounded-xl p-6">
+                            <h3 class="text-lg font-semibold text-slate-800 mb-4">Supported Scanners</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-chart-line text-blue-600 text-sm"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-slate-800">Qualys VM</p>
+                                        <p class="text-sm text-slate-500">Vulnerability Management exports</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-shield-alt text-green-600 text-sm"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-slate-800">Tenable/Nessus</p>
+                                        <p class="text-sm text-slate-500">Security Center scans</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-cloud text-purple-600 text-sm"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-slate-800">Wiz Cloud</p>
+                                        <p class="text-sm text-slate-500">Cloud security findings</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="vulnerability-progress" class="hidden">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium text-slate-700">Processing scan...</span>
+                            <span class="text-sm text-slate-500" id="vuln-progress-percent">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-2">
+                            <div id="vuln-progress-bar" class="bg-purple-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <div class="mt-3 text-sm text-slate-600" id="vuln-status-message">Initializing...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Processing Jobs Tab -->
+            <div id="jobs-content" class="vulnerability-content hidden">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-bold text-slate-800">Processing Jobs</h3>
+                        <button onclick="refreshJobs()" class="text-indigo-600 hover:text-indigo-800">
+                            <i class="fas fa-sync-alt mr-2"></i>Refresh
+                        </button>
+                    </div>
+                    <div id="jobs-list" class="space-y-3">
+                        <div class="text-center py-8 text-slate-500">
+                            <i class="fas fa-spinner fa-spin text-2xl mb-3"></i>
+                            <p>Loading jobs...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div id="reports-content" class="vulnerability-content hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                                <i class="fas fa-clipboard-list"></i>
+                            </span>
+                            <span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded">TOTAL</span>
+                        </div>
+                        <div class="text-3xl font-bold tracking-tight">0</div>
+                        <div class="text-sm text-slate-500 mt-1">Total POAMs</div>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="p-2 bg-rose-50 text-rose-600 rounded-lg">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </span>
+                            <span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded">CRITICAL</span>
+                        </div>
+                        <div class="text-3xl font-bold tracking-tight text-rose-600">0</div>
+                        <div class="text-sm text-slate-500 mt-1">Critical Risk</div>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="p-2 bg-amber-50 text-amber-600 rounded-lg">
+                                <i class="fas fa-clock"></i>
+                            </span>
+                            <span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded">OPEN</span>
+                        </div>
+                        <div class="text-3xl font-bold tracking-tight text-amber-600">0</div>
+                        <div class="text-sm text-slate-500 mt-1">Open Items</div>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="p-2 bg-green-50 text-green-600 rounded-lg">
+                                <i class="fas fa-check-circle"></i>
+                            </span>
+                            <span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded">DONE</span>
+                        </div>
+                        <div class="text-3xl font-bold tracking-tight text-green-600">0</div>
+                        <div class="text-sm text-slate-500 mt-1">Completed</div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">Quick Actions</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button onclick="generateUnifiedReport()" class="bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700 transition-colors text-left">
+                            <i class="fas fa-file-excel mr-2"></i>Generate Unified Report
+                        </button>
+                        <button onclick="exportAnalytics()" class="bg-slate-600 text-white px-4 py-3 rounded-lg hover:bg-slate-700 transition-colors text-left">
+                            <i class="fas fa-download mr-2"></i>Export Analytics Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Executive Reporting Module -->
+        <div id="reporting-module" class="module hidden">
+            <div class="mb-8">
+                <button onclick="showModule('dashboard')" class="text-indigo-600 hover:text-indigo-800 mb-4">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                </button>
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Executive Reporting</h1>
+                <p class="text-slate-500 mt-1">Generate compliance reports for C-Suite and regulatory review</p>
+            </div>
+
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-lock text-amber-600 text-xl"></i>
+                    <div>
+                        <p class="font-semibold text-amber-800">Restricted Access</p>
+                        <p class="text-sm text-amber-700">This module requires elevated permissions. Please contact your system administrator.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 opacity-75">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-slate-800">Quarterly Compliance Report</h3>
+                        <i class="fas fa-lock text-slate-400"></i>
+                    </div>
+                    <p class="text-slate-500 mb-4">Comprehensive quarterly overview of all POAM items and remediation progress.</p>
+                    <button disabled class="w-full bg-slate-200 text-slate-500 px-4 py-2 rounded-lg cursor-not-allowed">
+                        <i class="fas fa-download mr-2"></i>Generate Report
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 opacity-75">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-slate-800">Executive Summary</h3>
+                        <i class="fas fa-lock text-slate-400"></i>
+                    </div>
+                    <p class="text-slate-500 mb-4">High-level summary for C-Suite presentation with key metrics and trends.</p>
+                    <button disabled class="w-full bg-slate-200 text-slate-500 px-4 py-2 rounded-lg cursor-not-allowed">
+                        <i class="fas fa-download mr-2"></i>Generate Summary
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 opacity-75">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-slate-800">Regulatory Submission</h3>
+                        <i class="fas fa-lock text-slate-400"></i>
+                    </div>
+                    <p class="text-slate-500 mb-4">Formatted report for external regulatory agencies and auditors.</p>
+                    <button disabled class="w-full bg-slate-200 text-slate-500 px-4 py-2 rounded-lg cursor-not-allowed">
+                        <i class="fas fa-download mr-2"></i>Generate Submission
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 opacity-75">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-slate-800">Risk Assessment Report</h3>
+                        <i class="fas fa-lock text-slate-400"></i>
+                    </div>
+                    <p class="text-slate-500 mb-4">Detailed risk analysis with mitigation strategies and recommendations.</p>
+                    <button disabled class="w-full bg-slate-200 text-slate-500 px-4 py-2 rounded-lg cursor-not-allowed">
+                        <i class="fas fa-download mr-2"></i>Generate Assessment
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Module -->
+        <div id="reports-module" class="module hidden">
+            <div class="mb-8">
+                <button onclick="showModule('dashboard')" class="text-indigo-600 hover:text-indigo-800 mb-4">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                </button>
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Reports & Analytics</h1>
+                <p class="text-slate-500 mt-1">View detailed analytics and historical reports</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">Remediation Trend</h3>
+                    <div class="h-64 bg-slate-50 rounded-lg flex items-center justify-center">
+                        <p class="text-slate-500">Chart visualization would go here</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">Risk Distribution</h3>
+                    <div class="h-64 bg-slate-50 rounded-lg flex items-center justify-center">
+                        <p class="text-slate-500">Risk level chart would go here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audit Logs Module -->
+        <div id="audit-module" class="module hidden">
+            <div class="mb-8">
+                <button onclick="showModule('dashboard')" class="text-indigo-600 hover:text-indigo-800 mb-4">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                </button>
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Audit Logs</h1>
+                <p class="text-slate-500 mt-1">System activity and change history</p>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
+                        <div class="flex items-center gap-4">
+                            <i class="fas fa-user-edit text-blue-500"></i>
+                            <div>
+                                <p class="font-semibold text-slate-800">POAM V-001235 updated</p>
+                                <p class="text-sm text-slate-500">Admin User • 2 hours ago</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-slate-500">Status changed to In Progress</span>
+                    </div>
+                    <div class="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
+                        <div class="flex items-center gap-4">
+                            <i class="fas fa-file-upload text-green-500"></i>
+                            <div>
+                                <p class="font-semibold text-slate-800">Evidence uploaded</p>
+                                <p class="text-sm text-slate-500">Admin User • 2 hours ago</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Module -->
+        <div id="settings-module" class="module hidden">
+            <div class="mb-8">
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Settings & Configuration</h1>
+                <p class="text-slate-500 mt-1">Manage system settings, preferences, and configurations</p>
+            </div>
+
+            <!-- SLA Configuration Tab -->
+            <div id="settings-sla" class="settings-tab">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
+                        <i class="fas fa-clock text-indigo-600 mr-3"></i>
+                        SLA Configuration
+                    </h3>
+                    <p class="text-slate-600 mb-6">Define Service Level Agreement (SLA) thresholds for different risk levels. These thresholds determine when a POAM is considered overdue.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+                            <label class="block text-sm font-semibold text-red-900 mb-2">Critical Risk (days)</label>
+                            <input type="number" id="sla-critical" class="w-full px-4 py-2 border border-red-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" value="15" min="1">
+                            <p class="text-xs text-red-700 mt-2">Highest priority vulnerabilities requiring immediate action</p>
+                        </div>
+                        <div class="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                            <label class="block text-sm font-semibold text-orange-900 mb-2">High Risk (days)</label>
+                            <input type="number" id="sla-high" class="w-full px-4 py-2 border border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" value="30" min="1">
+                            <p class="text-xs text-orange-700 mt-2">Significant vulnerabilities requiring prompt remediation</p>
+                        </div>
+                        <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                            <label class="block text-sm font-semibold text-yellow-900 mb-2">Medium Risk (days)</label>
+                            <input type="number" id="sla-medium" class="w-full px-4 py-2 border border-yellow-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500" value="60" min="1">
+                            <p class="text-xs text-yellow-700 mt-2">Moderate vulnerabilities with standard remediation timeline</p>
+                        </div>
+                        <div class="bg-green-50 rounded-lg p-4 border border-green-200">
+                            <label class="block text-sm font-semibold text-green-900 mb-2">Low Risk (days)</label>
+                            <input type="number" id="sla-low" class="w-full px-4 py-2 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" value="90" min="1">
+                            <p class="text-xs text-green-700 mt-2">Lower priority items with extended remediation window</p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3">
+                        <button onclick="resetSLADefaults()" class="px-6 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition-colors">
+                            <i class="fas fa-undo mr-2"></i>Reset to Defaults
+                        </button>
+                        <button onclick="saveSLAConfig()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-save mr-2"></i>Save SLA Configuration
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Risk Framework Tab -->
+            <div id="settings-risk-framework" class="settings-tab hidden">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
+                        <i class="fas fa-shield-alt text-indigo-600 mr-3"></i>
+                        Risk Management Framework
+                    </h3>
+                    <p class="text-slate-600 mb-6">Select the risk assessment framework to be used for POAMs and control mappings.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Active Framework</label>
+                            <select id="risk-framework-select" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" onchange="updateFrameworkInfo()">
+                                <option value="nist">NIST 800-53 / RMF</option>
+                                <option value="csf">NIST Cybersecurity Framework</option>
+                                <option value="iso27001">ISO 27001</option>
+                                <option value="mitre">MITRE ATT&CK</option>
+                                <option value="fedramp">FedRAMP</option>
+                                <option value="cms">CMS ARS</option>
+                                <option value="irs">IRS 1075</option>
+                                <option value="cis">CIS Controls</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Control Mapping Mode</label>
+                            <select id="control-mapper-select" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="enhanced">Enhanced Control Mapper</option>
+                                <option value="basic">Basic Control Mapper</option>
+                                <option value="custom">Custom Mapping</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="framework-info" class="bg-indigo-50 rounded-lg p-6 border border-indigo-200 mb-6">
+                        <h4 class="font-bold text-indigo-900 mb-2 text-lg">NIST 800-53 / RMF</h4>
+                        <p class="text-sm text-indigo-800 mb-4">Federal risk management framework with comprehensive security controls and assessment procedures for information systems.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                            <div class="bg-white rounded-lg p-3">
+                                <strong class="text-indigo-900">Control Families:</strong>
+                                <p class="text-slate-600">20 control families</p>
+                            </div>
+                            <div class="bg-white rounded-lg p-3">
+                                <strong class="text-indigo-900">Total Controls:</strong>
+                                <p class="text-slate-600">1000+ security controls</p>
+                            </div>
+                            <div class="bg-white rounded-lg p-3">
+                                <strong class="text-indigo-900">Impact Levels:</strong>
+                                <p class="text-slate-600">High, Moderate, Low</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button onclick="saveRiskFramework()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-save mr-2"></i>Save Framework
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- POAM ID Structure Tab -->
+            <div id="settings-poam-id" class="settings-tab hidden">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
+                        <i class="fas fa-hashtag text-indigo-600 mr-3"></i>
+                        POAM ID Structure
+                    </h3>
+                    <p class="text-slate-600 mb-6">Configure how POAM identifiers are generated and formatted in your system.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">POAM ID Prefix</label>
+                            <input type="text" id="settings-poam-id-prefix" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g., POAM-2024-" onchange="updateSettingsIDPreview()">
+                            <p class="text-xs text-slate-500 mt-2">Prefix for all POAM identifiers</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Starting Number</label>
+                            <input type="number" id="settings-poam-id-start" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g., 001" min="1" onchange="updateSettingsIDPreview()">
+                            <p class="text-xs text-slate-500 mt-2">Initial counter value for new POAMs</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 rounded-lg p-6 border border-slate-200 mb-6">
+                        <label class="block text-sm font-semibold text-slate-700 mb-3">Current ID Structure Preview</label>
+                        <div class="px-6 py-4 bg-white rounded-lg font-mono text-lg border-2 border-indigo-200 text-center" id="settings-id-preview">
+                            POAM-2024-001
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3">
+                        <button onclick="resetPOAMIdCounter()" class="px-6 py-2 border border-orange-300 rounded-lg text-sm font-medium text-orange-700 bg-orange-50 hover:bg-orange-100 transition-colors">
+                            <i class="fas fa-redo mr-2"></i>Reset Counter
+                        </button>
+                        <button onclick="savePOAMIdConfigFromSettings()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-save mr-2"></i>Update Configuration
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Configuration Tab -->
+            <div id="settings-api-config" class="settings-tab hidden">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
+                        <i class="fas fa-sync-alt text-indigo-600 mr-3"></i>
+                        API Configuration
+                    </h3>
+                    <p class="text-slate-600 mb-6">Configure automated vulnerability scan retrieval from scanner APIs</p>
+
+                    <!-- Scanner Connections -->
+                    <div class="mb-6">
+                        <h4 class="font-semibold text-slate-800 mb-4">Scanner Connections</h4>
+                        
+                        <!-- Qualys VM -->
+                        <div class="bg-slate-50 rounded-lg p-4 mb-4 border border-slate-200">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-chart-line text-blue-600 text-2xl"></i>
+                                    <div>
+                                        <h5 class="font-semibold text-slate-800">Qualys VM</h5>
+                                        <p class="text-xs text-slate-500">Vulnerability Management Platform</p>
+                                    </div>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="qualys-enabled" class="sr-only peer" checked>
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">API URL</label>
+                                    <input type="text" id="qualys-url" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="https://qualysapi.qualys.com">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">API Key</label>
+                                    <input type="password" id="qualys-key" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="Enter API key">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Schedule</label>
+                                    <select id="qualys-schedule" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                                        <option value="daily">Daily at 2:00 AM</option>
+                                        <option value="weekly">Weekly on Monday</option>
+                                        <option value="monthly">Monthly on 1st</option>
+                                        <option value="manual">Manual Only</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Last Pull</label>
+                                    <input type="text" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-slate-100" value="Never" disabled>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tenable/Nessus -->
+                        <div class="bg-slate-50 rounded-lg p-4 mb-4 border border-slate-200">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-shield-alt text-green-600 text-2xl"></i>
+                                    <div>
+                                        <h5 class="font-semibold text-slate-800">Tenable/Nessus</h5>
+                                        <p class="text-xs text-slate-500">Security Center & Nessus Professional</p>
+                                    </div>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="tenable-enabled" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">API URL</label>
+                                    <input type="text" id="tenable-url" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="https://cloud.tenable.com">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Access Key</label>
+                                    <input type="password" id="tenable-key" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="Enter access key">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Schedule</label>
+                                    <select id="tenable-schedule" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                                        <option value="daily">Daily at 2:00 AM</option>
+                                        <option value="weekly" selected>Weekly on Monday</option>
+                                        <option value="monthly">Monthly on 1st</option>
+                                        <option value="manual">Manual Only</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Last Pull</label>
+                                    <input type="text" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-slate-100" value="Never" disabled>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Wiz Cloud -->
+                        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-cloud text-purple-600 text-2xl"></i>
+                                    <div>
+                                        <h5 class="font-semibold text-slate-800">Wiz Cloud Security</h5>
+                                        <p class="text-xs text-slate-500">Cloud Security Platform</p>
+                                    </div>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="wiz-enabled" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">API Endpoint</label>
+                                    <input type="text" id="wiz-url" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="https://api.wiz.io">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Client Secret</label>
+                                    <input type="password" id="wiz-secret" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="Enter client secret">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Schedule</label>
+                                    <select id="wiz-schedule" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                                        <option value="daily">Daily at 2:00 AM</option>
+                                        <option value="weekly">Weekly on Monday</option>
+                                        <option value="monthly">Monthly on 1st</option>
+                                        <option value="manual" selected>Manual Only</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Last Pull</label>
+                                    <input type="text" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-slate-100" value="Never" disabled>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Test & Save -->
+                    <div class="flex justify-end gap-3">
+                        <button onclick="testAPIConnections()" class="px-6 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition-colors">
+                            <i class="fas fa-plug mr-2"></i>Test Connections
+                        </button>
+                        <button onclick="saveAPIConfig()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-save mr-2"></i>Save Configuration
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Preferences Tab -->
+            <div id="settings-preferences" class="settings-tab hidden">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
+                        <i class="fas fa-sliders-h text-indigo-600 mr-3"></i>
+                        User Preferences
+                    </h3>
+                    <p class="text-slate-600 mb-6">Customize your personal experience and notification settings.</p>
+
+                    <div class="space-y-6">
+                        <!-- Notification Settings -->
+                        <div class="border-b border-slate-200 pb-6">
+                            <h4 class="font-semibold text-slate-800 mb-4">Notifications</h4>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-medium text-slate-700">Email Notifications</p>
+                                        <p class="text-sm text-slate-500">Receive email updates for POAM changes and assignments</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" class="sr-only peer" checked>
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-medium text-slate-700">Desktop Notifications</p>
+                                        <p class="text-sm text-slate-500">Show browser notifications for critical updates</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-medium text-slate-700">SLA Violation Alerts</p>
+                                        <p class="text-sm text-slate-500">Get notified when POAMs exceed SLA thresholds</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" class="sr-only peer" checked>
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Display Settings -->
+                        <div class="border-b border-slate-200 pb-6">
+                            <h4 class="font-semibold text-slate-800 mb-4">Display</h4>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-medium text-slate-700">Dark Mode</p>
+                                        <p class="text-sm text-slate-500">Enable dark theme for the interface</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-medium text-slate-700">Compact View</p>
+                                        <p class="text-sm text-slate-500">Show more items per page with reduced spacing</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Data & Privacy -->
+                        <div>
+                            <h4 class="font-semibold text-slate-800 mb-4">Data & Privacy</h4>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-medium text-slate-700">Activity Tracking</p>
+                                        <p class="text-sm text-slate-500">Log your actions for audit purposes</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" class="sr-only peer" checked disabled>
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 opacity-50"></div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end mt-6">
+                        <button onclick="saveUserPreferences()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-save mr-2"></i>Save Preferences
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Administration Module -->
+        <div id="admin-module" class="module hidden">
+            <div class="mb-8">
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Administration</h1>
+                <p class="text-slate-500 mt-1">Manage users, organization settings, and system permissions</p>
+            </div>
+
+            <!-- User Management Tab -->
+            <div id="admin-users" class="admin-tab">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-800 flex items-center">
+                                <i class="fas fa-users text-indigo-600 mr-3"></i>
+                                User Management
+                            </h3>
+                            <p class="text-slate-600 mt-1">Manage user accounts, roles, and access permissions</p>
+                        </div>
+                        <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-user-plus mr-2"></i>Add User
+                        </button>
+                    </div>
+
+                    <div class="mb-4">
+                        <input type="text" placeholder="Search users..." class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">User</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Role</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Department</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Status</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Last Active</th>
+                                    <th class="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr class="hover:bg-slate-50">
+                                    <td class="px-4 py-3">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-semibold">AU</div>
+                                            <div>
+                                                <p class="font-medium text-slate-800">Admin User</p>
+                                                <p class="text-sm text-slate-500">admin@poamnexus.com</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-semibold">Administrator</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-slate-600">Security Operations</td>
+                                    <td class="px-4 py-3">
+                                        <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Active</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-slate-600">Just now</td>
+                                    <td class="px-4 py-3 text-right">
+                                        <button class="text-indigo-600 hover:text-indigo-800 mr-2"><i class="fas fa-edit"></i></button>
+                                        <button class="text-slate-600 hover:text-slate-800"><i class="fas fa-ellipsis-v"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Organization Tab -->
+            <div id="admin-organization" class="admin-tab hidden">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
+                        <i class="fas fa-building text-indigo-600 mr-3"></i>
+                        Organization Settings
+                    </h3>
+                    <p class="text-slate-600 mb-6">Configure organization-wide settings and information</p>
+
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Organization Name</label>
+                                <input type="text" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" value="POAM Nexus Security">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Organization ID</label>
+                                <input type="text" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" value="ORG-2024-001" disabled>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Primary Contact</label>
+                                <input type="email" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" value="security@organization.com">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Time Zone</label>
+                                <select class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option>UTC-05:00 (Eastern Time)</option>
+                                    <option>UTC-06:00 (Central Time)</option>
+                                    <option>UTC-07:00 (Mountain Time)</option>
+                                    <option>UTC-08:00 (Pacific Time)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Organization Description</label>
+                            <textarea class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3">Enterprise security operations and compliance management</textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end mt-6">
+                        <button class="px-6 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-save mr-2"></i>Save Organization Settings
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Roles & Permissions Tab -->
+            <div id="admin-roles" class="admin-tab hidden">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-800 flex items-center">
+                                <i class="fas fa-user-shield text-indigo-600 mr-3"></i>
+                                Roles & Permissions
+                            </h3>
+                            <p class="text-slate-600 mt-1">Define user roles and their access permissions</p>
+                        </div>
+                        <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>Create Role
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="border border-slate-200 rounded-lg p-4 hover:border-indigo-300 transition-colors cursor-pointer">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-semibold text-slate-800">Administrator</h4>
+                                <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-semibold">Full Access</span>
+                            </div>
+                            <p class="text-sm text-slate-600 mb-3">Complete system access and configuration</p>
+                            <div class="text-xs text-slate-500">
+                                <i class="fas fa-users mr-1"></i>3 users
+                            </div>
+                        </div>
+                        <div class="border border-slate-200 rounded-lg p-4 hover:border-indigo-300 transition-colors cursor-pointer">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-semibold text-slate-800">Security Analyst</h4>
+                                <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">Read/Write</span>
+                            </div>
+                            <p class="text-sm text-slate-600 mb-3">Manage POAMs and evidence</p>
+                            <div class="text-xs text-slate-500">
+                                <i class="fas fa-users mr-1"></i>12 users
+                            </div>
+                        </div>
+                        <div class="border border-slate-200 rounded-lg p-4 hover:border-indigo-300 transition-colors cursor-pointer">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-semibold text-slate-800">Auditor</h4>
+                                <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Read Only</span>
+                            </div>
+                            <p class="text-sm text-slate-600 mb-3">View reports and audit logs</p>
+                            <div class="text-xs text-slate-500">
+                                <i class="fas fa-users mr-1"></i>5 users
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- POAM ID Configuration Popup -->
+    <div id="poam-id-config-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-slate-900">Configure POAM ID Structure</h2>
+                <button onclick="closePOAMIdConfigModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="mb-6">
+                <p class="text-slate-600 mb-4">Set up your POAM ID structure for generating unique identifiers. This will only appear once for your first POAM, but can be changed later in settings.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">POAM ID Prefix</label>
+                        <input type="text" id="popup-poam-id-prefix" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g., POAM-2024-" value="POAM-2024-" onchange="updatePopupIDPreview()">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Starting Number</label>
+                        <input type="number" id="popup-poam-id-start" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g., 001" value="001" min="1" onchange="updatePopupIDPreview()">
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">ID Structure Preview</label>
+                    <div class="px-4 py-2 bg-slate-50 rounded-lg font-mono text-sm border border-slate-200" id="popup-id-preview">POAM-2024-001</div>
+                </div>
+            </div>
+            
+            <div class="flex gap-3">
+                <button onclick="savePOAMIdConfigFromPopup()" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                    <i class="fas fa-save mr-2"></i>Save & Continue
+                </button>
+                <button onclick="closePOAMIdConfigModal()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New POAM Modal -->
+    <div id="poam-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-slate-900">Create New POAM Entry</h2>
+                <button onclick="closePOAMModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form class="space-y-6">
+                <!-- Basic Information -->
+                <div class="bg-slate-50 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center">
+                        <i class="fas fa-info-circle text-slate-600 mr-2"></i>
+                        Basic Information
+                    </h3>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Source Type *</label>
+                            <select id="poam-source" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                                <option value="">Select Source</option>
+                                <option value="manual">Manual Entry</option>
+                                <option value="control">Control Finding</option>
+                                <option value="scan">Scan-Derived</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Finding Description *</label>
+                        <textarea id="poam-description" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3" placeholder="Describe the security finding in detail..." required></textarea>
+                    </div>
+                </div>
+
+                <!-- Risk Assessment -->
+                <div class="bg-rose-50 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center">
+                        <i class="fas fa-exclamation-triangle text-rose-600 mr-2"></i>
+                        Risk Assessment
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Risk Level *</label>
+                            <select id="poam-risk" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                                <option value="">Select Risk</option>
+                                <option value="critical">Critical</option>
+                                <option value="high">High</option>
+                                <option value="medium">Medium</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">POAM Status *</label>
+                            <select id="poam-status" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                                <option value="">Select Status</option>
+                                <option value="open">Open</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="overdue">Overdue</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NIST Controls -->
+                <div class="bg-blue-50 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center">
+                        <i class="fas fa-shield-alt text-blue-600 mr-2"></i>
+                        NIST 800-53 Controls
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Control Family</label>
+                            <select id="poam-control-family" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="">Select Family</option>
+                                <option value="AC">Access Control (AC)</option>
+                                <option value="AU">Audit and Accountability (AU)</option>
+                                <option value="CA">Security Assessment and Authorization (CA)</option>
+                                <option value="CM">Configuration Management (CM)</option>
+                                <option value="CP">Contingency Planning (CP)</option>
+                                <option value="IA">Identification and Authentication (IA)</option>
+                                <option value="IR">Incident Response (IR)</option>
+                                <option value="MP">Media Protection (MP)</option>
+                                <option value="PE">Physical and Environmental Protection (PE)</option>
+                                <option value="PL">Planning (PL)</option>
+                                <option value="PS">Personnel Security (PS)</option>
+                                <option value="RA">Risk Assessment (RA)</option>
+                                <option value="SA">System and Services Acquisition (SA)</option>
+                                <option value="SC">System and Communications Protection (SC)</option>
+                                <option value="SI">System and Information Integrity (SI)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Control Numbers</label>
+                            <input type="text" id="poam-controls" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g., AC-2, AC-3, SC-8">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Remediation & Milestones -->
+                <div class="bg-amber-50 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center">
+                        <i class="fas fa-tools text-amber-600 mr-2"></i>
+                        Remediation Plan & Milestones
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Point of Contact *</label>
+                            <input type="text" id="poam-poc" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Security Team" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Contact Email</label>
+                            <input type="email" id="poam-email" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="security@company.com">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Scheduled Completion Date *</label>
+                            <input type="date" id="poam-date" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Resources Required</label>
+                            <input type="text" id="poam-resources" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Describe resources needed...">
+                        </div>
+                    </div>
+                    
+                    <div class="border-t border-amber-200 pt-4">
+                        <h4 class="text-md font-semibold text-slate-800 mb-3">Milestone</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Milestone #</label>
+                                <input type="number" id="milestone-number" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" value="1" min="1">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Completion Date</label>
+                                <input type="date" id="milestone-date" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Status</label>
+                                <select id="milestone-status" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option value="pending">Pending</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="completed">Completed</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Milestone Description</label>
+                            <textarea id="milestone-description" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="2" placeholder="Describe the milestone activities..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex justify-end gap-4 pt-6 border-t border-slate-200">
+                    <button type="button" onclick="closePOAMModal()" class="px-6 py-2 border border-slate-200 rounded-lg hover:bg-slate-50">Cancel</button>
+                    <button type="button" onclick="savePOAM()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save POAM</button>
+                </div>
+                
+                <!-- Linked Evidence Section -->
+                <div id="poam-evidence-section" class="border-t border-slate-200 pt-6" style="display: none;">
+                    <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center">
+                        <i class="fas fa-folder-open text-indigo-600 mr-2"></i>
+                        Linked Evidence
+                    </h3>
+                    <div id="poam-evidence-list" class="space-y-3">
+                        <!-- Evidence items will be populated here -->
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="showModule('evidence'); closePOAMModal();" class="text-sm px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200">
+                            <i class="fas fa-plus mr-2"></i>Add Evidence
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

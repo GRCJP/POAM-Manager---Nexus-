@@ -1,0 +1,6 @@
+title,severity,description,source
+SSL Certificate Vulnerability,Critical,SSL certificate expires soon and uses weak encryption,qualys
+Missing Security Patches,High,Critical security patches missing from web server,nessus
+Weak Authentication,Medium,Authentication mechanism does not enforce strong passwords,wiz
+Open Port Configuration,Low,Unnecessary ports open on firewall configuration,manual
+Insufficient Logging,Medium,Security events not properly logged and monitored,qualys

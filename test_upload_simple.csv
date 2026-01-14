@@ -1,0 +1,2 @@
+title,severity,description,cve,cvss_score,host
+Test Upload Finding,Critical,This is a test vulnerability for upload functionality,CVE-2024-TEST,9.5,test-server.example.com

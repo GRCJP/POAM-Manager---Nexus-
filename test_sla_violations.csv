@@ -1,0 +1,7 @@
+title,severity,description,cve,cvss_score,host,discovery_date
+Apache Struts RCE,Critical,Remote code execution vulnerability in Apache Struts,CVE-2017-5638,10.0,web01.example.com,2024-01-01
+OpenSSL Heartbleed,Critical,Heartbleed vulnerability allows data leak,CVE-2014-0160,9.8,ssl01.example.com,2024-02-15
+WordPress Plugin XSS,High,Cross-site scripting in outdated WordPress plugin,CVE-2023-1234,7.5,wp01.example.com,2024-03-01
+Outdated Java Version,Medium,Java 8 with known vulnerabilities,CVE-2021-44228,6.4,app01.example.com,2024-04-01
+Weak SSH Configuration,Low,Weak SSH cipher suites enabled,,3.1,ssh01.example.com,2024-05-01
+Recent SQL Injection,High,SQL injection found in login form,CVE-2024-9999,8.2,app02.example.com,2024-12-10

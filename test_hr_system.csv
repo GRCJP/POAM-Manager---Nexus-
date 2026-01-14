@@ -1,0 +1,3 @@
+title,severity,description,source
+HR Data Exposure,Critical,Employee personal data exposed in HR system,qualys
+Payroll Vulnerability,High,Payroll system has authentication bypass,nessus

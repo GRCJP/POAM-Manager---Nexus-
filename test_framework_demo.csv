@@ -1,0 +1,6 @@
+title,severity,description,cve,cvss_score,host,category
+SSL Certificate Issue,Critical,SSL certificate uses weak encryption,CVE-2024-1001,9.8,web-server.example.com,ssl_tls
+SQL Injection,High,SQL injection vulnerability in login form,CVE-2024-1002,8.5,app-server.example.com,sql_injection
+Authentication Bypass,High,Weak authentication allows unauthorized access,CVE-2024-1003,7.8,auth-server.example.com,authentication
+Missing Patches,Medium,Outdated software with known vulnerabilities,CVE-2024-1004,6.1,db-server.example.com,patch_management
+Access Control Issue,Low,Excessive user permissions on shared folders,,4.2,file-server.example.com,access_control

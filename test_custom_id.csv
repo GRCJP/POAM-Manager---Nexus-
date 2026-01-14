@@ -1,0 +1,3 @@
+title,severity,description,source
+Test SSL Issue,Critical,Test SSL certificate vulnerability for custom ID system,qualys
+Test Patch Missing,High,Test missing security patches for custom ID system,nessus
