@@ -78,8 +78,17 @@ async function showPOAMDetails(poamId) {
     poam.milestones = milestones;
     poam.comments = comments;
     
-    // Render the focused POAM detail view
-    renderFocusedPOAMDetailPage(poam);
+    // Render the focused POAM detail view with extracted data
+    renderFocusedPOAMDetailPage(poam, {
+        findingDescription,
+        affectedAssets,
+        solutionText,
+        firstDetected,
+        lastDetected,
+        resultsSamples,
+        scanSummary,
+        assetCount
+    });
     
     // Show the detail modal
     document.getElementById('poam-detail-page').classList.remove('hidden');
@@ -89,7 +98,7 @@ async function showPOAMDetails(poamId) {
     setupModalCloseHandlers();
 }
 
-function renderFocusedPOAMDetailPage(poam) {
+function renderFocusedPOAMDetailPage(poam, scanData) {
     const detailContainer = document.getElementById('poam-detail-page');
     if (!detailContainer) return;
     
@@ -107,26 +116,26 @@ function renderFocusedPOAMDetailPage(poam) {
         risk: poam.riskLevel || poam.risk || 'medium',
         status: poam.findingStatus || poam.status || 'Open',
         vulnerability: poam.vulnerabilityName || poam.vulnerability || poam.title || 'Unknown',
-        description: findingDescription, // Use description from scan summary or POAM
+        description: scanData.findingDescription, // Use description from scan summary or POAM
         dueDate: formatDateForInput(poam.updatedScheduledCompletionDate || poam.dueDate),
         poc: poam.poc || 'Unassigned',
         controlFamily: poam.controlFamily || 'CM',
         findingSource: poam.findingSource || 'Vulnerability Scan',
         initialScheduledCompletionDate: formatDateForInput(poam.initialScheduledCompletionDate),
         actualCompletionDate: formatDateForInput(poam.actualCompletionDate),
-        mitigation: solutionText, // Use solution from scan summary
+        mitigation: scanData.solutionText, // Use solution from scan summary
         resourcesRequired: poam.resourcesRequired || '',
         notes: poam.notes || '',
         // Use assets from scan summary
-        assets: affectedAssets,
+        assets: scanData.affectedAssets,
         // Add scan metadata
-        firstDetected: firstDetected,
-        lastDetected: lastDetected,
-        resultsSamples: resultsSamples,
-        hasScanData: !!scanSummary
+        firstDetected: scanData.firstDetected,
+        lastDetected: scanData.lastDetected,
+        resultsSamples: scanData.resultsSamples,
+        hasScanData: !!scanData.scanSummary
     };
     
-    const assetCount = scanSummary ? scanSummary.totalAffectedAssets : (poam.totalAffectedAssets || affectedAssets.length || 0);
+    const assetCount = scanData.scanSummary ? scanData.scanSummary.totalAffectedAssets : (poam.totalAffectedAssets || scanData.affectedAssets.length || 0);
     
     detailContainer.innerHTML = `
         <!-- Modal Background -->
