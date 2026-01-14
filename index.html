@@ -906,8 +906,34 @@
                 </div>
             </div>
 
+            <!-- Vulnerability Tracker Section Navigator -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-shield-alt text-indigo-600 text-lg"></i>
+                        <h2 class="text-xl font-bold text-slate-900">Vulnerability Tracker</h2>
+                    </div>
+                    
+                    <!-- Section Navigation Tabs -->
+                    <div class="flex items-center bg-slate-100 rounded-lg p-1">
+                        <button onclick="showVulnerabilitySection('overview')" id="nav-overview" class="px-4 py-2 text-sm font-medium rounded-md bg-white text-slate-900 shadow-sm transition-all">
+                            <i class="fas fa-chart-line mr-2"></i>Overview
+                        </button>
+                        <button onclick="showVulnerabilitySection('vulnerabilities')" id="nav-vulnerabilities" class="px-4 py-2 text-sm font-medium rounded-md text-slate-600 hover:text-slate-900 transition-all">
+                            <i class="fas fa-bug mr-2"></i>Vulnerability Tracker
+                        </button>
+                        <button onclick="showVulnerabilitySection('controls')" id="nav-controls" class="px-4 py-2 text-sm font-medium rounded-md text-slate-600 hover:text-slate-900 transition-all">
+                            <i class="fas fa-shield-virus mr-2"></i>Security Control POAMs
+                        </button>
+                        <button onclick="showVulnerabilitySection('systems')" id="nav-systems" class="px-4 py-2 text-sm font-medium rounded-md text-slate-600 hover:text-slate-900 transition-all">
+                            <i class="fas fa-server mr-2"></i>Systems
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Security Posture Overview -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-8 mb-6">
+            <div id="vulnerability-overview" class="bg-white rounded-xl shadow-sm border border-slate-200 p-8 mb-6">
                 <!-- Section Title Block -->
                 <div class="mb-8">
                     <h2 class="text-2xl font-bold text-slate-900 tracking-tight">Security Posture Overview</h2>
@@ -1037,6 +1063,78 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vulnerability Tracker Section -->
+            <div id="vulnerability-vulnerabilities" class="bg-white rounded-xl shadow-sm border border-slate-200 p-8 mb-6 hidden">
+                <!-- Section Title Block -->
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-slate-900 tracking-tight">Vulnerability Tracker</h2>
+                    <p class="text-slate-500 mt-1">Detailed vulnerability analysis and tracking.</p>
+                </div>
+
+                <!-- Vulnerability Analysis Content -->
+                <div class="text-center py-12">
+                    <i class="fas fa-bug text-6xl text-slate-300 mb-4"></i>
+                    <h3 class="text-xl font-semibold text-slate-700 mb-2">Vulnerability Analysis</h3>
+                    <p class="text-slate-500 mb-6">Advanced vulnerability tracking and analysis tools will be available here.</p>
+                    <div class="flex justify-center gap-4">
+                        <button onclick="openUploadModal()" class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-upload mr-2"></i>Upload Scan for Analysis
+                        </button>
+                        <button class="px-6 py-3 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors">
+                            <i class="fas fa-chart-bar mr-2"></i>View Vulnerability Trends
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Control POAMs Section -->
+            <div id="vulnerability-controls" class="bg-white rounded-xl shadow-sm border border-slate-200 p-8 mb-6 hidden">
+                <!-- Section Title Block -->
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-slate-900 tracking-tight">Security Control POAMs</h2>
+                    <p class="text-slate-500 mt-1">POAMs organized by security control families and compliance frameworks.</p>
+                </div>
+
+                <!-- Security Control Content -->
+                <div class="text-center py-12">
+                    <i class="fas fa-shield-virus text-6xl text-slate-300 mb-4"></i>
+                    <h3 class="text-xl font-semibold text-slate-700 mb-2">Security Control Analysis</h3>
+                    <p class="text-slate-500 mb-6">View and manage POAMs by security control families, NIST controls, and compliance frameworks.</p>
+                    <div class="flex justify-center gap-4">
+                        <button class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-filter mr-2"></i>Filter by Control Family
+                        </button>
+                        <button class="px-6 py-3 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors">
+                            <i class="fas fa-clipboard-check mr-2"></i>Compliance Dashboard
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Systems Section -->
+            <div id="vulnerability-systems" class="bg-white rounded-xl shadow-sm border border-slate-200 p-8 mb-6 hidden">
+                <!-- Section Title Block -->
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-slate-900 tracking-tight">Systems & Assets</h2>
+                    <p class="text-slate-500 mt-1">System-level vulnerability analysis and asset management.</p>
+                </div>
+
+                <!-- Systems Content -->
+                <div class="text-center py-12">
+                    <i class="fas fa-server text-6xl text-slate-300 mb-4"></i>
+                    <h3 class="text-xl font-semibold text-slate-700 mb-2">System Asset Management</h3>
+                    <p class="text-slate-500 mb-6">Track vulnerabilities by system, asset group, and infrastructure components.</p>
+                    <div class="flex justify-center gap-4">
+                        <button class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-network-wired mr-2"></i>Asset Inventory
+                        </button>
+                        <button class="px-6 py-3 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors">
+                            <i class="fas fa-chart-pie mr-2"></i>System Risk Analysis
+                        </button>
                     </div>
                 </div>
             </div>
