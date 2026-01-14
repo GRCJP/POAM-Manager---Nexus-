@@ -9,17 +9,36 @@
     <title>POAM Nexus | Management Dashboard</title>
 </head>
 <body class="bg-slate-50 font-sans antialiased text-slate-900">
-    <!-- Application Scripts -->
-    <script src="poam-database.js?v=20260114-5"></script>
-    <script src="vulnerability-analysis-engine.js"></script>
-    <script src="vulnerability-analysis-engine-v2.js"></script>
-    <script src="vulnerability-analysis-engine-v3.js?v=20260114-16"></script>
-    <script src="evidence-functions.js"></script>
-    <script src="sidebar-navigation.js"></script>
-    <script src="column-filters.js"></script>
-    <script src="bulk-operations.js"></script>
-    <script src="poam-detail-redesign.js?v=20260114-17"></script>
-    <script src="vulnerability-tracking.js?v=20260114-10"></script>
+    
+    <!-- Upload Modal -->
+    <div id="upload-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-slate-800">Upload Vulnerability Scan</h3>
+                        <button onclick="closeUploadModal()" class="text-slate-400 hover:text-slate-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-indigo-400 transition-colors cursor-pointer" onclick="document.getElementById('scan-file-input').click()">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-slate-400 mb-4"></i>
+                        <h4 class="text-lg font-semibold text-slate-700 mb-2">Drop CSV file here</h4>
+                        <p class="text-slate-500 mb-4">or click to browse</p>
+                        <p class="text-xs text-slate-400">Supported formats: CSV (max 10MB)</p>
+                    </div>
+                    
+                    <input type="file" id="scan-file-input" accept=".csv" class="hidden" onchange="handleScanFileSelect(event)">
+                    
+                    <div class="mt-4 flex justify-end gap-3">
+                        <button onclick="closeUploadModal()" class="px-4 py-2 text-slate-600 hover:text-slate-800">Cancel</button>
+                        <button onclick="document.getElementById('scan-file-input').click()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Choose File</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Top Header Bar -->
     <header class="bg-white border-b border-slate-200 px-6 py-3 flex justify-between items-center sticky top-0 z-50">
@@ -2512,36 +2531,18 @@
         </main>
     </div>
 
+    <!-- Application Scripts -->
+    <script src="poam-database.js?v=20260114-5"></script>
+    <script src="vulnerability-analysis-engine.js"></script>
+    <script src="vulnerability-analysis-engine-v2.js"></script>
+    <script src="vulnerability-analysis-engine-v3.js?v=20260114-16"></script>
+    <script src="evidence-functions.js"></script>
+    <script src="sidebar-navigation.js"></script>
+    <script src="column-filters.js"></script>
+    <script src="bulk-operations.js"></script>
+    <script src="poam-detail-redesign.js?v=20260114-17"></script>
+    <script src="vulnerability-tracking.js?v=20260114-11"></script>
     <script src="script.js?v=20260114-7"></script>
-<!-- Upload Modal -->
-    <div id="upload-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full">
-                <div class="p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-bold text-slate-800">Upload Vulnerability Scan</h3>
-                        <button onclick="closeUploadModal()" class="text-slate-400 hover:text-slate-600">
-                            <i class="fas fa-times text-xl"></i>
-                        </button>
-                    </div>
-                    
-                    <div class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-indigo-400 transition-colors cursor-pointer" onclick="document.getElementById('scan-file-input').click()">
-                        <i class="fas fa-cloud-upload-alt text-4xl text-slate-400 mb-4"></i>
-                        <h4 class="text-lg font-semibold text-slate-700 mb-2">Drop CSV file here</h4>
-                        <p class="text-slate-500 mb-4">or click to browse</p>
-                        <p class="text-xs text-slate-400">Supported formats: CSV (max 10MB)</p>
-                    </div>
-                    
-                    <input type="file" id="scan-file-input" accept=".csv" class="hidden" onchange="handleScanFileSelect(event)">
-                    
-                    <div class="mt-4 flex justify-end gap-3">
-                        <button onclick="closeUploadModal()" class="px-4 py-2 text-slate-600 hover:text-slate-800">Cancel</button>
-                        <button onclick="document.getElementById('scan-file-input').click()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Choose File</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
 </body>
 </html>
