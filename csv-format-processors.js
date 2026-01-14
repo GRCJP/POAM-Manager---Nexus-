@@ -47,26 +47,31 @@ class QualysProcessor {
     async process(csvContent, filename) {
         console.log(`🔍 Processing Qualys CSV: ${filename}`);
         
-        // Parse CSV using PapaParse
+        // Parse CSV WITHOUT headers first (Qualys has ORGDATA rows before headers)
         const parseResult = await new Promise((resolve, reject) => {
             Papa.parse(csvContent, {
-                header: true,
+                header: false, // Don't treat first row as header
                 skipEmptyLines: true,
                 complete: resolve,
                 error: reject
             });
         });
 
-        // Find header row (Qualys typically has headers at row 4)
-        const headerRow = this.findHeaderRow(parseResult.data);
-        if (headerRow === -1) {
+        console.log(`📊 Parsed ${parseResult.data.length} rows from CSV`);
+
+        // Find header row (Qualys typically has headers at row 4, after ORGDATA rows)
+        const headerRowIndex = this.findHeaderRow(parseResult.data);
+        if (headerRowIndex === -1) {
+            console.error('❌ Could not find Qualys header row. First 5 rows:', parseResult.data.slice(0, 5));
             throw new Error('Could not find Qualys header row');
         }
 
+        console.log(`✅ Found Qualys headers at row ${headerRowIndex + 1}`);
+
         // Extract vulnerability data
-        const vulnerabilities = this.extractVulnerabilities(parseResult.data, headerRow);
+        const vulnerabilities = this.extractVulnerabilities(parseResult.data, headerRowIndex);
         
-        console.log(`📊 Qualys Parse result: headerRow=${headerRow}, rowCount=${vulnerabilities.length}, columns=${Object.keys(vulnerabilities[0] || {}).length}`);
+        console.log(`📊 Qualys Parse result: headerRow=${headerRowIndex + 1}, rowCount=${vulnerabilities.length}, columns=${Object.keys(vulnerabilities[0] || {}).length}`);
         
         return {
             format: 'qualys',
@@ -74,7 +79,7 @@ class QualysProcessor {
             vulnerabilities: vulnerabilities,
             metadata: {
                 filename: filename,
-                headerRow: headerRow,
+                headerRow: headerRowIndex + 1,
                 totalRows: parseResult.data.length,
                 processedAt: new Date().toISOString()
             }
@@ -82,21 +87,45 @@ class QualysProcessor {
     }
 
     findHeaderRow(data) {
+        // Data is array of arrays, look for row containing 'CVE', 'Title', 'Severity'
         for (let i = 0; i < Math.min(10, data.length); i++) {
             const row = data[i];
-            if (row && row['CVE'] && row['Title'] && row['Severity']) {
-                return i;
+            if (Array.isArray(row)) {
+                // Check if this row contains the expected Qualys headers
+                const rowStr = row.join('|').toLowerCase();
+                if (rowStr.includes('cve') && rowStr.includes('title') && rowStr.includes('severity') && rowStr.includes('qid')) {
+                    console.log(`🔍 Found header row at index ${i}:`, row.slice(0, 5));
+                    return i;
+                }
             }
         }
         return -1;
     }
 
-    extractVulnerabilities(data, headerRow) {
+    extractVulnerabilities(data, headerRowIndex) {
         const vulnerabilities = [];
         
-        for (let i = headerRow + 1; i < data.length; i++) {
-            const row = data[i];
-            if (!row || !row['CVE'] || row['CVE'].trim() === '') {
+        // Get headers from the header row
+        const headers = data[headerRowIndex];
+        console.log(`📋 Using ${headers.length} headers from row ${headerRowIndex + 1}`);
+        
+        // Process data rows (skip header row)
+        for (let i = headerRowIndex + 1; i < data.length; i++) {
+            const rowArray = data[i];
+            
+            // Skip empty rows
+            if (!rowArray || rowArray.length === 0 || !rowArray[0]) {
+                continue;
+            }
+            
+            // Convert array to object using headers
+            const row = {};
+            headers.forEach((header, index) => {
+                row[header] = rowArray[index];
+            });
+            
+            // Skip rows without CVE (first column check)
+            if (!row['CVE'] || row['CVE'].trim() === '') {
                 continue;
             }
 
