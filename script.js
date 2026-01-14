@@ -11,8 +11,21 @@ function showModule(moduleName) {
         module.classList.add('hidden');
     });
     
-    // Show selected module
-    document.getElementById(moduleName + '-module').classList.remove('hidden');
+    // Show selected module with error handling
+    const targetModule = document.getElementById(moduleName + '-module');
+    if (targetModule) {
+        targetModule.classList.remove('hidden');
+    } else {
+        console.warn(`Module '${moduleName}' not found in showModule`);
+        // Default to dashboard if requested module doesn't exist
+        const dashboardModule = document.getElementById('dashboard-module');
+        if (dashboardModule) {
+            dashboardModule.classList.remove('hidden');
+        }
+        // Clear the invalid module from localStorage
+        localStorage.removeItem('currentModule');
+        return;
+    }
     
     // Load module-specific data
     if (moduleName === 'poam') {
