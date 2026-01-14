@@ -27,6 +27,12 @@ async function showPOAMDetails(poamId) {
         return;
     }
     
+    console.log('📋 POAM data structure:', poam);
+    console.log('🔍 POAM.description length:', poam.description?.length || 'undefined');
+    console.log('🔍 POAM.affectedAssets:', poam.affectedAssets);
+    console.log('🔍 POAM.assets:', poam.assets);
+    console.log('🔍 Available fields:', Object.keys(poam));
+    
     currentPOAMDetail = poam;
     
     // Load milestones and comments
@@ -392,6 +398,12 @@ async function updatePOAMField(poamId, field, value) {
             console.error('POAM not found:', poamId);
             return;
         }
+        
+        console.log('📋 POAM data:', poam);
+        console.log('🔍 POAM.description:', poam.description);
+        console.log('🔍 POAM.affectedAssets:', poam.affectedAssets);
+        console.log('🔍 POAM.assets:', poam.assets);
+        console.log('🔍 Available POAM fields:', Object.keys(poam));
         
         poam[field] = value;
         poam.lastModifiedDate = new Date().toISOString();
