@@ -950,7 +950,7 @@
                 </div>
 
                 <!-- KPI Card Row -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
                     <!-- Total POAM Items -->
                     <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all" onclick="filterPOAMsByMetric('all')">
                         <div class="flex items-center justify-between mb-4">
@@ -1001,6 +1001,19 @@
                         <p class="text-3xl font-bold text-slate-900 mb-1" id="open-poams-count">0</p>
                         <p class="text-sm text-slate-600">Active Work Items</p>
                         <p class="text-xs text-slate-500 mt-2">Open & in progress</p>
+                    </div>
+
+                    <!-- Risk Accepted -->
+                    <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm cursor-pointer hover:border-purple-400 hover:shadow-md transition-all" onclick="filterPOAMsByMetric('risk-accepted')">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="p-2 bg-purple-50 rounded-lg">
+                                <i class="fas fa-check-circle text-purple-600 text-lg"></i>
+                            </div>
+                            <span class="text-xs text-slate-500 font-medium">ACCEPTED</span>
+                        </div>
+                        <p class="text-3xl font-bold text-slate-900 mb-1" id="risk-accepted-count">0</p>
+                        <p class="text-sm text-slate-600">Risk Accepted</p>
+                        <p class="text-xs text-slate-500 mt-2">Mitigated & accepted</p>
                     </div>
                 </div>
 
