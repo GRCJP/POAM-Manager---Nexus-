@@ -28,10 +28,15 @@ async function showPOAMDetails(poamId) {
     }
     
     console.log('📋 POAM data structure:', poam);
-    console.log('🔍 POAM.description length:', poam.description?.length || 'undefined');
+    console.log('🔍 POAM.description:', poam.description || 'undefined');
+    console.log('🔍 POAM.findingDescription:', poam.findingDescription || 'undefined');
     console.log('🔍 POAM.affectedAssets:', poam.affectedAssets);
     console.log('🔍 POAM.assets:', poam.assets);
     console.log('🔍 Available fields:', Object.keys(poam));
+    
+    // Check if this is an old POAM vs new POAM
+    const hasNewStructure = poam.affectedAssets && Array.isArray(poam.affectedAssets);
+    console.log('🔍 Has new POAM structure:', hasNewStructure ? 'YES' : 'NO (old POAM)');
     
     currentPOAMDetail = poam;
     
