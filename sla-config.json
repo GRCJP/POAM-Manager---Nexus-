@@ -1,0 +1,81 @@
+{
+  "slaConfig": {
+    "critical": 30,
+    "high": 60,
+    "medium": 90,
+    "low": 180
+  },
+  "pocAssignmentRules": [
+    {
+      "name": "Windows Systems Team",
+      "priority": 1,
+      "conditions": {
+        "platform": ["windows"],
+        "remediationType": ["patch_cycle", "kb_install"]
+      }
+    },
+    {
+      "name": "Linux Systems Team",
+      "priority": 2,
+      "conditions": {
+        "platform": ["linux"],
+        "remediationType": ["patch_cycle", "package_upgrade"]
+      }
+    },
+    {
+      "name": "Application Development Team",
+      "priority": 3,
+      "conditions": {
+        "component": ["java", "dotnet", "python", "nodejs", "spring_framework"]
+      }
+    },
+    {
+      "name": "Web Infrastructure Team",
+      "priority": 4,
+      "conditions": {
+        "component": ["apache", "nginx", "iis", "tomcat"]
+      }
+    },
+    {
+      "name": "Desktop Engineering Team",
+      "priority": 5,
+      "conditions": {
+        "component": ["firefox", "chrome", "edge", "safari"],
+        "remediationType": ["software_upgrade"]
+      }
+    },
+    {
+      "name": "Network Security Team",
+      "priority": 6,
+      "conditions": {
+        "component": ["openssh", "ssl", "tls"],
+        "remediationType": ["config_change", "operational_mitigation"]
+      }
+    },
+    {
+      "name": "Security Operations Team",
+      "priority": 99,
+      "conditions": {},
+      "default": true
+    }
+  ],
+  "descriptionTemplates": {
+    "patch_cycle": "Apply {platform} security patches for {patchCycle}.\n\nAffected Systems: {assetCount} assets\nSeverity: {severity}\nFirst Detected: {firstDetected}\nSLA Breach Date: {breachDate}\n\nThis POAM consolidates {findingCount} findings that require the {patchCycle} patch cycle to be applied.\n\nSample CVEs: {sampleCVEs}\nSample Advisories: {sampleAdvisories}\n\nRemediation Action: Deploy {patchCycle} patches to all affected {platform} systems.",
+    
+    "kb_install": "Install KB updates for {component}.\n\nAffected Systems: {assetCount} assets\nSeverity: {severity}\nKB Updates Required: {kbIds}\nFirst Detected: {firstDetected}\nSLA Breach Date: {breachDate}\n\nThis POAM consolidates {findingCount} findings requiring KB installation.\n\nSample CVEs: {sampleCVEs}\n\nRemediation Action: Install the following KB updates: {kbIds}",
+    
+    "software_upgrade_latest": "Upgrade {component} to approved latest version on {platform} systems.\n\nAffected Systems: {assetCount} assets\nSeverity: {severity}\nCurrent Versions Detected: {currentVersions}\nTarget: Latest approved version\nFirst Detected: {firstDetected}\nSLA Breach Date: {breachDate}\n\nThis POAM consolidates {findingCount} findings across multiple CVEs that are all resolved by upgrading {component} to the latest approved version.\n\nSample CVEs: {sampleCVEs}\nSample Advisories: {sampleAdvisories}\n\nRemediation Action: Upgrade all instances of {component} to the latest approved version per organizational standards.",
+    
+    "software_upgrade_branched": "Upgrade {component} to version {targetVersion} on {platform} systems.\n\nAffected Systems: {assetCount} assets\nSeverity: {severity}\nCurrent Versions Detected: {currentVersions}\nTarget Version: {targetVersion}\nFirst Detected: {firstDetected}\nSLA Breach Date: {breachDate}\n\nThis POAM consolidates {findingCount} findings for {component} version {majorVersion} track.\n\nSample CVEs: {sampleCVEs}\n\nRemediation Action: Upgrade {component} to version {targetVersion} or later within the {majorVersion} support track.",
+    
+    "vendor_fix": "Apply vendor security fix per advisory {advisoryIds}.\n\nAffected Systems: {assetCount} assets\nSeverity: {severity}\nComponent: {component}\nAdvisory IDs: {advisoryIds}\nFirst Detected: {firstDetected}\nSLA Breach Date: {breachDate}\n\nThis POAM consolidates {findingCount} findings addressed by vendor advisory {advisoryIds}.\n\nSample CVEs: {sampleCVEs}\n\nRemediation Action: Apply vendor-provided fix per advisory documentation.",
+    
+    "config_change": "Apply configuration hardening for {component}.\n\nAffected Systems: {assetCount} assets\nSeverity: {severity}\nComponent: {component}\nFirst Detected: {firstDetected}\nSLA Breach Date: {breachDate}\n\nThis POAM consolidates {findingCount} findings requiring configuration changes.\n\nSample CVEs: {sampleCVEs}\n\nRemediation Action: Apply recommended configuration hardening per security baseline.",
+    
+    "operational_mitigation": "Implement operational mitigation for {component} (no patch available).\n\nAffected Systems: {assetCount} assets\nSeverity: {severity}\nComponent: {component}\nFirst Detected: {firstDetected}\nSLA Breach Date: {breachDate}\n\nThis POAM consolidates {findingCount} findings with no vendor patch available.\n\nSample CVEs: {sampleCVEs}\n\nRemediation Action: Implement compensating controls such as network segmentation, access restrictions, or monitoring until vendor provides a patch.\n\nEvidence Samples:\n{evidenceSamples}",
+    
+    "risk_acceptance": "Risk acceptance required for {component}.\n\nAffected Systems: {assetCount} assets\nSeverity: {severity}\nComponent: {component}\nFirst Detected: {firstDetected}\n\nThis POAM consolidates {findingCount} findings requiring risk acceptance decision.\n\nSample CVEs: {sampleCVEs}\n\nRemediation Action: Document risk acceptance with business justification and compensating controls.",
+    
+    "package_upgrade": "Update {component} package to version {targetVersion} on {platform} systems.\n\nAffected Systems: {assetCount} assets\nSeverity: {severity}\nCurrent Versions: {currentVersions}\nTarget Version: {targetVersion}\nFirst Detected: {firstDetected}\nSLA Breach Date: {breachDate}\n\nThis POAM consolidates {findingCount} findings for {component} package updates.\n\nSample CVEs: {sampleCVEs}\n\nRemediation Action: Update {component} package using system package manager (yum/apt/dnf)."
+  }
+}

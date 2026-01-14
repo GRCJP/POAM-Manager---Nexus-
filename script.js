@@ -2,6 +2,9 @@
 
 // Module navigation
 function showModule(moduleName) {
+    // Save current module to localStorage for page refresh persistence
+    localStorage.setItem('currentModule', moduleName);
+    
     // Hide all modules
     const modules = document.querySelectorAll('.module');
     modules.forEach(module => {
@@ -1279,10 +1282,12 @@ function showVulnerabilityTab(tabName) {
     const tabs = ['upload-tab', 'jobs-tab', 'reports-tab'];
     tabs.forEach(tabId => {
         const tab = document.getElementById(tabId);
-        if (tabId === tabName + '-tab') {
-            tab.className = 'flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium transition-colors';
-        } else {
-            tab.className = 'flex-1 px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors';
+        if (tab) {
+            if (tabId === tabName + '-tab') {
+                tab.className = 'flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium transition-colors';
+            } else {
+                tab.className = 'flex-1 px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors';
+            }
         }
     });
     
@@ -1294,96 +1299,23 @@ function showVulnerabilityTab(tabName) {
     }
 }
 
-function handleVulnerabilityUpload(event) {
-    console.log('Unified upload function called');
-    const file = event.target.files[0];
-    if (!file) {
-        console.log('No file selected');
-        return;
+// Update vulnerability processing progress
+function updateVulnerabilityProgress(percent, message) {
+    const progressBar = document.getElementById('vulnerability-progress-bar');
+    const progressText = document.getElementById('vulnerability-progress-text');
+    
+    if (progressBar) {
+        progressBar.style.width = percent + '%';
     }
     
-    console.log('File selected:', file.name);
-    
-    // Validate file type
-    if (!file.name.toLowerCase().endsWith('.csv')) {
-        alert('Please upload a CSV file');
-        return;
+    if (progressText) {
+        progressText.textContent = message;
     }
     
-    // Show progress
-    console.log('Showing progress');
-    document.getElementById('vulnerability-progress').classList.remove('hidden');
-    
-    // Process file locally within POAM Manager
-    processLocalCSV(file);
+    console.log(`Progress: ${percent}% - ${message}`);
 }
 
-async function processLocalCSV(file) {
-    try {
-        updateVulnerabilityProgress(0, 'Reading CSV file...');
-        
-        // Read CSV file
-        const text = await file.text();
-        const lines = text.split('\n').filter(line => line.trim());
-        
-        if (lines.length < 2) {
-            throw new Error('CSV file appears to be empty or invalid');
-        }
-        
-        updateVulnerabilityProgress(25, 'Parsing scan data...');
-        
-        // Parse CSV headers and data
-        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-        const dataLines = lines.slice(1);
-        
-        updateVulnerabilityProgress(50, 'Analyzing SLA compliance...');
-        
-        // Process scan data and identify SLA-exceeded vulnerabilities
-        const scanResults = processScanDataForSLA(headers, dataLines, file.name);
-        
-        updateVulnerabilityProgress(75, 'Creating POAM items...');
-        
-        // Generate POAMs for SLA-exceeded vulnerabilities
-        const generatedPOAMs = createPOAMsFromSLAViolations(scanResults);
-        
-        // Add POAMs to the repository
-        addPOAMsToRepository(generatedPOAMs);
-        
-        // Store job info for jobs tab
-        const jobId = 'job_' + Date.now();
-        const jobInfo = {
-            id: jobId,
-            filename: file.name,
-            application: 'sla_processing',
-            application_name: 'SLA Processing',
-            status: 'completed',
-            created_at: new Date().toISOString(),
-            poams_generated: generatedPOAMs.length,
-            file_size: file.size,
-            scan_type: 'sla_violation_detection',
-            sla_violations: scanResults.slaViolations.length,
-            total_findings: scanResults.totalFindings
-        };
-        
-        // Save to local storage for jobs tracking
-        saveUnifiedJob(jobInfo);
-        
-        updateVulnerabilityProgress(100, 'Processing complete!');
-        
-        setTimeout(() => {
-            alert(`Successfully processed ${file.name}!\n\nTotal Findings: ${scanResults.totalFindings}\nSLA Violations: ${scanResults.slaViolations.length}\nPOAMs Created: ${generatedPOAMs.length}\n\nCritical POAMs: ${generatedPOAMs.filter(p => p.risk_level === 'critical').length}\nHigh POAMs: ${generatedPOAMs.filter(p => p.risk_level === 'high').length}`);
-            resetVulnerabilityProgress();
-            loadUnifiedJobs(); // Refresh jobs list
-            updateSLAMetrics(); // Update SLA dashboard metrics
-            updateApplicationPOAMCounts(); // Update counts in POAM Repository
-        }, 1000);
-        
-    } catch (error) {
-        console.error('CSV processing error:', error);
-        alert('Failed to process CSV file: ' + error.message);
-        resetVulnerabilityProgress();
-    }
-}
+// Note: handleVulnerabilityUpload and processLocalCSV are now in vulnerability-tracking.js
 
 function processScanDataForSLA(headers, dataLines, filename) {
     const scannerInfo = detectScannerType(headers, filename);
@@ -1651,17 +1583,49 @@ function buildSLAMilestoneDescription(violation) {
     return description;
 }
 
-function updateSLAMetrics() {
-    const allPOAMs = JSON.parse(localStorage.getItem('poamData') || '{}');
-    const poamArray = Object.values(allPOAMs);
+async function updateSLAMetrics() {
+    console.log('📊 updateSLAMetrics called');
+    
+    // Get manual POAMs from localStorage
+    const manualPOAMs = JSON.parse(localStorage.getItem('poamData') || '{}');
+    const manualArray = Object.values(manualPOAMs);
+    console.log(`📝 Manual POAMs from localStorage: ${manualArray.length}`);
+    
+    // Get vulnerability POAMs from IndexedDB
+    let vulnerabilityArray = [];
+    if (typeof poamDB !== 'undefined' && poamDB) {
+        try {
+            vulnerabilityArray = await poamDB.getAllPOAMs();
+            console.log(`🐛 Vulnerability POAMs from IndexedDB: ${vulnerabilityArray.length}`);
+        } catch (error) {
+            console.error('❌ Failed to load vulnerability POAMs:', error);
+        }
+    } else {
+        console.warn('⚠️ poamDB not available');
+    }
+    
+    // Combine both sources
+    const poamArray = [...manualArray, ...vulnerabilityArray];
+    console.log(`📊 Total POAMs combined: ${poamArray.length}`);
+    
+    // Normalize field names for vulnerability POAMs
+    const normalizedArray = poamArray.map(p => ({
+        ...p,
+        risk_level: p.risk_level || p.risk,
+        scheduled_completion_date: p.scheduled_completion_date || p.dueDate,
+        affected_asset: p.affected_asset || p.asset || (p.affectedAssets ? p.affectedAssets.join(', ') : ''),
+        asset_name: p.asset_name || p.asset
+    }));
     
     // Calculate POAM metrics by severity
-    const totalPOAMs = poamArray.length;
-    const criticalPOAMs = poamArray.filter(p => p.risk_level === 'critical').length;
-    const riskAcceptedPOAMs = poamArray.filter(p => p.status === 'risk-accepted').length;
+    const totalPOAMs = normalizedArray.length;
+    const criticalPOAMs = normalizedArray.filter(p => p.risk_level === 'critical').length;
+    const riskAcceptedPOAMs = normalizedArray.filter(p => p.status === 'risk-accepted').length;
+    
+    console.log(`📈 Metrics calculated - Total: ${totalPOAMs}, Critical: ${criticalPOAMs}, Risk Accepted: ${riskAcceptedPOAMs}`);
     
     // Calculate overdue POAMs
-    const overduePOAMs = poamArray.filter(p => {
+    const overduePOAMs = normalizedArray.filter(p => {
         if (p.status === 'completed' || p.status === 'closed' || p.status === 'risk-accepted') return false;
         return new Date(p.scheduled_completion_date) < new Date();
     }).length;
@@ -1672,27 +1636,26 @@ function updateSLAMetrics() {
     const sixtyDaysFromNow = new Date(now.getTime() + (60 * 24 * 60 * 60 * 1000));
     const ninetyDaysFromNow = new Date(now.getTime() + (90 * 24 * 60 * 60 * 1000));
     
-    const dueIn30Days = poamArray.filter(p => {
+    const dueIn30Days = normalizedArray.filter(p => {
         if (p.status === 'completed' || p.status === 'closed' || p.status === 'risk-accepted') return false;
         const dueDate = new Date(p.scheduled_completion_date);
         return dueDate >= now && dueDate <= thirtyDaysFromNow;
     }).length;
     
-    const dueIn60Days = poamArray.filter(p => {
+    const dueIn60Days = normalizedArray.filter(p => {
         if (p.status === 'completed' || p.status === 'closed' || p.status === 'risk-accepted') return false;
         const dueDate = new Date(p.scheduled_completion_date);
         return dueDate > thirtyDaysFromNow && dueDate <= sixtyDaysFromNow;
     }).length;
     
-    const dueIn90Days = poamArray.filter(p => {
-        if (p.status === 'completed' || p.status === 'closed' || p.status === 'risk-accepted') return false;
-        const dueDate = new Date(p.scheduled_completion_date);
-        return dueDate > sixtyDaysFromNow && dueDate <= ninetyDaysFromNow;
+    // Calculate closed POAMs (completed or closed status)
+    const closedPOAMs = normalizedArray.filter(p => {
+        return p.status === 'completed' || p.status === 'closed';
     }).length;
     
     // Calculate OS breakdown
     const osCounts = {};
-    poamArray.forEach(poam => {
+    normalizedArray.forEach(poam => {
         // Extract OS from affected_asset or other fields
         const asset = poam.affected_asset || poam.asset_name || '';
         let os = 'Unknown';
@@ -1726,7 +1689,7 @@ function updateSLAMetrics() {
     document.getElementById('overdue-poams-count').textContent = overduePOAMs;
     document.getElementById('due-30-days-count').textContent = dueIn30Days;
     document.getElementById('due-60-days-count').textContent = dueIn60Days;
-    document.getElementById('due-90-days-count').textContent = dueIn90Days;
+    document.getElementById('poams-closed-count').textContent = closedPOAMs;
     document.getElementById('os-breakdown').textContent = osBreakdown;
 }
 
@@ -1786,7 +1749,7 @@ function loadSettings() {
 }
 
 // Module initialization
-function initializeModule(moduleName) {
+async function initializeModule(moduleName) {
     // Hide all modules
     document.querySelectorAll('.module').forEach(module => {
         module.classList.add('hidden');
@@ -1796,7 +1759,12 @@ function initializeModule(moduleName) {
     document.getElementById(moduleName + '-module').classList.remove('hidden');
     
     // Load module-specific data
-    if (moduleName === 'poam') {
+    if (moduleName === 'dashboard') {
+        // Load dashboard metrics from all POAM sources
+        console.log('🔄 Loading dashboard metrics...');
+        await updateSLAMetrics();
+        console.log('✅ Dashboard metrics loaded');
+    } else if (moduleName === 'poam') {
         // Load POAM ID configuration when POAM Repository is shown
         loadPOAMIdConfig();
         updateApplicationPOAMCounts();
@@ -1820,6 +1788,7 @@ function initializeModule(moduleName) {
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
-    // Load initial module
-    initializeModule('poam');
+    // Restore last active module or default to dashboard
+    const savedModule = localStorage.getItem('currentModule') || 'dashboard';
+    initializeModule(savedModule);
 });
