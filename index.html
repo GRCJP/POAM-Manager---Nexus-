@@ -914,48 +914,58 @@
                     <p class="text-slate-500 mt-1">Real-time remediation velocity across the enclave.</p>
                 </div>
 
-                <!-- Action Status Strip -->
-                <div class="bg-white rounded-xl border border-slate-200 p-6 mb-6 shadow-sm">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-slate-900">Action Status Overview</h3>
-                        <span class="text-xs text-slate-500">Click any status to filter POAMs</span>
+                <!-- KPI Card Row -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <!-- Total POAM Items -->
+                    <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all" onclick="filterPOAMsByMetric('all')">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="p-2 bg-indigo-50 rounded-lg">
+                                <i class="fas fa-clipboard-list text-indigo-600 text-lg"></i>
+                            </div>
+                            <span class="text-xs text-slate-500 font-medium">ACTIVE</span>
+                        </div>
+                        <p class="text-3xl font-bold text-slate-900 mb-1" id="total-poams-count">0</p>
+                        <p class="text-sm text-slate-600">Total POAM Items</p>
+                        <p class="text-xs text-emerald-600 mt-2" id="total-poams-delta">+0 from last scan</p>
                     </div>
-                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                        <!-- Overdue -->
-                        <div class="text-center cursor-pointer hover:bg-red-50 rounded-lg p-3 transition-colors" onclick="filterPOAMsByMetric('overdue')">
-                            <p class="text-2xl font-bold text-red-600" id="overdue-poams-count">0</p>
-                            <p class="text-xs text-slate-600 font-medium">Overdue</p>
+
+                    <!-- Overdue Milestones -->
+                    <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm cursor-pointer hover:border-red-400 hover:shadow-md transition-all" onclick="filterPOAMsByMetric('overdue')">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="p-2 bg-red-50 rounded-lg">
+                                <i class="fas fa-calendar-times text-red-600 text-lg"></i>
+                            </div>
+                            <span class="text-xs text-slate-500 font-medium">URGENT</span>
                         </div>
-                        
-                        <!-- Open -->
-                        <div class="text-center cursor-pointer hover:bg-blue-50 rounded-lg p-3 transition-colors" onclick="filterPOAMsByMetric('open')">
-                            <p class="text-2xl font-bold text-blue-600" id="open-poams-count">0</p>
-                            <p class="text-xs text-slate-600 font-medium">Open</p>
+                        <p class="text-3xl font-bold text-slate-900 mb-1" id="overdue-poams-count">0</p>
+                        <p class="text-sm text-slate-600">Overdue Milestones</p>
+                        <p class="text-xs text-slate-500 mt-2">Requires attention</p>
+                    </div>
+
+                    <!-- Critical Findings -->
+                    <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm cursor-pointer hover:border-rose-400 hover:shadow-md transition-all" onclick="filterPOAMsByMetric('critical')">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="p-2 bg-rose-50 rounded-lg">
+                                <i class="fas fa-exclamation-triangle text-rose-600 text-lg"></i>
+                            </div>
+                            <span class="text-xs text-slate-500 font-medium">CRITICAL</span>
                         </div>
-                        
-                        <!-- New -->
-                        <div class="text-center cursor-pointer hover:bg-emerald-50 rounded-lg p-3 transition-colors" onclick="filterPOAMsByMetric('baseline-new')">
-                            <p class="text-2xl font-bold text-emerald-600" id="new-poams-count">0</p>
-                            <p class="text-xs text-slate-600 font-medium">New</p>
+                        <p class="text-3xl font-bold text-slate-900 mb-1" id="critical-poams-count">0</p>
+                        <p class="text-sm text-slate-600">Critical Findings</p>
+                        <p class="text-xs text-slate-500 mt-2">Immediate action required</p>
+                    </div>
+
+                    <!-- System Health -->
+                    <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm cursor-pointer hover:border-emerald-400 hover:shadow-md transition-all" onclick="filterPOAMsByMetric('open')">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="p-2 bg-emerald-50 rounded-lg">
+                                <i class="fas fa-shield-alt text-emerald-600 text-lg"></i>
+                            </div>
+                            <span class="text-xs text-slate-500 font-medium">HEALTH</span>
                         </div>
-                        
-                        <!-- Closed -->
-                        <div class="text-center cursor-pointer hover:bg-green-50 rounded-lg p-3 transition-colors" onclick="filterPOAMsByMetric('closed')">
-                            <p class="text-2xl font-bold text-green-600" id="closed-poams-count">0</p>
-                            <p class="text-xs text-slate-600 font-medium">Closed</p>
-                        </div>
-                        
-                        <!-- Risk Accepted -->
-                        <div class="text-center cursor-pointer hover:bg-purple-50 rounded-lg p-3 transition-colors" onclick="filterPOAMsByMetric('risk-accepted')">
-                            <p class="text-2xl font-bold text-purple-600" id="risk-accepted-count">0</p>
-                            <p class="text-xs text-slate-600 font-medium">Risk Accepted</p>
-                        </div>
-                        
-                        <!-- Needs Review -->
-                        <div class="text-center cursor-pointer hover:bg-amber-50 rounded-lg p-3 transition-colors" onclick="filterPOAMsByMetric('needs-review')">
-                            <p class="text-2xl font-bold text-amber-600" id="needs-review-count">0</p>
-                            <p class="text-xs text-slate-600 font-medium">Needs Review</p>
-                        </div>
+                        <p class="text-3xl font-bold text-slate-900 mb-1" id="open-poams-count">0</p>
+                        <p class="text-sm text-slate-600">Active Work Items</p>
+                        <p class="text-xs text-slate-500 mt-2">Open & in progress</p>
                     </div>
                 </div>
 
@@ -1043,69 +1053,6 @@
                 </div>
                 <div class="space-y-2" id="needs-review-items">
                     <p class="text-sm text-amber-700">No POAMs require review at this time.</p>
-                </div>
-            </div>
-
-            <!-- Scan Upload Section -->
-            <div id="vulnerability-upload-section" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Upload Area -->
-                    <div>
-                        <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
-                            <i class="fas fa-upload text-indigo-600 mr-2"></i>
-                            Upload Vulnerability Scan
-                        </h3>
-                        <div class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-indigo-400 transition-colors cursor-pointer" onclick="document.getElementById('scan-file-input').click()">
-                            <i class="fas fa-cloud-upload-alt text-4xl text-slate-400 mb-4"></i>
-                            <h4 class="text-lg font-semibold text-slate-700 mb-2">Drop CSV file here</h4>
-                            <p class="text-slate-500 mb-4">or click to browse</p>
-                            <input type="file" id="scan-file-input" class="hidden" accept=".csv" onchange="handleVulnerabilityUpload(event)">
-                            <button class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
-                                <i class="fas fa-folder-open mr-2"></i>Choose File
-                            </button>
-                        </div>
-                        
-                        <!-- Progress Bar -->
-                        <div id="upload-progress" class="mt-4 hidden">
-                            <div class="bg-slate-100 rounded-lg p-4 border border-slate-200">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-sm font-medium text-slate-700" id="upload-progress-text">Processing scan...</span>
-                                    <span class="text-sm font-semibold text-indigo-600" id="upload-progress-percent">0%</span>
-                                </div>
-                                <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
-                                    <div id="upload-progress-bar" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
-                                </div>
-                                <div class="mt-2 flex items-center gap-2 text-xs text-slate-500">
-                                    <i class="fas fa-spinner fa-spin"></i>
-                                    <span id="upload-progress-detail">Reading file...</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Last Scan Info -->
-                    <div>
-                        <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
-                            <i class="fas fa-history text-green-600 mr-2"></i>
-                            Scan History
-                        </h3>
-                        <div id="last-scan-info" class="bg-green-50 rounded-lg p-6 border border-green-200">
-                            <h4 class="text-sm font-semibold text-green-900 mb-3">Last Scan Processed</h4>
-                            <div class="space-y-2 text-sm">
-                                <p class="text-green-800"><strong>Date:</strong> <span id="last-scan-date">No scans processed yet</span></p>
-                                <p class="text-green-800"><strong>POAMs Created:</strong> <span id="last-scan-poams">0</span></p>
-                                <p class="text-green-800"><strong>Total Stored:</strong> <span id="total-stored-poams">0</span> POAMs</p>
-                            </div>
-                            <div class="mt-4 pt-4 border-t border-green-200 space-y-2">
-                                <button onclick="showSettingsTab('api-config')" class="text-sm text-green-700 hover:text-green-900 font-medium block">
-                                    <i class="fas fa-cog mr-1"></i>Configure API Pulls
-                                </button>
-                                <button onclick="clearOldPOAMs()" class="text-sm text-orange-700 hover:text-orange-900 font-medium block">
-                                    <i class="fas fa-trash-alt mr-1"></i>Clear Old POAMs
-                                </button>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -2488,5 +2435,35 @@
     </div>
 
     <script src="script.js?v=20260114-5"></script>
+<!-- Upload Modal -->
+    <div id="upload-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-slate-800">Upload Vulnerability Scan</h3>
+                        <button onclick="closeUploadModal()" class="text-slate-400 hover:text-slate-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-indigo-400 transition-colors cursor-pointer" onclick="document.getElementById('scan-file-input').click()">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-slate-400 mb-4"></i>
+                        <h4 class="text-lg font-semibold text-slate-700 mb-2">Drop CSV file here</h4>
+                        <p class="text-slate-500 mb-4">or click to browse</p>
+                        <p class="text-xs text-slate-400">Supported formats: CSV (max 10MB)</p>
+                    </div>
+                    
+                    <input type="file" id="scan-file-input" accept=".csv" class="hidden" onchange="handleScanFileSelect(event)">
+                    
+                    <div class="mt-4 flex justify-end gap-3">
+                        <button onclick="closeUploadModal()" class="px-4 py-2 text-slate-600 hover:text-slate-800">Cancel</button>
+                        <button onclick="document.getElementById('scan-file-input').click()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Choose File</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
