@@ -76,10 +76,12 @@ function renderFocusedPOAMDetailPage(poam) {
         actualCompletionDate: formatDateForInput(poam.actualCompletionDate),
         mitigation: poam.mitigation || '',
         resourcesRequired: poam.resourcesRequired || '',
-        notes: poam.notes || ''
+        notes: poam.notes || '',
+        // Map affectedAssets to assets for display compatibility
+        assets: poam.affectedAssets || poam.assets || []
     };
     
-    const assetCount = poam.totalAffectedAssets || poam.assets?.length || 0;
+    const assetCount = poam.totalAffectedAssets || poam.affectedAssets?.length || poam.assets?.length || 0;
     
     detailContainer.innerHTML = `
         <!-- Modal Background -->
