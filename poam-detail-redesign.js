@@ -59,7 +59,7 @@ function renderFocusedPOAMDetailPage(poam) {
         risk: poam.riskLevel || poam.risk || 'medium',
         status: poam.findingStatus || poam.status || 'Open',
         vulnerability: poam.vulnerabilityName || poam.vulnerability || poam.title || 'Unknown',
-        description: poam.findingDescription || poam.description || '',
+        description: poam.description || poam.findingDescription || '', // Prioritize scan description (Column B)
         dueDate: poam.updatedScheduledCompletionDate || poam.dueDate || '',
         poc: poam.poc || 'Unassigned',
         controlFamily: poam.controlFamily || 'CM',
@@ -198,7 +198,7 @@ function renderFocusedPOAMDetailPage(poam) {
                     <textarea rows="3" 
                               class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
                               placeholder="Describe the finding..."
-                              onchange="updatePOAMField('${poam.id}', 'findingDescription', this.value)">${displayPOAM.description}</textarea>
+                              onchange="updatePOAMField('${poam.id}', 'description', this.value)">${displayPOAM.description}</textarea>
                 </div>
                 
                 <!-- AFFECTED ASSETS - Always Visible -->
