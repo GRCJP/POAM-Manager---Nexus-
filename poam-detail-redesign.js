@@ -1,11 +1,8 @@
 // ═══════════════════════════════════════════════════════════════
-// POAM DETAIL VIEW - HYBRID INVESTIGATIVE EXPERIENCE
+// POAM DETAIL VIEW - FOCUSED EDITABLE EXPERIENCE
 // ═══════════════════════════════════════════════════════════════
 
 let currentPOAMDetail = null;
-let assetViewMode = 'list'; // Default to list for >20 assets
-let expandedAssets = new Set();
-let expandedSections = new Set(['assets']); // Assets expanded by default
 
 async function showPOAMDetails(poamId) {
     console.log(`🔍 Loading POAM details for: ${poamId}`);
@@ -41,11 +38,8 @@ async function showPOAMDetails(poamId) {
     poam.milestones = milestones;
     poam.comments = comments;
     
-    // Determine asset view mode based on count
-    assetViewMode = (poam.assets?.length || 0) > 20 ? 'list' : 'grid';
-    
-    // Render the hybrid POAM detail page
-    renderHybridPOAMDetailPage(poam);
+    // Render the focused POAM detail view
+    renderFocusedPOAMDetailPage(poam);
     
     // Show the detail modal
     document.getElementById('poam-detail-page').classList.remove('hidden');
@@ -55,7 +49,7 @@ async function showPOAMDetails(poamId) {
     setupModalCloseHandlers();
 }
 
-function renderHybridPOAMDetailPage(poam) {
+function renderFocusedPOAMDetailPage(poam) {
     const detailContainer = document.getElementById('poam-detail-page');
     if (!detailContainer) return;
     
@@ -69,7 +63,12 @@ function renderHybridPOAMDetailPage(poam) {
         dueDate: poam.updatedScheduledCompletionDate || poam.dueDate || '',
         poc: poam.poc || 'Unassigned',
         controlFamily: poam.controlFamily || 'CM',
-        findingSource: poam.findingSource || 'Vulnerability Scan'
+        findingSource: poam.findingSource || 'Vulnerability Scan',
+        initialScheduledCompletionDate: poam.initialScheduledCompletionDate || '',
+        actualCompletionDate: poam.actualCompletionDate || '',
+        mitigation: poam.mitigation || '',
+        resourcesRequired: poam.resourcesRequired || '',
+        notes: poam.notes || ''
     };
     
     const assetCount = poam.totalAffectedAssets || poam.assets?.length || 0;
@@ -78,186 +77,189 @@ function renderHybridPOAMDetailPage(poam) {
         <!-- Modal Background -->
         <div class="fixed inset-0 bg-black bg-opacity-50 z-50" onclick="closePOAMDetails()"></div>
         
-        <!-- Modal Content -->
-        <div class="fixed inset-4 bg-white rounded-lg shadow-xl z-50 overflow-hidden flex flex-col">
+        <!-- Modal Content - Smaller, focused size -->
+        <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-11/12 max-w-6xl max-h-[90vh] bg-white rounded-lg shadow-xl z-50 overflow-hidden flex flex-col">
             
-            <!-- LAYER 1: COMMAND STRIP (Always Visible) -->
-            <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between flex-shrink-0">
+            <!-- Header - Compact -->
+            <div class="bg-slate-900 text-white px-6 py-3 flex items-center justify-between flex-shrink-0">
                 <div class="flex items-center gap-4">
                     <!-- POAM ID -->
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm font-mono bg-slate-700 px-2 py-1 rounded">${poam.id}</span>
-                    </div>
+                    <span class="text-sm font-mono bg-slate-700 px-2 py-1 rounded">${poam.id}</span>
                     
                     <!-- Title -->
-                    <div class="max-w-md">
-                        <h1 class="text-lg font-semibold truncate" title="${displayPOAM.vulnerability}">
-                            ${displayPOAM.vulnerability}
-                        </h1>
-                    </div>
+                    <h1 class="text-base font-semibold truncate" title="${displayPOAM.vulnerability}">
+                        ${displayPOAM.vulnerability}
+                    </h1>
                 </div>
                 
-                <div class="flex items-center gap-6">
+                <div class="flex items-center gap-4">
                     <!-- Risk Badge -->
-                    <div class="flex items-center gap-2">
-                        ${getRiskBadge(displayPOAM.risk)}
-                    </div>
-                    
-                    <!-- Status (Inline Editable) -->
-                    <div class="flex items-center gap-2">
-                        <label class="text-xs text-slate-400">Status:</label>
-                        <select class="bg-slate-700 text-white text-sm px-3 py-1 rounded border-0 cursor-pointer"
-                                onchange="updatePOAMField('${poam.id}', 'findingStatus', this.value)">
-                            ${getStatusOptions(displayPOAM.status)}
-                        </select>
-                    </div>
+                    ${getRiskBadge(displayPOAM.risk)}
                     
                     <!-- Asset Count -->
-                    <div class="flex items-center gap-2">
-                        <i class="fas fa-server text-slate-400"></i>
-                        <span class="text-sm">${assetCount} assets</span>
-                    </div>
-                    
-                    <!-- Due Date (Inline Editable) -->
-                    <div class="flex items-center gap-2">
-                        <label class="text-xs text-slate-400">Due:</label>
-                        <input type="date" 
-                               value="${displayPOAM.dueDate}" 
-                               class="bg-slate-700 text-white text-sm px-2 py-1 rounded border-0 cursor-pointer"
-                               onchange="updatePOAMField('${poam.id}', 'updatedScheduledCompletionDate', this.value)">
-                    </div>
-                    
-                    <!-- POC (Inline Editable) -->
-                    <div class="flex items-center gap-2">
-                        <label class="text-xs text-slate-400">POC:</label>
-                        <input type="text" 
-                               value="${displayPOAM.poc}" 
-                               placeholder="Assign POC"
-                               class="bg-slate-700 text-white text-sm px-2 py-1 rounded border-0 cursor-pointer w-24"
-                               onchange="updatePOAMField('${poam.id}', 'poc', this.value)">
-                    </div>
+                    <span class="text-sm">${assetCount} assets</span>
                     
                     <!-- Close Button -->
                     <button onclick="closePOAMDetails()" 
                             class="text-slate-400 hover:text-white transition-colors">
-                        <i class="fas fa-times text-xl"></i>
+                        <i class="fas fa-times"></i>
                     </button>
                 </div>
             </div>
             
-            <!-- Scrollable Content Area -->
-            <div class="flex-1 overflow-y-auto">
+            <!-- Scrollable Content -->
+            <div class="flex-1 overflow-y-auto p-6">
                 
-                <!-- LAYER 2: FINDING CONTEXT (Read-Only, Compact) -->
-                <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
-                    <div class="grid grid-cols-4 gap-4 text-sm">
-                        <!-- Finding Summary -->
-                        <div class="col-span-2">
-                            <div class="font-semibold text-slate-700 mb-1">Finding Summary</div>
-                            <div class="text-slate-600 line-clamp-3">${displayPOAM.description}</div>
+                <!-- Key Information Grid -->
+                <div class="grid grid-cols-2 gap-6 mb-6">
+                    <!-- Left Column -->
+                    <div class="space-y-4">
+                        <!-- Status -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Status</label>
+                            <select class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                    onchange="updatePOAMField('${poam.id}', 'findingStatus', this.value)">
+                                ${getStatusOptions(displayPOAM.status)}
+                            </select>
                         </div>
                         
-                        <!-- Finding Source -->
+                        <!-- Risk Level -->
                         <div>
-                            <div class="font-semibold text-slate-700 mb-1">Source</div>
-                            <div class="text-slate-600">${displayPOAM.findingSource}</div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Risk Level</label>
+                            <select class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                    onchange="updatePOAMField('${poam.id}', 'riskLevel', this.value)">
+                                ${getRiskOptions(displayPOAM.risk)}
+                            </select>
+                        </div>
+                        
+                        <!-- POC -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Point of Contact</label>
+                            <input type="text" 
+                                   value="${displayPOAM.poc}" 
+                                   placeholder="Assign POC"
+                                   class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                   onchange="updatePOAMField('${poam.id}', 'poc', this.value)">
                         </div>
                         
                         <!-- Control Family -->
                         <div>
-                            <div class="font-semibold text-slate-700 mb-1">Control Family</div>
-                            <div class="text-slate-600">${displayPOAM.controlFamily}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- AFFECTED ASSETS (Primary Section) -->
-                <div class="px-6 py-4">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-lg font-semibold text-slate-900">Affected Assets (${assetCount})</h2>
-                        <div class="flex items-center gap-2">
-                            <button onclick="toggleAssetView()" 
-                                    class="text-sm px-3 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 transition-colors">
-                                <i class="fas fa-${assetViewMode === 'list' ? 'th-list' : 'th'} mr-1"></i>
-                                ${assetViewMode === 'list' ? 'List' : 'Grid'} View
-                            </button>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Control Family</label>
+                            <select class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                    onchange="updatePOAMField('${poam.id}', 'controlFamily', this.value)">
+                                ${getControlFamilyOptions(displayPOAM.controlFamily)}
+                            </select>
                         </div>
                     </div>
                     
-                    ${renderAssetsSection(poam.assets || [])}
-                </div>
-                
-                <!-- LAYER 3: POAM CONTROLS (Secondary, Collapsible) -->
-                <div class="px-6 py-4 border-t border-slate-200">
+                    <!-- Right Column -->
                     <div class="space-y-4">
-                        <!-- Schedule & Milestones -->
-                        <div class="border border-slate-200 rounded-lg">
-                            <button onclick="toggleSection('schedule')" 
-                                    class="w-full px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors flex items-center justify-between">
-                                <span class="font-semibold text-slate-900">
-                                    <i class="fas fa-calendar-alt mr-2"></i>Schedule & Milestones
-                                </span>
-                                <i class="fas fa-chevron-${expandedSections.has('schedule') ? 'up' : 'down'} text-slate-400"></i>
-                            </button>
-                            ${expandedSections.has('schedule') ? renderScheduleSection(poam) : ''}
+                        <!-- Initial Scheduled Completion -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Initial Scheduled Completion</label>
+                            <input type="date" 
+                                   value="${displayPOAM.initialScheduledCompletionDate}" 
+                                   class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                   onchange="updatePOAMField('${poam.id}', 'initialScheduledCompletionDate', this.value)">
                         </div>
                         
-                        <!-- Mitigation -->
-                        <div class="border border-slate-200 rounded-lg">
-                            <button onclick="toggleSection('mitigation')" 
-                                    class="w-full px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors flex items-center justify-between">
-                                <span class="font-semibold text-slate-900">
-                                    <i class="fas fa-shield-alt mr-2"></i>Mitigation
-                                </span>
-                                <i class="fas fa-chevron-${expandedSections.has('mitigation') ? 'up' : 'down'} text-slate-400"></i>
-                            </button>
-                            ${expandedSections.has('mitigation') ? renderMitigationSection(poam) : ''}
+                        <!-- Updated Scheduled Completion -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Updated Scheduled Completion</label>
+                            <input type="date" 
+                                   value="${displayPOAM.dueDate}" 
+                                   class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                   onchange="updatePOAMField('${poam.id}', 'updatedScheduledCompletionDate', this.value)">
                         </div>
                         
-                        <!-- Resources & Completion -->
-                        <div class="border border-slate-200 rounded-lg">
-                            <button onclick="toggleSection('resources')" 
-                                    class="w-full px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors flex items-center justify-between">
-                                <span class="font-semibold text-slate-900">
-                                    <i class="fas fa-tools mr-2"></i>Resources & Completion
-                                </span>
-                                <i class="fas fa-chevron-${expandedSections.has('resources') ? 'up' : 'down'} text-slate-400"></i>
-                            </button>
-                            ${expandedSections.has('resources') ? renderResourcesSection(poam) : ''}
+                        <!-- Actual Completion -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Actual Completion</label>
+                            <input type="date" 
+                                   value="${displayPOAM.actualCompletionDate}" 
+                                   class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                   onchange="updatePOAMField('${poam.id}', 'actualCompletionDate', this.value)">
                         </div>
                         
-                        <!-- Comments -->
-                        <div class="border border-slate-200 rounded-lg">
-                            <button onclick="toggleSection('comments')" 
-                                    class="w-full px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors flex items-center justify-between">
-                                <span class="font-semibold text-slate-900">
-                                    <i class="fas fa-comments mr-2"></i>Comments (${poam.comments?.length || 0})
-                                </span>
-                                <i class="fas fa-chevron-${expandedSections.has('comments') ? 'up' : 'down'} text-slate-400"></i>
-                            </button>
-                            ${expandedSections.has('comments') ? renderCommentsSection(poam) : ''}
+                        <!-- Finding Source -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Finding Source</label>
+                            <input type="text" 
+                                   value="${displayPOAM.findingSource}" 
+                                   readonly
+                                   class="w-full px-3 py-2 border border-slate-300 rounded bg-slate-50">
                         </div>
                     </div>
                 </div>
+                
+                <!-- Description -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Finding Description</label>
+                    <textarea rows="3" 
+                              class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+                              placeholder="Describe the finding..."
+                              onchange="updatePOAMField('${poam.id}', 'findingDescription', this.value)">${displayPOAM.description}</textarea>
+                </div>
+                
+                <!-- AFFECTED ASSETS - Always Visible -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-slate-900 mb-3">Affected Assets (${assetCount})</h3>
+                    <div class="border border-slate-200 rounded-lg overflow-hidden">
+                        ${renderAssetsList(poam.assets || [])}
+                    </div>
+                </div>
+                
+                <!-- Mitigation & Resources -->
+                <div class="grid grid-cols-2 gap-6 mb-6">
+                    <!-- Mitigation -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Mitigation Strategy</label>
+                        <textarea rows="4" 
+                                  class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+                                  placeholder="Describe mitigation approach..."
+                                  onchange="updatePOAMField('${poam.id}', 'mitigation', this.value)">${displayPOAM.mitigation}</textarea>
+                    </div>
+                    
+                    <!-- Resources Required -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Resources Required</label>
+                        <input type="text" 
+                               value="${displayPOAM.resourcesRequired}" 
+                               placeholder="Personnel, tools, budget..."
+                               class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                               onchange="updatePOAMField('${poam.id}', 'resourcesRequired', this.value)">
+                        
+                        <label class="block text-sm font-medium text-slate-700 mb-1 mt-3">Notes</label>
+                        <textarea rows="2" 
+                                  class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+                                  placeholder="Additional notes..."
+                                  onchange="updatePOAMField('${poam.id}', 'notes', this.value)">${displayPOAM.notes}</textarea>
+                    </div>
+                </div>
+                
+            </div>
+            
+            <!-- Footer Actions -->
+            <div class="bg-slate-50 px-6 py-3 flex justify-end gap-3 border-t border-slate-200">
+                <button onclick="closePOAMDetails()" 
+                        class="px-4 py-2 text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50 transition-colors">
+                    Cancel
+                </button>
+                <button onclick="savePOAMChanges()" 
+                        class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors">
+                    <i class="fas fa-save mr-2"></i>Save Changes
+                </button>
             </div>
         </div>
     `;
 }
 
-function renderAssetsSection(assets) {
+function renderAssetsList(assets) {
     if (!assets || assets.length === 0) {
-        return '<div class="text-center text-slate-500 py-8">No affected assets found</div>';
+        return '<div class="p-4 text-center text-slate-500">No affected assets found</div>';
     }
     
-    if (assetViewMode === 'list' || assets.length > 20) {
-        return renderAssetsList(assets);
-    } else {
-        return renderAssetsGrid(assets);
-    }
-}
-
-function renderAssetsList(assets) {
-    const headers = ['Asset', 'Status', 'First Detected', 'Last Detected', 'Result', 'Solution', 'Actions'];
+    const headers = ['Asset', 'Status', 'OS', 'First Detected', 'Last Detected'];
     
     let html = `
         <div class="overflow-x-auto">
@@ -271,7 +273,6 @@ function renderAssetsList(assets) {
     `;
     
     assets.forEach((asset, index) => {
-        const isExpanded = expandedAssets.has(asset.id || index);
         const assetId = asset.id || asset.name || `asset-${index}`;
         
         html += `
@@ -287,40 +288,11 @@ function renderAssetsList(assets) {
                         ${asset.status || 'affected'}
                     </span>
                 </td>
+                <td class="px-4 py-3 text-slate-600">${asset.operatingSystem || asset.os || 'Unknown'}</td>
                 <td class="px-4 py-3 text-slate-600">${asset.firstDetected || 'N/A'}</td>
                 <td class="px-4 py-3 text-slate-600">${asset.lastDetected || 'N/A'}</td>
-                <td class="px-4 py-3 text-slate-600">
-                    <div class="max-w-xs truncate" title="${asset.result || 'No result data'}">
-                        ${asset.result || 'No result data'}
-                    </div>
-                </td>
-                <td class="px-4 py-3 text-slate-600">
-                    <div class="max-w-xs truncate" title="${asset.solution || 'No solution data'}">
-                        ${asset.solution || 'No solution data'}
-                    </div>
-                </td>
-                <td class="px-4 py-3">
-                    <button onclick="toggleAssetExpansion('${assetId}')" 
-                            class="text-indigo-600 hover:text-indigo-800 text-sm">
-                        <i class="fas fa-${isExpanded ? 'compress' : 'expand'} mr-1"></i>
-                        ${isExpanded ? 'Hide' : 'Show'} Raw
-                    </button>
-                </td>
             </tr>
         `;
-        
-        if (isExpanded) {
-            html += `
-                <tr class="bg-slate-50">
-                    <td colspan="7" class="px-4 py-3">
-                        <div class="bg-slate-900 text-slate-100 p-4 rounded font-mono text-xs overflow-x-auto">
-                            <div class="mb-2 font-semibold text-slate-300">Raw Scan Data:</div>
-                            <pre>${JSON.stringify(asset.raw || asset, null, 2)}</pre>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        }
     });
     
     html += `
@@ -330,150 +302,6 @@ function renderAssetsList(assets) {
     `;
     
     return html;
-}
-
-function renderAssetsGrid(assets) {
-    let html = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">';
-    
-    assets.forEach((asset, index) => {
-        const assetId = asset.id || asset.name || `asset-${index}`;
-        
-        html += `
-            <div class="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                <div class="flex items-center justify-between mb-2">
-                    <div class="flex items-center gap-2">
-                        <i class="fas fa-server text-slate-400"></i>
-                        <span class="font-medium text-slate-900">${asset.name || asset.assetId || 'Unknown'}</span>
-                    </div>
-                    <span class="px-2 py-1 rounded-full text-xs font-semibold ${getAssetStatusColor(asset.status)}">
-                        ${asset.status || 'affected'}
-                    </span>
-                </div>
-                
-                <div class="space-y-1 text-sm text-slate-600">
-                    <div><strong>First:</strong> ${asset.firstDetected || 'N/A'}</div>
-                    <div><strong>Last:</strong> ${asset.lastDetected || 'N/A'}</div>
-                    <div class="truncate"><strong>Result:</strong> ${asset.result || 'No data'}</div>
-                </div>
-                
-                <button onclick="toggleAssetExpansion('${assetId}')" 
-                        class="mt-3 text-indigo-600 hover:text-indigo-800 text-sm">
-                    <i class="fas fa-expand mr-1"></i>View Raw Data
-                </button>
-            </div>
-        `;
-    });
-    
-    html += '</div>';
-    return html;
-}
-
-function renderScheduleSection(poam) {
-    const milestones = poam.milestones || [];
-    
-    return `
-        <div class="p-4 space-y-4">
-            <!-- Key Dates -->
-            <div class="grid grid-cols-3 gap-4 text-sm">
-                <div>
-                    <label class="block text-slate-600 mb-1">Initial Scheduled</label>
-                    <input type="date" 
-                           value="${poam.initialScheduledCompletionDate || ''}" 
-                           class="w-full px-3 py-2 border border-slate-300 rounded"
-                           onchange="updatePOAMField('${poam.id}', 'initialScheduledCompletionDate', this.value)">
-                </div>
-                <div>
-                    <label class="block text-slate-600 mb-1">Updated Scheduled</label>
-                    <input type="date" 
-                           value="${poam.updatedScheduledCompletionDate || ''}" 
-                           class="w-full px-3 py-2 border border-slate-300 rounded"
-                           onchange="updatePOAMField('${poam.id}', 'updatedScheduledCompletionDate', this.value)">
-                </div>
-                <div>
-                    <label class="block text-slate-600 mb-1">Actual Completion</label>
-                    <input type="date" 
-                           value="${poam.actualCompletionDate || ''}" 
-                           class="w-full px-3 py-2 border border-slate-300 rounded"
-                           onchange="updatePOAMField('${poam.id}', 'actualCompletionDate', this.value)">
-                </div>
-            </div>
-            
-            <!-- Milestones -->
-            <div>
-                <div class="flex items-center justify-between mb-3">
-                    <h4 class="font-semibold text-slate-900">Milestones</h4>
-                    <button onclick="addMilestone('${poam.id}')" 
-                            class="text-sm px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700">
-                        <i class="fas fa-plus mr-1"></i>Add Milestone
-                    </button>
-                </div>
-                
-                ${milestones.length === 0 ? 
-                    '<div class="text-center text-slate-500 py-4">No milestones defined</div>' :
-                    renderMilestonesList(poam.id, milestones)
-                }
-            </div>
-        </div>
-    `;
-}
-
-function renderMitigationSection(poam) {
-    return `
-        <div class="p-4">
-            <label class="block text-slate-600 mb-2">Mitigation Strategy</label>
-            <textarea rows="4" 
-                      class="w-full px-3 py-2 border border-slate-300 rounded resize-none"
-                      placeholder="Describe mitigation approach..."
-                      onchange="updatePOAMField('${poam.id}', 'mitigation', this.value)">${poam.mitigation || ''}</textarea>
-        </div>
-    `;
-}
-
-function renderResourcesSection(poam) {
-    return `
-        <div class="p-4 space-y-4">
-            <div>
-                <label class="block text-slate-600 mb-2">Resources Required</label>
-                <input type="text" 
-                       value="${poam.resourcesRequired || ''}" 
-                       placeholder="Personnel, tools, budget..."
-                       class="w-full px-3 py-2 border border-slate-300 rounded"
-                       onchange="updatePOAMField('${poam.id}', 'resourcesRequired', this.value)">
-            </div>
-            
-            <div>
-                <label class="block text-slate-600 mb-2">Notes</label>
-                <textarea rows="3" 
-                          class="w-full px-3 py-2 border border-slate-300 rounded resize-none"
-                          placeholder="Additional notes..."
-                          onchange="updatePOAMField('${poam.id}', 'notes', this.value)">${poam.notes || ''}</textarea>
-            </div>
-        </div>
-    `;
-}
-
-function renderCommentsSection(poam) {
-    const comments = poam.comments || [];
-    
-    return `
-        <div class="p-4">
-            <div class="mb-4">
-                <textarea rows="2" 
-                          id="new-comment-${poam.id}"
-                          class="w-full px-3 py-2 border border-slate-300 rounded resize-none"
-                          placeholder="Add a comment..."></textarea>
-                <button onclick="addComment('${poam.id}')" 
-                        class="mt-2 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
-                    <i class="fas fa-comment mr-1"></i>Add Comment
-                </button>
-            </div>
-            
-            ${comments.length === 0 ? 
-                '<div class="text-center text-slate-500 py-4">No comments yet</div>' :
-                renderCommentsList(comments)
-            }
-        </div>
-    `;
 }
 
 // Helper Functions
@@ -491,10 +319,27 @@ function getRiskBadge(risk) {
 function getStatusOptions(currentStatus) {
     const statuses = ['Open', 'In Progress', 'Completed', 'Closed', 'Risk Accepted'];
     return statuses.map(status => {
-        const value = status.toLowerCase().replace(' ', '-').replace('risk-accepted', 'risk-accepted');
+        const value = status.toLowerCase().replace(' ', '-');
         const isSelected = currentStatus.toLowerCase() === status.toLowerCase() || 
                           (status === 'Risk Accepted' && currentStatus.toLowerCase() === 'risk-accepted');
         return `<option value="${value}" ${isSelected ? 'selected' : ''}>${status}</option>`;
+    }).join('');
+}
+
+function getRiskOptions(currentRisk) {
+    const risks = ['Critical', 'High', 'Medium', 'Low'];
+    return risks.map(risk => {
+        const value = risk.toLowerCase();
+        const isSelected = currentRisk.toLowerCase() === value;
+        return `<option value="${value}" ${isSelected ? 'selected' : ''}>${risk}</option>`;
+    }).join('');
+}
+
+function getControlFamilyOptions(currentFamily) {
+    const families = ['AC', 'AU', 'CM', 'IA', 'IR', 'MA', 'PE', 'SC', 'SI'];
+    return families.map(family => {
+        const isSelected = currentFamily === family;
+        return `<option value="${family}" ${isSelected ? 'selected' : ''}>${family}</option>`;
     }).join('');
 }
 
@@ -508,34 +353,10 @@ function getAssetStatusColor(status) {
     return colors[status] || 'bg-slate-100 text-slate-700';
 }
 
-function toggleSection(sectionId) {
-    if (expandedSections.has(sectionId)) {
-        expandedSections.delete(sectionId);
-    } else {
-        expandedSections.add(sectionId);
-    }
-    renderHybridPOAMDetailPage(currentPOAMDetail);
-}
-
-function toggleAssetView() {
-    assetViewMode = assetViewMode === 'list' ? 'grid' : 'list';
-    renderHybridPOAMDetailPage(currentPOAMDetail);
-}
-
-function toggleAssetExpansion(assetId) {
-    if (expandedAssets.has(assetId)) {
-        expandedAssets.delete(assetId);
-    } else {
-        expandedAssets.add(assetId);
-    }
-    renderHybridPOAMDetailPage(currentPOAMDetail);
-}
-
 function closePOAMDetails() {
     document.getElementById('poam-detail-page').classList.add('hidden');
     document.body.style.overflow = 'auto';
     currentPOAMDetail = null;
-    expandedAssets.clear();
 }
 
 function setupModalCloseHandlers() {
@@ -568,15 +389,6 @@ async function updatePOAMField(poamId, field, value) {
         await poamDB.savePOAM(poam);
         showUpdateFeedback('Field updated', 'success');
         
-        // Add comment for significant field changes
-        const significantFields = ['findingStatus', 'riskLevel', 'updatedScheduledCompletionDate'];
-        if (significantFields.includes(field)) {
-            await poamDB.addComment(poamId, {
-                text: `Updated ${field} to: ${value}`,
-                type: 'status_change'
-            });
-        }
-        
         // Refresh if needed
         if (currentPOAMDetail && currentPOAMDetail.id === poamId) {
             currentPOAMDetail = poam;
@@ -588,55 +400,23 @@ async function updatePOAMField(poamId, field, value) {
     }
 }
 
-// Placeholder functions for milestones and comments
-function addMilestone(poamId) {
-    console.log('Add milestone for:', poamId);
-    showUpdateFeedback('Milestone feature coming soon', 'info');
-}
-
-function addComment(poamId) {
-    const textarea = document.getElementById(`new-comment-${poamId}`);
-    const text = textarea.value.trim();
+async function savePOAMChanges() {
+    if (!currentPOAMDetail) return;
     
-    if (!text) return;
-    
-    console.log('Add comment for:', poamId, text);
-    showUpdateFeedback('Comment feature coming soon', 'info');
-    textarea.value = '';
-}
-
-function renderMilestonesList(poamId, milestones) {
-    return `
-        <div class="space-y-2">
-            ${milestones.map(milestone => `
-                <div class="flex items-center justify-between p-3 bg-slate-50 rounded">
-                    <div>
-                        <div class="font-medium text-slate-900">${milestone.name}</div>
-                        <div class="text-sm text-slate-600">${milestone.targetDate}</div>
-                    </div>
-                    <span class="px-2 py-1 rounded-full text-xs ${milestone.completed ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">
-                        ${milestone.completed ? 'Completed' : 'Pending'}
-                    </span>
-                </div>
-            `).join('')}
-        </div>
-    `;
-}
-
-function renderCommentsList(comments) {
-    return `
-        <div class="space-y-3">
-            ${comments.map(comment => `
-                <div class="border-l-4 border-indigo-200 pl-4 py-2">
-                    <div class="flex items-center justify-between mb-1">
-                        <span class="font-medium text-slate-900">${comment.author}</span>
-                        <span class="text-xs text-slate-500">${new Date(comment.timestamp).toLocaleString()}</span>
-                    </div>
-                    <div class="text-sm text-slate-700">${comment.text}</div>
-                </div>
-            `).join('')}
-        </div>
-    `;
+    try {
+        await poamDB.savePOAM(currentPOAMDetail);
+        showUpdateFeedback('POAM saved successfully', 'success');
+        closePOAMDetails();
+        
+        // Refresh the main POAM list
+        if (typeof displayVulnerabilityPOAMs === 'function') {
+            await displayVulnerabilityPOAMs();
+        }
+        
+    } catch (error) {
+        console.error('Failed to save POAM:', error);
+        showUpdateFeedback('Failed to save POAM', 'error');
+    }
 }
 
 function showUpdateFeedback(message, type = 'info') {
