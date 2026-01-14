@@ -35,6 +35,11 @@ async function showPOAMDetails(poamId) {
     console.log('🔍 Available fields:', Object.keys(poam));
     console.log('🔍 POAM.rawFindings:', poam.rawFindings);
     console.log('🔍 POAM.rawData:', poam.rawData);
+    console.log('🔍 POAM.totalAffectedAssets:', poam.totalAffectedAssets);
+    console.log('🔍 POAM.breachedAssets:', poam.breachedAssets);
+    console.log('🔍 POAM.vulnerabilityName:', poam.vulnerabilityName);
+    console.log('🔍 POAM.title:', poam.title);
+    console.log('🔍 POAM.vulnerability:', poam.vulnerability);
     
     // Check if this is an old POAM vs new POAM
     const hasNewStructure = poam.affectedAssets && Array.isArray(poam.affectedAssets);
