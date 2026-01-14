@@ -122,10 +122,13 @@ async function executeBulkAssignPOC() {
         showUpdateFeedback('Operation failed: ' + error.message, 'error');
     } finally {
         // Always close modal, even if there was an error
-        const modal = document.querySelector('.fixed.inset-0.bg-black.bg-opacity-50');
-        if (modal) {
+        console.log('🔍 Closing bulk assign POC modal...');
+        const modals = document.querySelectorAll('.fixed.inset-0.bg-black.bg-opacity-50');
+        console.log(`🔍 Found ${modals.length} modals to close`);
+        modals.forEach(modal => {
+            console.log('🔍 Removing modal:', modal);
             modal.remove();
-        }
+        });
         
         // Always refresh display and clear selection
         await displayVulnerabilityPOAMs();
@@ -199,10 +202,13 @@ async function executeBulkChangeStatus() {
         showUpdateFeedback('Operation failed: ' + error.message, 'error');
     } finally {
         // Always close modal, even if there was an error
-        const modal = document.querySelector('.fixed.inset-0.bg-black.bg-opacity-50');
-        if (modal) {
+        console.log('🔍 Closing bulk change status modal...');
+        const modals = document.querySelectorAll('.fixed.inset-0.bg-black.bg-opacity-50');
+        console.log(`🔍 Found ${modals.length} modals to close`);
+        modals.forEach(modal => {
+            console.log('🔍 Removing modal:', modal);
             modal.remove();
-        }
+        });
         
         // Always refresh display and clear selection
         await displayVulnerabilityPOAMs();
@@ -285,10 +291,13 @@ async function executeBulkAddNote() {
         showUpdateFeedback('Operation failed: ' + error.message, 'error');
     } finally {
         // Always close modal, even if there was an error
-        const modal = document.querySelector('.fixed.inset-0.bg-black.bg-opacity-50');
-        if (modal) {
+        console.log('🔍 Closing bulk add note modal...');
+        const modals = document.querySelectorAll('.fixed.inset-0.bg-black.bg-opacity-50');
+        console.log(`🔍 Found ${modals.length} modals to close`);
+        modals.forEach(modal => {
+            console.log('🔍 Removing modal:', modal);
             modal.remove();
-        }
+        });
         
         // Always refresh display and clear selection
         await displayVulnerabilityPOAMs();
