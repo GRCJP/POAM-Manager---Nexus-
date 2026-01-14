@@ -100,31 +100,37 @@ async function executeBulkAssignPOC() {
         return;
     }
     
-    let successCount = 0;
-    for (const poamId of selectedPOAMs) {
-        try {
-            const poam = await poamDB.getPOAM(poamId);
-            if (poam) {
-                poam.poc = pocTeam;
-                poam.pocTeam = pocTeam;
-                await poamDB.savePOAM(poam);
-                successCount++;
+    try {
+        let successCount = 0;
+        for (const poamId of selectedPOAMs) {
+            try {
+                const poam = await poamDB.getPOAM(poamId);
+                if (poam) {
+                    poam.poc = pocTeam;
+                    poam.pocTeam = pocTeam;
+                    await poamDB.savePOAM(poam);
+                    successCount++;
+                }
+            } catch (error) {
+                console.error(`Failed to update POAM ${poamId}:`, error);
             }
-        } catch (error) {
-            console.error(`Failed to update POAM ${poamId}:`, error);
         }
+        
+        showUpdateFeedback(`Successfully assigned POC to ${successCount} POAMs`, 'success');
+    } catch (error) {
+        console.error('Bulk assign POC operation failed:', error);
+        showUpdateFeedback('Operation failed: ' + error.message, 'error');
+    } finally {
+        // Always close modal, even if there was an error
+        const modal = document.querySelector('.fixed.inset-0.bg-black.bg-opacity-50');
+        if (modal) {
+            modal.remove();
+        }
+        
+        // Always refresh display and clear selection
+        await displayVulnerabilityPOAMs();
+        clearSelection();
     }
-    
-    // Close modal
-    document.querySelector('.fixed.inset-0').remove();
-    
-    // Refresh display
-    await displayVulnerabilityPOAMs();
-    
-    // Clear selection
-    clearSelection();
-    
-    showUpdateFeedback(`Successfully assigned POC to ${successCount} POAMs`, 'success');
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -172,30 +178,36 @@ async function executeBulkChangeStatus() {
         return;
     }
     
-    let successCount = 0;
-    for (const poamId of selectedPOAMs) {
-        try {
-            const poam = await poamDB.getPOAM(poamId);
-            if (poam) {
-                poam.status = status;
-                await poamDB.savePOAM(poam);
-                successCount++;
+    try {
+        let successCount = 0;
+        for (const poamId of selectedPOAMs) {
+            try {
+                const poam = await poamDB.getPOAM(poamId);
+                if (poam) {
+                    poam.status = status;
+                    await poamDB.savePOAM(poam);
+                    successCount++;
+                }
+            } catch (error) {
+                console.error(`Failed to update POAM ${poamId}:`, error);
             }
-        } catch (error) {
-            console.error(`Failed to update POAM ${poamId}:`, error);
         }
+        
+        showUpdateFeedback(`Successfully changed status for ${successCount} POAMs`, 'success');
+    } catch (error) {
+        console.error('Bulk change status operation failed:', error);
+        showUpdateFeedback('Operation failed: ' + error.message, 'error');
+    } finally {
+        // Always close modal, even if there was an error
+        const modal = document.querySelector('.fixed.inset-0.bg-black.bg-opacity-50');
+        if (modal) {
+            modal.remove();
+        }
+        
+        // Always refresh display and clear selection
+        await displayVulnerabilityPOAMs();
+        clearSelection();
     }
-    
-    // Close modal
-    document.querySelector('.fixed.inset-0').remove();
-    
-    // Refresh display
-    await displayVulnerabilityPOAMs();
-    
-    // Clear selection
-    clearSelection();
-    
-    showUpdateFeedback(`Successfully changed status for ${successCount} POAMs`, 'success');
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -239,43 +251,49 @@ async function executeBulkAddNote() {
         return;
     }
     
-    const timestamp = new Date().toISOString();
-    let successCount = 0;
-    
-    for (const poamId of selectedPOAMs) {
-        try {
-            const poam = await poamDB.getPOAM(poamId);
-            if (poam) {
-                // Initialize notes array if it doesn't exist
-                if (!poam.notes) {
-                    poam.notes = [];
+    try {
+        const timestamp = new Date().toISOString();
+        let successCount = 0;
+        
+        for (const poamId of selectedPOAMs) {
+            try {
+                const poam = await poamDB.getPOAM(poamId);
+                if (poam) {
+                    // Initialize notes array if it doesn't exist
+                    if (!poam.notes) {
+                        poam.notes = [];
+                    }
+                    
+                    // Add note with timestamp
+                    poam.notes.push({
+                        text: note,
+                        timestamp: timestamp,
+                        author: 'Admin User'
+                    });
+                    
+                    await poamDB.savePOAM(poam);
+                    successCount++;
                 }
-                
-                // Add note with timestamp
-                poam.notes.push({
-                    text: note,
-                    timestamp: timestamp,
-                    author: 'Admin User'
-                });
-                
-                await poamDB.savePOAM(poam);
-                successCount++;
+            } catch (error) {
+                console.error(`Failed to update POAM ${poamId}:`, error);
             }
-        } catch (error) {
-            console.error(`Failed to update POAM ${poamId}:`, error);
         }
+        
+        showUpdateFeedback(`Successfully added note to ${successCount} POAMs`, 'success');
+    } catch (error) {
+        console.error('Bulk add note operation failed:', error);
+        showUpdateFeedback('Operation failed: ' + error.message, 'error');
+    } finally {
+        // Always close modal, even if there was an error
+        const modal = document.querySelector('.fixed.inset-0.bg-black.bg-opacity-50');
+        if (modal) {
+            modal.remove();
+        }
+        
+        // Always refresh display and clear selection
+        await displayVulnerabilityPOAMs();
+        clearSelection();
     }
-    
-    // Close modal
-    document.querySelector('.fixed.inset-0').remove();
-    
-    // Refresh display
-    await displayVulnerabilityPOAMs();
-    
-    // Clear selection
-    clearSelection();
-    
-    showUpdateFeedback(`Successfully added note to ${successCount} POAMs`, 'success');
 }
 
 // ═══════════════════════════════════════════════════════════════
