@@ -894,10 +894,16 @@
                     <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Vulnerability Tracking</h1>
                     <p class="text-slate-500 mt-1">Upload scans and manage generated POAMs</p>
                 </div>
-                <button onclick="exportPOAMReport()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
-                    <i class="fas fa-download"></i>
-                    <span>Export POAMs</span>
-                </button>
+                <div class="flex items-center gap-3">
+                    <button onclick="scrollToUploadSection()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2">
+                        <i class="fas fa-upload"></i>
+                        <span>Upload Scan</span>
+                    </button>
+                    <button onclick="exportPOAMReport()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+                        <i class="fas fa-download"></i>
+                        <span>Export POAMs</span>
+                    </button>
+                </div>
             </div>
 
             <!-- Security Posture Overview -->
@@ -976,12 +982,14 @@
                             </select>
                         </div>
                         
-                        <div class="space-y-4" id="active-remediation-groups">
+                        <div class="space-y-4 py-4" id="active-remediation-groups">
                             <!-- Remediation group cards will be populated here -->
-                            <div class="text-center py-8 text-slate-500">
-                                <i class="fas fa-inbox text-4xl mb-3 block text-slate-300"></i>
-                                <p class="text-sm">No active remediation groups</p>
-                                <p class="text-xs text-slate-400 mt-1">Upload a scan to see remediation groups</p>
+                            <div class="text-center py-6 text-slate-600">
+                                <p class="text-sm mb-3">No remediation groups yet. Upload a vulnerability scan to establish your baseline.</p>
+                                <button onclick="scrollToUploadSection()" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors">
+                                    <i class="fas fa-upload"></i>
+                                    <span>Upload First Scan</span>
+                                </button>
                             </div>
                         </div>
                     </div>
