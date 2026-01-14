@@ -50,16 +50,19 @@ async function showPOAMDetails(poamId) {
     
     if (scanSummary) {
         console.log('🔍 Using data from scan summary');
-        findingDescription = scanSummary.rawFindings[0]?.results || scanSummary.rawFindings[0]?.description || scanSummary.rawFindings[0]?.title || findingDescription;
+        // Use exact finding description from Qualys CVE-Description column
+        findingDescription = scanSummary.findingDescription || scanSummary.rawFindings[0]?.description || findingDescription;
+        // Use affected assets array with hostname/IP/OS structure
         affectedAssets = scanSummary.affectedAssets || affectedAssets;
+        // Use exact solution text from Qualys Solution column
         solutionText = scanSummary.solutionText || solutionText;
         firstDetected = scanSummary.firstDetectedMin;
         lastDetected = scanSummary.lastDetectedMax;
         resultsSamples = scanSummary.resultsSamples || [];
         
-        console.log('🔍 Extracted finding description from raw data:', findingDescription.substring(0, 100) + '...');
+        console.log('🔍 Extracted finding description:', findingDescription?.substring(0, 100) + '...');
         console.log('🔍 Extracted affected assets:', affectedAssets.length, 'assets');
-        console.log('🔍 Extracted solution text:', solutionText.substring(0, 100) + '...');
+        console.log('🔍 Extracted solution text:', solutionText?.substring(0, 100) + '...');
     } else {
         console.log('🔍 No scan summary available, using POAM data');
     }
