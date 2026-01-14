@@ -80,13 +80,12 @@
                         <span>Vulnerability Management</span>
                     </a>
 
-                    <!-- Security Control POAMs (Primary POAM Module) -->
+                    <!-- Security Control POAMs -->
                     <div class="sidebar-section" id="security-controls-section">
                         <button onclick="toggleSidebarSection('security-controls-menu')" class="sidebar-section-toggle w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
                             <div class="flex items-center gap-3">
                                 <i class="fas fa-shield-virus w-5"></i>
                                 <span>Security Control POAMs</span>
-                                <span class="ml-2 px-2 py-0.5 bg-indigo-600 text-white text-xs rounded-full">PRIMARY</span>
                             </div>
                             <i class="fas fa-chevron-down text-xs transition-transform"></i>
                         </button>
@@ -95,14 +94,6 @@
                                 <i class="fas fa-list text-xs w-4 text-indigo-400"></i>
                                 <span>Security Control POAMs</span>
                                 <span class="ml-auto text-xs text-slate-400">284</span>
-                            </a>
-                            <a href="#" onclick="showModule('security-controls'); filterPOAMsByMetric('risk-accepted')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
-                                <i class="fas fa-check-circle text-xs w-4 text-purple-400"></i>
-                                <span>Risk Accepted POAMs</span>
-                            </a>
-                            <a href="#" onclick="showModule('security-controls'); filterPOAMsByMetric('closed')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
-                                <i class="fas fa-archive text-xs w-4 text-slate-400"></i>
-                                <span>Closed POAMs</span>
                             </a>
                             <div class="sidebar-section" id="systems-subsection">
                                 <button onclick="toggleSidebarSection('systems-menu')" class="sidebar-section-toggle w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium hover:bg-slate-800 transition-colors">
