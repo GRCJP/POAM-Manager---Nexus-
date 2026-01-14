@@ -75,109 +75,94 @@
                     </a>
 
                     <!-- Vulnerability Management -->
-                    <div class="sidebar-section" id="vulnerability-section">
-                        <button onclick="toggleSidebarSection('vulnerability-menu')" class="sidebar-section-toggle w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
+                    <a href="#" onclick="showModule('vulnerability-tracking')" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
+                        <i class="fas fa-bug w-5"></i>
+                        <span>Vulnerability Management</span>
+                    </a>
+
+                    <!-- Security Control POAMs (Primary POAM Module) -->
+                    <div class="sidebar-section" id="security-controls-section">
+                        <button onclick="toggleSidebarSection('security-controls-menu')" class="sidebar-section-toggle w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
                             <div class="flex items-center gap-3">
-                                <i class="fas fa-shield-alt w-5"></i>
-                                <span>Vulnerability Management</span>
-                                <span class="ml-2 px-2 py-0.5 bg-indigo-600 text-white text-xs rounded-full">3</span>
-                            </div>
-                            <i class="fas fa-chevron-down text-xs transition-transform"></i>
-                        </button>
-                        <div id="vulnerability-menu" class="sidebar-submenu ml-8 mt-1 space-y-1 hidden">
-                            <a href="#" onclick="showModule('vulnerability-tracking')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
-                                <i class="fas fa-bug text-xs w-4 text-blue-400"></i>
-                                <span>Vulnerability Tracker</span>
-                                <span class="ml-auto text-xs text-blue-400">Active</span>
-                            </a>
-                            <a href="#" onclick="showModule('security-controls')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
-                                <i class="fas fa-shield-virus text-xs w-4 text-purple-400"></i>
+                                <i class="fas fa-shield-virus w-5"></i>
                                 <span>Security Control POAMs</span>
-                                <span class="ml-auto text-xs text-purple-400">New</span>
-                            </a>
-                            <a href="#" onclick="showModule('systems-assets')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
-                                <i class="fas fa-server text-xs w-4 text-green-400"></i>
-                                <span>Systems & Assets</span>
-                                <span class="ml-auto text-xs text-green-400">New</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Systems (Admin/Security Team Only) -->
-                    <div class="sidebar-section" id="systems-section">
-                        <button onclick="toggleSidebarSection('systems-menu')" class="sidebar-section-toggle w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
-                            <div class="flex items-center gap-3">
-                                <i class="fas fa-server w-5"></i>
-                                <span>Systems</span>
-                                <span class="ml-2 px-2 py-0.5 bg-indigo-600 text-white text-xs rounded-full">6</span>
+                                <span class="ml-2 px-2 py-0.5 bg-indigo-600 text-white text-xs rounded-full">PRIMARY</span>
                             </div>
                             <i class="fas fa-chevron-down text-xs transition-transform"></i>
                         </button>
-                        <div id="systems-menu" class="sidebar-submenu ml-8 mt-1 space-y-1 hidden">
-                            <!-- Critical Systems -->
-                            <div class="text-xs text-slate-500 font-semibold px-3 py-2">CRITICAL SYSTEMS</div>
-                            <a href="#" onclick="showSystemFindings('ehr-system')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
-                                <i class="fas fa-hospital text-xs w-4 text-red-400"></i>
-                                <span>EHR System</span>
-                                <span class="ml-auto text-xs text-red-400">12 findings</span>
+                        <div id="security-controls-menu" class="sidebar-submenu ml-8 mt-1 space-y-1 hidden">
+                            <a href="#" onclick="showModule('security-controls')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
+                                <i class="fas fa-list text-xs w-4 text-indigo-400"></i>
+                                <span>All POAMs</span>
+                                <span class="ml-auto text-xs text-slate-400">284</span>
                             </a>
-                            <a href="#" onclick="showSystemFindings('patient-portal')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
-                                <i class="fas fa-user-injured text-xs w-4 text-orange-400"></i>
-                                <span>Patient Portal</span>
-                                <span class="ml-auto text-xs text-orange-400">8 findings</span>
+                            <a href="#" onclick="showModule('security-controls'); filterPOAMsByMetric('risk-accepted')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
+                                <i class="fas fa-check-circle text-xs w-4 text-purple-400"></i>
+                                <span>Risk Accepted POAMs</span>
                             </a>
-                            <a href="#" onclick="showSystemFindings('billing-system')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
-                                <i class="fas fa-dollar-sign text-xs w-4 text-yellow-400"></i>
-                                <span>Billing System</span>
-                                <span class="ml-auto text-xs text-yellow-400">5 findings</span>
+                            <a href="#" onclick="showModule('security-controls'); filterPOAMsByMetric('closed')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
+                                <i class="fas fa-archive text-xs w-4 text-slate-400"></i>
+                                <span>Closed POAMs</span>
                             </a>
-                            
-                            <!-- Support Systems -->
-                            <div class="text-xs text-slate-500 font-semibold px-3 py-2 mt-2">SUPPORT SYSTEMS</div>
-                            <a href="#" onclick="showSystemFindings('lab-system')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
-                                <i class="fas fa-flask text-xs w-4 text-blue-400"></i>
-                                <span>Lab System</span>
-                                <span class="ml-auto text-xs text-blue-400">3 findings</span>
-                            </a>
-                            <a href="#" onclick="showSystemFindings('pharmacy-system')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
-                                <i class="fas fa-pills text-xs w-4 text-green-400"></i>
-                                <span>Pharmacy System</span>
-                                <span class="ml-auto text-xs text-green-400">2 findings</span>
-                            </a>
-                            <a href="#" onclick="showSystemFindings('imaging-system')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
-                                <i class="fas fa-x-ray text-xs w-4 text-purple-400"></i>
-                                <span>Imaging System</span>
-                                <span class="ml-auto text-xs text-purple-400">4 findings</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <div class="border-t border-slate-700 my-4"></div>
-
-                    <!-- Reports & Analytics -->
-                    <div class="sidebar-section">
-                        <button onclick="toggleSidebarSection('reports-section')" class="sidebar-section-toggle w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
-                            <div class="flex items-center gap-3">
-                                <i class="fas fa-chart-bar w-5"></i>
-                                <span>Reports & Analytics</span>
+                            <div class="sidebar-section" id="systems-subsection">
+                                <button onclick="toggleSidebarSection('systems-menu')" class="sidebar-section-toggle w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium hover:bg-slate-800 transition-colors">
+                                    <div class="flex items-center gap-2">
+                                        <i class="fas fa-server text-xs w-4"></i>
+                                        <span>Systems</span>
+                                    </div>
+                                    <i class="fas fa-chevron-down text-xs transition-transform"></i>
+                                </button>
+                                <div id="systems-menu" class="sidebar-submenu ml-6 mt-1 space-y-1 hidden">
+                                    <a href="#" onclick="showSystemFindings('ehr-system')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-xs hover:bg-slate-800 transition-colors group">
+                                        <i class="fas fa-hospital text-xs w-3 text-red-400"></i>
+                                        <span>EHR System</span>
+                                        <span class="ml-auto text-xs text-red-400">12</span>
+                                    </a>
+                                    <a href="#" onclick="showSystemFindings('patient-portal')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-xs hover:bg-slate-800 transition-colors group">
+                                        <i class="fas fa-user-injured text-xs w-3 text-orange-400"></i>
+                                        <span>Patient Portal</span>
+                                        <span class="ml-auto text-xs text-orange-400">8</span>
+                                    </a>
+                                    <a href="#" onclick="showSystemFindings('billing-system')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-xs hover:bg-slate-800 transition-colors group">
+                                        <i class="fas fa-file-invoice text-xs w-3 text-blue-400"></i>
+                                        <span>Billing System</span>
+                                        <span class="ml-auto text-xs text-blue-400">6</span>
+                                    </a>
+                                    <a href="#" onclick="showSystemFindings('lab-system')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-xs hover:bg-slate-800 transition-colors group">
+                                        <i class="fas fa-flask text-xs w-3 text-green-400"></i>
+                                        <span>Lab System</span>
+                                        <span class="ml-auto text-xs text-green-400">4</span>
+                                    </a>
+                                    <a href="#" onclick="showSystemFindings('pharmacy-system')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-xs hover:bg-slate-800 transition-colors group">
+                                        <i class="fas fa-pills text-xs w-3 text-purple-400"></i>
+                                        <span>Pharmacy System</span>
+                                        <span class="ml-auto text-xs text-purple-400">3</span>
+                                    </a>
+                                    <a href="#" onclick="showSystemFindings('imaging-system')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-xs hover:bg-slate-800 transition-colors group">
+                                        <i class="fas fa-x-ray text-xs w-3 text-cyan-400"></i>
+                                        <span>Imaging System</span>
+                                        <span class="ml-auto text-xs text-cyan-400">5</span>
+                                    </a>
+                                </div>
                             </div>
-                            <i class="fas fa-chevron-down text-xs transition-transform"></i>
-                        </button>
-                        <div id="reports-section" class="sidebar-submenu ml-8 mt-1 space-y-1 hidden">
-                            <a href="#" onclick="showModule('reports')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors">
-                                <i class="fas fa-chart-line text-xs w-4"></i>
-                                <span>Analytics Dashboard</span>
-                            </a>
-                            <a href="#" onclick="showModule('reporting')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors">
-                                <i class="fas fa-file-alt text-xs w-4"></i>
-                                <span>Executive Reports</span>
-                            </a>
                         </div>
                     </div>
+
+                    <!-- Evidence Vault -->
+                    <a href="#" onclick="showModule('evidence')" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
+                        <i class="fas fa-archive w-5"></i>
+                        <span>Evidence Vault</span>
+                    </a>
+
+                    <!-- Executive Reporting -->
+                    <a href="#" onclick="showModule('reporting')" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
+                        <i class="fas fa-chart-bar w-5"></i>
+                        <span>Executive Reporting</span>
+                    </a>
 
                     <!-- Audit Logs -->
                     <a href="#" onclick="showModule('audit')" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
-                        <i class="fas fa-history w-5"></i>
+                        <i class="fas fa-clipboard-check w-5"></i>
                         <span>Audit Logs</span>
                     </a>
 
@@ -265,10 +250,11 @@
         <!-- Dashboard Module -->
         <div id="dashboard-module" class="module">
             <div class="mb-10">
-                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">System Security Posture</h1>
-                <p class="text-slate-500 mt-1">Reviewing POA&M milestones for <span class="font-semibold text-slate-700 underline decoration-indigo-300">Enclave Alpha</span></p>
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Executive Security Dashboard</h1>
+                <p class="text-slate-500 mt-1">Security posture overview and trends for <span class="font-semibold text-slate-700 underline decoration-indigo-300">Enclave Alpha</span></p>
             </div>
 
+            <!-- Executive Metrics -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
                     <div class="flex justify-between items-start mb-4">
@@ -278,7 +264,8 @@
                         <span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded">TOTAL</span>
                     </div>
                     <h3 class="text-3xl font-bold tracking-tight">284</h3>
-                    <p class="text-sm text-slate-500 font-medium">Open Findings</p>
+                    <p class="text-sm text-slate-500 font-medium">Active POAMs</p>
+                    <p class="text-xs text-emerald-600 mt-2">+12% from last month</p>
                 </div>
 
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
@@ -286,10 +273,11 @@
                         <span class="p-2 bg-rose-50 text-rose-600 rounded-lg">
                             <i class="fas fa-clock"></i>
                         </span>
-                        <span class="text-[10px] font-bold text-rose-400 bg-rose-50 px-2 py-1 rounded">CRITICAL</span>
+                        <span class="text-[10px] font-bold text-rose-400 bg-rose-50 px-2 py-1 rounded">OVERDUE</span>
                     </div>
                     <h3 class="text-3xl font-bold tracking-tight text-rose-600">14</h3>
-                    <p class="text-sm text-slate-500 font-medium">Past Scheduled Date</p>
+                    <p class="text-sm text-slate-500 font-medium">Past Due Date</p>
+                    <p class="text-xs text-rose-600 mt-2">Requires attention</p>
                 </div>
 
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
@@ -297,10 +285,11 @@
                         <span class="p-2 bg-amber-50 text-amber-600 rounded-lg">
                             <i class="fas fa-chart-line"></i>
                         </span>
-                        <span class="text-[10px] font-bold text-amber-400 bg-amber-50 px-2 py-1 rounded">AVG SCORE</span>
+                        <span class="text-[10px] font-bold text-amber-400 bg-amber-50 px-2 py-1 rounded">RISK</span>
                     </div>
                     <h3 class="text-3xl font-bold tracking-tight">Med High</h3>
-                    <p class="text-sm text-slate-500 font-medium">Aggregate Risk Level</p>
+                    <p class="text-sm text-slate-500 font-medium">Aggregate Risk</p>
+                    <p class="text-xs text-amber-600 mt-2">↓ Improved from last quarter</p>
                 </div>
 
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
@@ -308,53 +297,79 @@
                         <span class="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
                             <i class="fas fa-check-circle"></i>
                         </span>
+                        <span class="text-[10px] font-bold text-emerald-400 bg-emerald-50 px-2 py-1 rounded">TREND</span>
                     </div>
                     <h3 class="text-3xl font-bold tracking-tight text-emerald-600">72%</h3>
-                    <p class="text-sm text-slate-500 font-medium">Remediation Goal</p>
+                    <p class="text-sm text-slate-500 font-medium">Remediation Rate</p>
+                    <p class="text-xs text-emerald-600 mt-2">On track for Q4 goals</p>
                 </div>
             </div>
 
+            <!-- Management Module Navigation -->
             <h2 class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
                 <span class="w-2 h-6 bg-indigo-600 rounded-full"></span>
                 Management Modules
             </h2>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div class="group relative bg-white border border-slate-200 p-8 rounded-2xl hover:border-indigo-500 transition-all cursor-pointer shadow-sm hover:shadow-xl" onclick="showModule('poam')">
-                    <h3 class="text-xl font-bold mb-2 group-hover:text-indigo-600">POAM Repository</h3>
-                    <p class="text-slate-500 text-sm leading-relaxed mb-6">Access the full list of weaknesses, scheduled completion dates, and resource requirements.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Security Control POAMs -->
+                <div class="group relative bg-white border border-slate-200 p-6 rounded-2xl hover:border-indigo-500 transition-all cursor-pointer shadow-sm hover:shadow-xl" onclick="showModule('security-controls')">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="p-3 bg-indigo-50 text-indigo-600 rounded-lg">
+                            <i class="fas fa-shield-virus text-lg"></i>
+                        </span>
+                        <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">PRIMARY</span>
+                    </div>
+                    <h3 class="text-lg font-bold mb-2 group-hover:text-indigo-600">Security Control POAMs</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed mb-4">Authoritative POAM management, control family analysis, and compliance tracking.</p>
                     <div class="flex justify-between items-center">
-                        <span class="text-xs font-bold text-indigo-600 uppercase tracking-widest">Go to Data →</span>
-                        <span class="text-[10px] bg-slate-100 px-2 py-1 rounded uppercase font-bold text-slate-400 italic">Editor Access Required</span>
+                        <span class="text-xs font-bold text-indigo-600 uppercase tracking-widest">Manage POAMs →</span>
+                        <span class="text-xs text-slate-400">284 items</span>
                     </div>
                 </div>
 
-                <div class="group relative bg-white border border-slate-200 p-8 rounded-2xl hover:border-indigo-500 transition-all cursor-pointer shadow-sm hover:shadow-xl" onclick="showModule('vulnerability')">
-                    <h3 class="text-xl font-bold mb-2 group-hover:text-indigo-600">Vulnerability Tracking</h3>
-                    <p class="text-slate-500 text-sm leading-relaxed mb-6">Advanced scan processing with Qualys, Tenable, Wiz integration, automated POAM generation, and enterprise reporting.</p>
+                <!-- Vulnerability Tracking -->
+                <div class="group relative bg-white border border-slate-200 p-6 rounded-2xl hover:border-indigo-500 transition-all cursor-pointer shadow-sm hover:shadow-xl" onclick="showModule('vulnerability-tracking')">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="p-3 bg-blue-50 text-blue-600 rounded-lg">
+                            <i class="fas fa-bug text-lg"></i>
+                        </span>
+                    </div>
+                    <h3 class="text-lg font-bold mb-2 group-hover:text-indigo-600">Vulnerability Tracking</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed mb-4">Scan processing, vulnerability analysis, and automated POAM generation workflow.</p>
                     <div class="flex justify-between items-center">
                         <span class="text-xs font-bold text-indigo-600 uppercase tracking-widest">Track Vulnerabilities →</span>
-                        <span class="text-[10px] bg-purple-50 px-2 py-1 rounded uppercase font-bold text-purple-400">Enterprise</span>
+                        <span class="text-xs text-slate-400">Scan integration</span>
                     </div>
                 </div>
 
-                <div class="group relative bg-white border border-slate-200 p-8 rounded-2xl hover:border-indigo-500 transition-all cursor-pointer shadow-sm hover:shadow-xl" onclick="showModule('evidence')">
-                    <h3 class="text-xl font-bold mb-2 group-hover:text-indigo-600">Evidence Vault</h3>
-                    <p class="text-slate-500 text-sm leading-relaxed mb-6">Upload and link screenshots, configuration files, and policy documents to specific milestones.</p>
+                <!-- Evidence Vault -->
+                <div class="group relative bg-white border border-slate-200 p-6 rounded-2xl hover:border-indigo-500 transition-all cursor-pointer shadow-sm hover:shadow-xl" onclick="showModule('evidence')">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="p-3 bg-green-50 text-green-600 rounded-lg">
+                            <i class="fas fa-archive text-lg"></i>
+                        </span>
+                    </div>
+                    <h3 class="text-lg font-bold mb-2 group-hover:text-indigo-600">Evidence Vault</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed mb-4">Upload and link screenshots, configuration files, and policy documents to POAMs.</p>
                     <div class="flex justify-between items-center">
-                        <span class="text-xs font-bold text-indigo-600 uppercase tracking-widest">Open Vault →</span>
+                        <span class="text-xs font-bold text-indigo-600 uppercase tracking-widest">Manage Evidence →</span>
+                        <span class="text-xs text-slate-400">Documentation</span>
                     </div>
                 </div>
 
-                <div class="group relative bg-white border border-slate-200 p-8 rounded-2xl hover:border-indigo-500 transition-all cursor-pointer shadow-sm hover:shadow-xl overflow-hidden" onclick="showModule('reporting')">
-                    <h3 class="text-xl font-bold mb-2 group-hover:text-indigo-600">Executive Reporting</h3>
-                    <p class="text-slate-500 text-sm leading-relaxed mb-6">Generate high-level compliance exports for C-Suite and Regulatory review.</p>
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs font-bold text-indigo-600 uppercase tracking-widest">Export Suite →</span>
-                        <span class="text-[10px] bg-red-50 px-2 py-1 rounded uppercase font-bold text-red-400">Restricted</span>
+                <!-- Executive Reporting -->
+                <div class="group relative bg-white border border-slate-200 p-6 rounded-2xl hover:border-indigo-500 transition-all cursor-pointer shadow-sm hover:shadow-xl" onclick="showModule('reporting')">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="p-3 bg-purple-50 text-purple-600 rounded-lg">
+                            <i class="fas fa-chart-bar text-lg"></i>
+                        </span>
                     </div>
-                    <div class="absolute top-4 right-4 text-slate-200">
-                        <i class="fas fa-lock"></i>
+                    <h3 class="text-lg font-bold mb-2 group-hover:text-indigo-600">Executive Reporting</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed mb-4">Generate compliance reports, trend analysis, and executive summaries.</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-indigo-600 uppercase tracking-widest">Generate Reports →</span>
+                        <span class="text-xs text-slate-400">Analytics</span>
                     </div>
                 </div>
             </div>
@@ -2485,30 +2500,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Systems & Assets Module -->
-        <div id="systems-assets-module" class="module hidden">
-            <div class="mb-8">
-                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Systems & Assets</h1>
-                <p class="text-slate-500 mt-1">System-level vulnerability analysis and asset management</p>
-            </div>
-
-            <!-- Systems Content -->
-            <div class="text-center py-12">
-                <i class="fas fa-server text-6xl text-slate-300 mb-4"></i>
-                <h3 class="text-xl font-semibold text-slate-700 mb-2">System Asset Management</h3>
-                <p class="text-slate-500 mb-6">Track vulnerabilities by system, asset group, and infrastructure components.</p>
-                <div class="flex justify-center gap-4">
-                    <button class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                        <i class="fas fa-network-wired mr-2"></i>Asset Inventory
-                    </button>
-                    <button class="px-6 py-3 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors">
-                        <i class="fas fa-chart-pie mr-2"></i>System Risk Analysis
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <script src="script.js?v=20260114-5"></script>
 <!-- Upload Modal -->
