@@ -22,7 +22,7 @@ function showModule(moduleName) {
     } else if (moduleName === 'vulnerability') {
         // Initialize vulnerability tracking
         showVulnerabilityTab('upload');
-        updateSLAMetrics();
+        // updateSLAMetrics(); // Disabled - using new Security Posture Overview instead
     } else if (moduleName === 'evidence') {
         // Load evidence vault data
         loadEvidenceFiles();
@@ -1672,7 +1672,7 @@ async function updateSLAMetrics() {
     document.getElementById('due-30-days-count').textContent = dueIn30Days;
     document.getElementById('due-60-days-count').textContent = dueIn60Days;
     document.getElementById('poams-closed-count').textContent = closedPOAMs;
-    document.getElementById('os-breakdown').textContent = osBreakdown;
+    document.getElementById('os-breakdown-container').textContent = osBreakdown;
 }
 
 function loadSLAConfig() {
@@ -1744,7 +1744,7 @@ async function initializeModule(moduleName) {
     if (moduleName === 'dashboard') {
         // Load dashboard metrics from all POAM sources
         console.log('🔄 Loading dashboard metrics...');
-        await updateSLAMetrics();
+        // await updateSLAMetrics(); // Disabled - using new Security Posture Overview instead
         console.log('✅ Dashboard metrics loaded');
     } else if (moduleName === 'poam') {
         // Load POAM ID configuration when POAM Repository is shown
@@ -1753,7 +1753,7 @@ async function initializeModule(moduleName) {
     } else if (moduleName === 'vulnerability') {
         // Initialize vulnerability tracking
         showVulnerabilityTab('upload');
-        updateSLAMetrics();
+        // updateSLAMetrics(); // Disabled - using new Security Posture Overview instead
     } else if (moduleName === 'evidence') {
         // Load evidence vault data
         loadEvidenceFiles();
