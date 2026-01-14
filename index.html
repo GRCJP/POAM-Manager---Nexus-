@@ -75,6 +75,55 @@
                         <span>Dashboard</span>
                     </a>
 
+                    <!-- Systems (Admin/Security Team Only) -->
+                    <div class="sidebar-section" id="systems-section">
+                        <button onclick="toggleSidebarSection('systems-menu')" class="sidebar-section-toggle w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-server w-5"></i>
+                                <span>Systems</span>
+                                <span class="ml-2 px-2 py-0.5 bg-indigo-600 text-white text-xs rounded-full">6</span>
+                            </div>
+                            <i class="fas fa-chevron-down text-xs transition-transform"></i>
+                        </button>
+                        <div id="systems-menu" class="sidebar-submenu ml-8 mt-1 space-y-1 hidden">
+                            <!-- Critical Systems -->
+                            <div class="text-xs text-slate-500 font-semibold px-3 py-2">CRITICAL SYSTEMS</div>
+                            <a href="#" onclick="showSystemFindings('ehr-system')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
+                                <i class="fas fa-hospital text-xs w-4 text-red-400"></i>
+                                <span>EHR System</span>
+                                <span class="ml-auto text-xs text-red-400">12 findings</span>
+                            </a>
+                            <a href="#" onclick="showSystemFindings('patient-portal')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
+                                <i class="fas fa-user-injured text-xs w-4 text-orange-400"></i>
+                                <span>Patient Portal</span>
+                                <span class="ml-auto text-xs text-orange-400">8 findings</span>
+                            </a>
+                            <a href="#" onclick="showSystemFindings('billing-system')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
+                                <i class="fas fa-dollar-sign text-xs w-4 text-yellow-400"></i>
+                                <span>Billing System</span>
+                                <span class="ml-auto text-xs text-yellow-400">5 findings</span>
+                            </a>
+                            
+                            <!-- Support Systems -->
+                            <div class="text-xs text-slate-500 font-semibold px-3 py-2 mt-2">SUPPORT SYSTEMS</div>
+                            <a href="#" onclick="showSystemFindings('lab-system')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
+                                <i class="fas fa-flask text-xs w-4 text-blue-400"></i>
+                                <span>Lab System</span>
+                                <span class="ml-auto text-xs text-blue-400">3 findings</span>
+                            </a>
+                            <a href="#" onclick="showSystemFindings('pharmacy-system')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
+                                <i class="fas fa-pills text-xs w-4 text-green-400"></i>
+                                <span>Pharmacy System</span>
+                                <span class="ml-auto text-xs text-green-400">2 findings</span>
+                            </a>
+                            <a href="#" onclick="showSystemFindings('imaging-system')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
+                                <i class="fas fa-x-ray text-xs w-4 text-purple-400"></i>
+                                <span>Imaging System</span>
+                                <span class="ml-auto text-xs text-purple-400">4 findings</span>
+                            </a>
+                        </div>
+                    </div>
+
                     <div class="border-t border-slate-700 my-4"></div>
 
                     <!-- Reports & Analytics -->

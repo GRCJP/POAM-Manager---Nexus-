@@ -397,6 +397,328 @@ function loadAPIConfig() {
     }
 }
 
+// System Findings Functions
+function showSystemFindings(systemId) {
+    console.log(`🖥️ Loading findings for system: ${systemId}`);
+    
+    // Check if user has admin or security role
+    const userRole = getCurrentUserRole();
+    if (!['admin', 'security', 'auditor'].includes(userRole)) {
+        showUpdateFeedback('Access denied. Admin or Security role required.', 'error');
+        return;
+    }
+    
+    // Hide all modules
+    document.querySelectorAll('.module').forEach(module => {
+        module.classList.add('hidden');
+    });
+    
+    // Show the system findings module
+    let systemModule = document.getElementById('system-findings-module');
+    if (!systemModule) {
+        // Create the module if it doesn't exist
+        createSystemFindingsModule();
+        systemModule = document.getElementById('system-findings-module');
+    }
+    
+    systemModule.classList.remove('hidden');
+    
+    // Load system-specific data
+    loadSystemFindings(systemId);
+    
+    // Update sidebar active state
+    updateSidebarActiveState(`system-${systemId}`);
+}
+
+function createSystemFindingsModule() {
+    const mainContent = document.querySelector('main');
+    
+    const moduleHTML = `
+        <div id="system-findings-module" class="module hidden">
+            <div class="mb-8 flex justify-between items-center">
+                <div>
+                    <button onclick="showModule('dashboard')" class="text-indigo-600 hover:text-indigo-800 mb-4">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                    </button>
+                    <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">System Findings</h1>
+                    <p class="text-slate-500 mt-1">View scan findings and NIST controls by system</p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="exportSystemReport()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+                        <i class="fas fa-download"></i>
+                        <span>Export Report</span>
+                    </button>
+                    <button onclick="refreshSystemData()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Refresh</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- System Info Header -->
+            <div id="system-info-header" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+                <!-- System info will be populated here -->
+            </div>
+            
+            <!-- Findings Tabs -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <div class="border-b border-slate-200 mb-6">
+                    <nav class="flex space-x-8">
+                        <button onclick="showSystemTab('scan-findings')" class="system-tab py-2 px-1 border-b-2 font-medium text-sm border-indigo-500 text-indigo-600">
+                            <i class="fas fa-bug mr-2"></i>Scan Findings
+                        </button>
+                        <button onclick="showSystemTab('nist-controls')" class="system-tab py-2 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300">
+                            <i class="fas fa-shield-alt mr-2"></i>NIST Controls
+                        </button>
+                        <button onclick="showSystemTab('compliance-status')" class="system-tab py-2 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300">
+                            <i class="fas fa-chart-pie mr-2"></i>Compliance Status
+                        </button>
+                    </nav>
+                </div>
+                
+                <!-- Tab Content -->
+                <div id="system-tab-content">
+                    <!-- Content will be populated based on selected tab -->
+                </div>
+            </div>
+        </div>
+    `;
+    
+    mainContent.insertAdjacentHTML('beforeend', moduleHTML);
+}
+
+function loadSystemFindings(systemId) {
+    const systems = {
+        'ehr-system': {
+            name: 'EHR System',
+            icon: 'fa-hospital',
+            category: 'Clinical',
+            risk: 'Critical',
+            lastScan: '2025-01-14',
+            totalFindings: 12,
+            criticalFindings: 3,
+            highFindings: 5,
+            description: 'Electronic Health Records system containing patient medical data'
+        },
+        'patient-portal': {
+            name: 'Patient Portal',
+            icon: 'fa-user-injured',
+            category: 'Clinical',
+            risk: 'High',
+            lastScan: '2025-01-13',
+            totalFindings: 8,
+            criticalFindings: 1,
+            highFindings: 3,
+            description: 'Patient-facing portal for accessing medical records and appointments'
+        },
+        'billing-system': {
+            name: 'Billing System',
+            icon: 'fa-dollar-sign',
+            category: 'Financial',
+            risk: 'High',
+            lastScan: '2025-01-12',
+            totalFindings: 5,
+            criticalFindings: 0,
+            highFindings: 2,
+            description: 'Medical billing and claims processing system'
+        },
+        'lab-system': {
+            name: 'Lab System',
+            icon: 'fa-flask',
+            category: 'Clinical',
+            risk: 'Medium',
+            lastScan: '2025-01-14',
+            totalFindings: 3,
+            criticalFindings: 0,
+            highFindings: 1,
+            description: 'Laboratory information management system'
+        },
+        'pharmacy-system': {
+            name: 'Pharmacy System',
+            icon: 'fa-pills',
+            category: 'Clinical',
+            risk: 'Medium',
+            lastScan: '2025-01-11',
+            totalFindings: 2,
+            criticalFindings: 0,
+            highFindings: 0,
+            description: 'Pharmacy management and prescription system'
+        },
+        'imaging-system': {
+            name: 'Imaging System',
+            icon: 'fa-x-ray',
+            category: 'Clinical',
+            risk: 'Medium',
+            lastScan: '2025-01-13',
+            totalFindings: 4,
+            criticalFindings: 0,
+            highFindings: 1,
+            description: 'Medical imaging and radiology information system'
+        }
+    };
+    
+    const system = systems[systemId];
+    if (!system) {
+        console.error('System not found:', systemId);
+        return;
+    }
+    
+    // Update system info header
+    const header = document.getElementById('system-info-header');
+    header.innerHTML = `
+        <div class="flex items-start justify-between">
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 bg-slate-100 rounded-xl flex items-center justify-center">
+                    <i class="fas ${system.icon} text-2xl text-slate-600"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">${system.name}</h2>
+                    <p class="text-slate-600">${system.description}</p>
+                    <div class="flex items-center gap-4 mt-2 text-sm">
+                        <span class="px-2 py-1 bg-slate-100 text-slate-700 rounded">${system.category}</span>
+                        <span class="px-2 py-1 ${getRiskColorClass(system.risk)} rounded">${system.risk} Risk</span>
+                        <span class="text-slate-500">Last scan: ${system.lastScan}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="text-right">
+                <div class="text-2xl font-bold text-slate-900">${system.totalFindings}</div>
+                <div class="text-sm text-slate-600">Total Findings</div>
+                <div class="flex items-center gap-2 mt-1">
+                    <span class="text-xs text-red-600">${system.criticalFindings} critical</span>
+                    <span class="text-xs text-orange-600">${system.highFindings} high</span>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Show scan findings by default
+    showSystemTab('scan-findings');
+}
+
+function showSystemTab(tabName) {
+    // Update tab active states
+    document.querySelectorAll('.system-tab').forEach(tab => {
+        tab.classList.remove('border-indigo-500', 'text-indigo-600');
+        tab.classList.add('border-transparent', 'text-slate-500');
+    });
+    
+    event.target.classList.remove('border-transparent', 'text-slate-500');
+    event.target.classList.add('border-indigo-500', 'text-indigo-600');
+    
+    // Update content based on tab
+    const content = document.getElementById('system-tab-content');
+    
+    switch(tabName) {
+        case 'scan-findings':
+            content.innerHTML = `
+                <div class="space-y-4">
+                    <div class="text-sm text-slate-500">Showing vulnerability scan findings for this system</div>
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Finding</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Severity</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-slate-200">
+                            <tr class="hover:bg-slate-50">
+                                <td class="px-6 py-4 text-sm text-slate-900">CVE-2024-0001 in Apache Tomcat</td>
+                                <td class="px-6 py-4 text-sm"><span class="px-2 py-1 text-xs rounded bg-red-100 text-red-800">Critical</span></td>
+                                <td class="px-6 py-4 text-sm"><span class="px-2 py-1 text-xs rounded bg-yellow-100 text-yellow-800">Open</span></td>
+                                <td class="px-6 py-4 text-sm">
+                                    <button class="text-indigo-600 hover:text-indigo-900">View Details</button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-50">
+                                <td class="px-6 py-4 text-sm text-slate-900">Outdated OpenSSL Version</td>
+                                <td class="px-6 py-4 text-sm"><span class="px-2 py-1 text-xs rounded bg-orange-100 text-orange-800">High</span></td>
+                                <td class="px-6 py-4 text-sm"><span class="px-2 py-1 text-xs rounded bg-green-100 text-green-800">Fixed</span></td>
+                                <td class="px-6 py-4 text-sm">
+                                    <button class="text-indigo-600 hover:text-indigo-900">View Details</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            break;
+            
+        case 'nist-controls':
+            content.innerHTML = `
+                <div class="space-y-4">
+                    <div class="text-sm text-slate-500">NIST 800-53 controls applicable to this system</div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="border border-slate-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-slate-900">AC-2: Account Management</h4>
+                            <p class="text-sm text-slate-600 mt-1">Manage individual system accounts</p>
+                            <div class="mt-2">
+                                <span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded">Implemented</span>
+                            </div>
+                        </div>
+                        <div class="border border-slate-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-slate-900">SC-8: Transmission Integrity</h4>
+                            <p class="text-sm text-slate-600 mt-1">Protect transmitted information</p>
+                            <div class="mt-2">
+                                <span class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded">Partial</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            break;
+            
+        case 'compliance-status':
+            content.innerHTML = `
+                <div class="space-y-4">
+                    <div class="text-sm text-slate-500">Overall compliance status for this system</div>
+                    <div class="bg-slate-50 rounded-lg p-6">
+                        <div class="text-center">
+                            <div class="text-4xl font-bold text-indigo-600">78%</div>
+                            <div class="text-sm text-slate-600">Compliance Score</div>
+                        </div>
+                        <div class="mt-6 space-y-2">
+                            <div class="flex justify-between text-sm">
+                                <span>Controls Implemented</span>
+                                <span class="font-semibold">39/50</span>
+                            </div>
+                            <div class="w-full bg-slate-200 rounded-full h-2">
+                                <div class="bg-indigo-600 h-2 rounded-full" style="width: 78%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            break;
+    }
+}
+
+function getCurrentUserRole() {
+    // This would typically come from authentication
+    // For now, return 'admin' for demo purposes
+    return 'admin';
+}
+
+function getRiskColorClass(risk) {
+    const colors = {
+        'Critical': 'bg-red-100 text-red-800',
+        'High': 'bg-orange-100 text-orange-800',
+        'Medium': 'bg-yellow-100 text-yellow-800',
+        'Low': 'bg-green-100 text-green-800'
+    };
+    return colors[risk] || colors['Medium'];
+}
+
+function exportSystemReport() {
+    showUpdateFeedback('System report exported successfully', 'success');
+}
+
+function refreshSystemData() {
+    showUpdateFeedback('System data refreshed', 'success');
+}
+
 // Initialize sidebar on page load
 document.addEventListener('DOMContentLoaded', function() {
     // Set dashboard as active by default
