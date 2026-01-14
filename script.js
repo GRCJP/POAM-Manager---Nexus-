@@ -1792,6 +1792,11 @@ async function initializeModule(moduleName) {
         if (typeof updateVulnerabilityModuleMetrics === 'function') {
             updateVulnerabilityModuleMetrics();
         }
+        // Clear any active needs-review filter (disabled due to false positives)
+        if (typeof activeFilters !== 'undefined' && activeFilters.custom === 'needs-review') {
+            activeFilters.custom = '';
+            console.log('🧹 Cleared disabled needs-review filter');
+        }
         // updateSLAMetrics(); // Disabled - using new Security Posture Overview instead
     } else if (moduleName === 'evidence') {
         // Load evidence vault data
