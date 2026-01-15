@@ -218,16 +218,19 @@ function renderFocusedPOAMDetailPage(poam) {
                                 <div>
                                     <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Impacted Components / URL Details</label>
                                     <div data-edit="display" class="text-sm text-slate-700 whitespace-pre-wrap">${displayPOAM.impactedComponents || 'Not specified'}</div>
+                                    <button type="button" onclick="switchMainTab('assets')" class="mt-2 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800">See affected assets</button>
                                     <textarea data-edit="input" disabled
                                               rows="2" class="hidden w-full text-sm text-slate-700 border border-slate-200 rounded px-3 py-2 resize-none"
                                               onchange="updatePOAMField('${poam.id}', 'impactedComponents', this.value)">${displayPOAM.impactedComponents || ''}</textarea>
                                 </div>
                                 <div>
                                     <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Internal Notes</label>
-                                    <div data-edit="display" class="text-sm text-slate-700 whitespace-pre-wrap">${displayPOAM.notes || 'No notes added'}</div>
-                                    <textarea data-edit="input" disabled
-                                              rows="3" class="hidden w-full text-sm text-slate-700 border border-slate-200 rounded px-3 py-2 resize-none"
+                                    <textarea rows="3" class="w-full text-sm text-slate-700 border border-slate-200 rounded px-3 py-2 resize-none"
                                               onchange="updatePOAMField('${poam.id}', 'notes', this.value)">${displayPOAM.notes || ''}</textarea>
+                                </div>
+                                <div>
+                                    <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Milestones</div>
+                                    <div class="mt-3">${renderMilestonesList(poam.milestones || [])}</div>
                                 </div>
                             </div>
                         </div>
@@ -237,10 +240,13 @@ function renderFocusedPOAMDetailPage(poam) {
                                 <div>
                                     <label class="text-[10px] font-bold text-slate-500 uppercase">POC</label>
                                     <div data-edit="display" class="text-sm font-semibold text-slate-800">${displayPOAM.poc || 'Unassigned'}</div>
-                                    <input data-edit="input" disabled
-                                           class="hidden w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded px-3 py-2"
-                                           value="${displayPOAM.poc || ''}"
-                                           onchange="updatePOAMField('${poam.id}', 'poc', this.value)">
+                                    <select data-edit="input" disabled
+                                            class="hidden w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded px-3 py-2"
+                                            onchange="updatePOAMField('${poam.id}', 'poc', this.value)">
+                                        ${(window.pocTeams || ['Unassigned']).map(team => `
+                                            <option value="${team}" ${displayPOAM.poc === team ? 'selected' : ''}>${team}</option>
+                                        `).join('')}
+                                    </select>
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-bold text-slate-500 uppercase">Finding Status</label>
@@ -310,10 +316,6 @@ function renderFocusedPOAMDetailPage(poam) {
                                                onchange="updatePOAMField('${poam.id}', 'actualCompletionDate', this.value)">
                                     </div>
                                 </div>
-                            </div>
-                            <div class="border border-slate-200 rounded-lg p-4">
-                                <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-3">Milestones</div>
-                                ${renderMilestonesList(poam.milestones || [])}
                             </div>
                         </div>
                     </div>
