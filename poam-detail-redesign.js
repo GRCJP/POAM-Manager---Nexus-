@@ -272,11 +272,11 @@ function renderFocusedPOAMDetailPage(poam, scanData) {
                 </div>
                 
                 <!-- CVE References -->
-                ${poam.cves && poam.cves.length > 0 ? `
+                ${(poam.cves && Array.isArray(poam.cves) && poam.cves.length > 0) ? `
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-slate-700 mb-1">Related CVEs</label>
                     <div class="flex flex-wrap gap-2">
-                        ${poam.cves.map(cve => `
+                        ${poam.cves.filter(cve => cve && cve.trim()).map(cve => `
                             <a href="https://nvd.nist.gov/vuln/detail/${cve}" target="_blank" 
                                class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium hover:bg-blue-100 transition-colors">
                                 ${cve}
