@@ -149,6 +149,7 @@ function renderFocusedPOAMDetailPage(poam) {
         risk: poam.riskLevel || poam.risk || 'medium',
         status: poam.findingStatus || poam.status || 'Open',
         vulnerability: poam.vulnerabilityName || poam.vulnerability || poam.title || 'Unknown',
+        description: poam.findingDescription || poam.description || '',
         dueDate: formatDateForInput(poam.updatedScheduledCompletionDate || poam.dueDate),
         initialDate: formatDateForInput(poam.initialScheduledCompletionDate),
         actualDate: formatDateForInput(poam.actualCompletionDate),
