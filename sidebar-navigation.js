@@ -70,9 +70,13 @@ function showModule(moduleName) {
         // Show default admin tab (users)
         showAdminTab('users');
     } else if (moduleName === 'vulnerability-tracking') {
-        // Load vulnerability tracking data
+        // Load vulnerability tracking data asynchronously to avoid blocking UI
+        console.log('📊 Loading Vulnerability Management module...');
         if (typeof updateVulnerabilityModuleMetrics === 'function') {
-            updateVulnerabilityModuleMetrics();
+            // Run async to not block UI
+            setTimeout(() => {
+                updateVulnerabilityModuleMetrics();
+            }, 0);
         }
     } else if (moduleName === 'security-controls') {
         // Load security controls data
