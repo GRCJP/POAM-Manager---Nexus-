@@ -94,68 +94,30 @@
                     </a>
 
                     <!-- Vulnerability Management -->
-                    <a href="#" onclick="showModule('vulnerability-tracking')" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 transition-colors">
-                        <i class="fas fa-bug w-5"></i>
-                        <span>Vulnerability Management</span>
-                        <span id="review-count-badge" class="hidden ml-auto px-2 py-0.5 bg-amber-500 text-white text-xs font-bold rounded-full">0</span>
-                    </a>
-
-                    <!-- Security Control POAMs -->
-                    <div class="sidebar-section" id="security-controls-section">
-                        <button onclick="toggleSidebarSection('security-controls-menu')" class="sidebar-section-toggle w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
+                    <div class="sidebar-section" id="vulnerability-management-section">
+                        <button onclick="toggleSidebarSection('vulnerability-management-menu')" class="sidebar-section-toggle w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
                             <div class="flex items-center gap-3">
-                                <i class="fas fa-shield-virus w-5"></i>
-                                <span>Security Control POAMs</span>
+                                <i class="fas fa-bug w-5"></i>
+                                <span>Vulnerability Management</span>
                             </div>
                             <i class="fas fa-chevron-down text-xs transition-transform"></i>
                         </button>
-                        <div id="security-controls-menu" class="sidebar-submenu ml-8 mt-1 space-y-1 hidden">
-                            <a href="#" onclick="showModule('security-controls')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
-                                <i class="fas fa-list text-xs w-4 text-indigo-400"></i>
-                                <span>Security Control POAMs</span>
-                                <span class="ml-auto text-xs text-slate-400">284</span>
+                        <div id="vulnerability-management-menu" class="sidebar-submenu ml-8 mt-1 space-y-1 hidden">
+                            <a href="#" onclick="showModule('vulnerability-tracking')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
+                                <i class="fas fa-shield-alt text-xs w-4 text-green-400"></i>
+                                <span>Vulnerability Scanner</span>
+                                <span class="ml-auto text-xs text-slate-400">Upload & Track</span>
                             </a>
-                            <div class="sidebar-section" id="systems-subsection">
-                                <button onclick="toggleSidebarSection('systems-menu')" class="sidebar-section-toggle w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium hover:bg-slate-800 transition-colors">
-                                    <div class="flex items-center gap-2">
-                                        <i class="fas fa-server text-xs w-4"></i>
-                                        <span>Systems</span>
-                                    </div>
-                                    <i class="fas fa-chevron-down text-xs transition-transform"></i>
-                                </button>
-                                <div id="systems-menu" class="sidebar-submenu ml-6 mt-1 space-y-1 hidden">
-                                    <a href="#" onclick="showSystemFindings('ehr-system')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-xs hover:bg-slate-800 transition-colors group">
-                                        <i class="fas fa-hospital text-xs w-3 text-red-400"></i>
-                                        <span>EHR System</span>
-                                        <span class="ml-auto text-xs text-red-400">12</span>
-                                    </a>
-                                    <a href="#" onclick="showSystemFindings('patient-portal')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-xs hover:bg-slate-800 transition-colors group">
-                                        <i class="fas fa-user-injured text-xs w-3 text-orange-400"></i>
-                                        <span>Patient Portal</span>
-                                        <span class="ml-auto text-xs text-orange-400">8</span>
-                                    </a>
-                                    <a href="#" onclick="showSystemFindings('billing-system')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-xs hover:bg-slate-800 transition-colors group">
-                                        <i class="fas fa-file-invoice text-xs w-3 text-blue-400"></i>
-                                        <span>Billing System</span>
-                                        <span class="ml-auto text-xs text-blue-400">6</span>
-                                    </a>
-                                    <a href="#" onclick="showSystemFindings('lab-system')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-xs hover:bg-slate-800 transition-colors group">
-                                        <i class="fas fa-flask text-xs w-3 text-green-400"></i>
-                                        <span>Lab System</span>
-                                        <span class="ml-auto text-xs text-green-400">4</span>
-                                    </a>
-                                    <a href="#" onclick="showSystemFindings('pharmacy-system')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-xs hover:bg-slate-800 transition-colors group">
-                                        <i class="fas fa-pills text-xs w-3 text-purple-400"></i>
-                                        <span>Pharmacy System</span>
-                                        <span class="ml-auto text-xs text-purple-400">3</span>
-                                    </a>
-                                    <a href="#" onclick="showSystemFindings('imaging-system')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-xs hover:bg-slate-800 transition-colors group">
-                                        <i class="fas fa-x-ray text-xs w-3 text-cyan-400"></i>
-                                        <span>Imaging System</span>
-                                        <span class="ml-auto text-xs text-cyan-400">5</span>
-                                    </a>
-                                </div>
-                            </div>
+                            <a href="#" onclick="showModule('scan-history')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
+                                <i class="fas fa-history text-xs w-4 text-blue-400"></i>
+                                <span>Scan History</span>
+                                <span class="ml-auto text-xs text-slate-400">Audit Trail</span>
+                            </a>
+                            <a href="#" onclick="showReviewIssuesSidebar()" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
+                                <i class="fas fa-exclamation-triangle text-xs w-4 text-amber-400"></i>
+                                <span>POAMs Requiring Review</span>
+                                <span id="sidebar-review-count" class="ml-auto px-2 py-0.5 bg-amber-500 text-white text-xs font-bold rounded-full">0</span>
+                            </a>
                         </div>
                     </div>
 
@@ -205,9 +167,13 @@
                                 <i class="fas fa-sync-alt text-xs w-4"></i>
                                 <span>API Configuration</span>
                             </a>
-                            <a href="#" onclick="showSettingsTab('preferences')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors">
+                            <a href="#" onclick="showSettingsTab('preferences')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors" id="tab-link-preferences">
                                 <i class="fas fa-sliders-h text-xs w-4"></i>
                                 <span>User Preferences</span>
+                            </a>
+                            <a href="#" onclick="showSettingsTab('systems')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors" id="tab-link-systems">
+                                <i class="fas fa-server text-xs w-4"></i>
+                                <span>System Configuration</span>
                             </a>
                             <div class="border-t border-slate-700 my-2"></div>
                             <a href="#" onclick="confirmClearVulnerabilityData()" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-red-900 transition-colors text-red-400">
@@ -244,16 +210,19 @@
                 </nav>
             </div>
 
-            <!-- Sidebar Footer -->
-            <div class="border-t border-slate-700 p-4">
-                <div class="flex items-center gap-3 text-xs">
-                    <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span class="text-slate-400">System Online</span>
-                </div>
-                <div class="mt-2 text-xs text-slate-500">
-                    Version 2.1.0
-                </div>
-            </div>
+    <!-- Sidebar Footer -->
+    <div class="border-t border-slate-700 p-4">
+        <div class="flex items-center gap-3 text-xs">
+            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+            <span class="text-slate-400">System Online</span>
+        </div>
+        <div class="mt-2 text-[10px] text-slate-500 font-mono" id="ui-build-id">
+            BUILD_ID: GITHUB_20260114_V3
+        </div>
+        <div class="mt-1 text-xs text-slate-500">
+            Version 2.1.0
+        </div>
+    </div>
         </aside>
 
         <!-- Sidebar Overlay for Mobile -->
@@ -327,23 +296,7 @@
                 Management Modules
             </h2>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Security Control POAMs -->
-                <div class="group relative bg-white border border-slate-200 p-6 rounded-2xl hover:border-indigo-500 transition-all cursor-pointer shadow-sm hover:shadow-xl" onclick="showModule('security-controls')">
-                    <div class="flex items-center gap-3 mb-4">
-                        <span class="p-3 bg-indigo-50 text-indigo-600 rounded-lg">
-                            <i class="fas fa-shield-virus text-lg"></i>
-                        </span>
-                        <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">PRIMARY</span>
-                    </div>
-                    <h3 class="text-lg font-bold mb-2 group-hover:text-indigo-600">Security Control POAMs</h3>
-                    <p class="text-slate-500 text-sm leading-relaxed mb-4">Authoritative POAM management, control family analysis, and compliance tracking.</p>
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs font-bold text-indigo-600 uppercase tracking-widest">Manage POAMs →</span>
-                        <span class="text-xs text-slate-400">284 items</span>
-                    </div>
-                </div>
-
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Vulnerability Tracking -->
                 <div class="group relative bg-white border border-slate-200 p-6 rounded-2xl hover:border-indigo-500 transition-all cursor-pointer shadow-sm hover:shadow-xl" onclick="showModule('vulnerability-tracking')">
                     <div class="flex items-center gap-3 mb-4">
@@ -1114,65 +1067,7 @@
                 </div>
             </div>
 
-            <!-- Review Issues Panel (Collapsible) -->
-            <div id="review-issues-panel" class="hidden mb-6">
-                <button onclick="toggleReviewIssuesPanel()" class="w-full flex items-center justify-between p-4 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-exclamation-triangle text-amber-600"></i>
-                        <span class="text-sm font-semibold text-amber-900">POAMs Requiring Review</span>
-                        <span class="px-2 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full" id="review-issues-count">0</span>
-                    </div>
-                    <i class="fas fa-chevron-down text-amber-600" id="review-issues-chevron"></i>
-                </button>
-                
-                <div id="review-issues-content" class="hidden mt-2 bg-white border border-amber-200 rounded-lg p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                        <!-- Missing POC -->
-                        <div class="bg-amber-50 rounded-lg border border-amber-200 p-4">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-sm font-semibold text-slate-700">Missing POC</span>
-                                <span class="px-2 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full" id="missing-poc-count">0</span>
-                            </div>
-                            <p class="text-xs text-slate-600">POAMs without assigned Point of Contact</p>
-                        </div>
-                        
-                        <!-- Missing Dates -->
-                        <div class="bg-amber-50 rounded-lg border border-amber-200 p-4">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-sm font-semibold text-slate-700">Missing Dates</span>
-                                <span class="px-2 py-1 bg-orange-100 text-orange-800 text-xs font-bold rounded-full" id="missing-dates-count">0</span>
-                            </div>
-                            <p class="text-xs text-slate-600">POAMs without due dates</p>
-                        </div>
-                        
-                        <!-- Missing Control Family -->
-                        <div class="bg-amber-50 rounded-lg border border-amber-200 p-4">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-sm font-semibold text-slate-700">Missing Controls</span>
-                                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-bold rounded-full" id="missing-controls-count">0</span>
-                            </div>
-                            <p class="text-xs text-slate-600">POAMs without control family assignment</p>
-                        </div>
-                        
-                        <!-- Low Confidence -->
-                        <div class="bg-amber-50 rounded-lg border border-amber-200 p-4">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-sm font-semibold text-slate-700">Low Confidence</span>
-                                <span class="px-2 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full" id="low-confidence-count">0</span>
-                            </div>
-                            <p class="text-xs text-slate-600">POAMs flagged for manual review</p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-center justify-between">
-                        <p class="text-sm text-slate-600">Click on a POAM in the table below to review and fix these issues</p>
-                        <button onclick="showAllReviewIssues()" class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium">
-                            View All Issues
-                        </button>
-                    </div>
-                </div>
-            </div>
-
+            
             <!-- POAM Tracker List -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                 <div class="flex justify-between items-center mb-4">
@@ -1657,8 +1552,369 @@
             </div>
         </div>
 
-        <!-- Executive Reporting Module -->
-        <div id="reporting-module" class="module hidden">
+        <!-- Scan History Module -->
+        <div id="scan-history-module" class="module hidden">
+            <div class="mb-8">
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Scan Ingestion History</h1>
+                <p class="text-slate-500 mt-1">Audit trail of all vulnerability scan uploads and API pulls.</p>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-4 font-semibold">Scan ID / Date</th>
+                                <th class="px-6 py-4 font-semibold">Source / Filename</th>
+                                <th class="px-6 py-4 font-semibold">Findings</th>
+                                <th class="px-6 py-4 font-semibold">Status</th>
+                                <th class="px-6 py-4 font-semibold">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scan-history-list" class="divide-y divide-slate-100">
+                            <tr>
+                                <td colspan="5" class="px-6 py-12 text-center text-slate-500">
+                                    <i class="fas fa-history text-4xl mb-3 opacity-20"></i>
+                                    <p>Loading scan history...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Module -->
+        <div id="settings-module" class="module hidden">
+            <div class="mb-8 border-b border-slate-200 pb-6">
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Application Settings</h1>
+                <p class="text-slate-500 mt-1">Configure system names and global application preferences.</p>
+            </div>
+
+            <!-- Tab Navigation for Settings -->
+            <div class="mb-6 border-b border-slate-200">
+                <nav class="flex space-x-8">
+                    <button onclick="showSettingsTab('sla')" id="btn-settings-sla" class="settings-tab-btn py-4 px-1 border-b-2 font-medium text-sm border-indigo-500 text-indigo-600">
+                        <i class="fas fa-clock mr-2"></i>SLA & Preferences
+                    </button>
+                    <button onclick="showSettingsTab('risk-framework')" id="btn-settings-risk" class="settings-tab-btn py-4 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300">
+                        <i class="fas fa-shield-alt mr-2"></i>Risk Framework
+                    </button>
+                    <button onclick="showSettingsTab('poam-id')" id="btn-settings-poam-id" class="settings-tab-btn py-4 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300">
+                        <i class="fas fa-hashtag mr-2"></i>POAM ID
+                    </button>
+                    <button onclick="showSettingsTab('api-config')" id="btn-settings-api" class="settings-tab-btn py-4 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300">
+                        <i class="fas fa-sync-alt mr-2"></i>API Config
+                    </button>
+                </nav>
+            </div>
+
+            <!-- SLA & User Preferences Tab -->
+            <div id="settings-sla" class="settings-tab">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
+                        <i class="fas fa-clock text-indigo-600 mr-3"></i>
+                        User Preferences & SLA Configuration
+                    </h3>
+                    <p class="text-slate-600 mb-6">Define Service Level Agreement (SLA) thresholds and general user preferences.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+                            <label class="block text-sm font-semibold text-red-900 mb-2">Critical Risk (days)</label>
+                            <input type="number" id="sla-critical" class="w-full px-4 py-2 border border-red-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" value="15" min="1">
+                        </div>
+                        <div class="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                            <label class="block text-sm font-semibold text-orange-900 mb-2">High Risk (days)</label>
+                            <input type="number" id="sla-high" class="w-full px-4 py-2 border border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" value="30" min="1">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3 border-b border-slate-100 pb-8 mb-8">
+                        <button onclick="saveSLAConfig()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-save mr-2"></i>Save Preferences
+                        </button>
+                    </div>
+
+                    <!-- System Configuration Section (Consolidated) -->
+                    <div class="mt-8 border-t border-slate-100 pt-8">
+                        <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
+                            <i class="fas fa-server text-indigo-600 mr-3"></i>
+                            System Configuration
+                        </h3>
+                        <p class="text-slate-600 mb-6">Manage system inventory and tie them to organization/group access permissions.</p>
+                        
+                        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden mb-6">
+                            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                                <h4 class="font-bold text-slate-700">System Inventory</h4>
+                                <button onclick="openAddSystemModal()" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-xs font-bold transition-all">
+                                    <i class="fas fa-plus mr-1"></i> Add System
+                                </button>
+                            </div>
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500">
+                                    <tr>
+                                        <th class="px-6 py-3 font-semibold uppercase tracking-wider">System ID</th>
+                                        <th class="px-6 py-3 font-semibold uppercase tracking-wider">Display Name</th>
+                                        <th class="px-6 py-3 font-semibold uppercase tracking-wider">Group/Permissions</th>
+                                        <th class="px-6 py-3 font-semibold uppercase tracking-wider text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="systems-settings-list" class="divide-y divide-slate-100">
+                                    <!-- Populated via settings-manager.js -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Risk Framework Tab -->
+            <div id="settings-risk-framework" class="settings-tab hidden">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
+                        <i class="fas fa-shield-alt text-indigo-600 mr-3"></i>
+                        Risk Management Framework
+                    </h3>
+                    <p class="text-slate-600 mb-6">Select the risk assessment framework to be used for POAMs and control mappings.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Active Framework</label>
+                            <select id="risk-framework-select" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" onchange="updateFrameworkInfo()">
+                                <option value="nist">NIST 800-53 / RMF</option>
+                                <option value="csf">NIST Cybersecurity Framework</option>
+                                <option value="iso27001">ISO 27001</option>
+                                <option value="mitre">MITRE ATT&CK</option>
+                                <option value="fedramp">FedRAMP</option>
+                                <option value="cms">CMS ARS</option>
+                                <option value="irs">IRS 1075</option>
+                                <option value="cis">CIS Controls</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Control Mapping Mode</label>
+                            <select id="control-mapper-select" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="enhanced">Enhanced Control Mapper</option>
+                                <option value="basic">Basic Control Mapper</option>
+                                <option value="custom">Custom Mapping</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="framework-info" class="bg-indigo-50 rounded-lg p-6 border border-indigo-200 mb-6">
+                        <h4 class="font-bold text-indigo-900 mb-2 text-lg">NIST 800-53 / RMF</h4>
+                        <p class="text-sm text-indigo-800 mb-4">Federal risk management framework with comprehensive security controls and assessment procedures for information systems.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                            <div class="bg-white rounded-lg p-3">
+                                <strong class="text-indigo-900">Control Families:</strong>
+                                <p class="text-slate-600">20 control families</p>
+                            </div>
+                            <div class="bg-white rounded-lg p-3">
+                                <strong class="text-indigo-900">Total Controls:</strong>
+                                <p class="text-slate-600">1000+ security controls</p>
+                            </div>
+                            <div class="bg-white rounded-lg p-3">
+                                <strong class="text-indigo-900">Impact Levels:</strong>
+                                <p class="text-slate-600">High, Moderate, Low</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button onclick="saveRiskFramework()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-save mr-2"></i>Save Framework
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- POAM ID Structure Tab -->
+            <div id="settings-poam-id" class="settings-tab hidden">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
+                        <i class="fas fa-hashtag text-indigo-600 mr-3"></i>
+                        POAM ID Structure
+                    </h3>
+                    <p class="text-slate-600 mb-6">Configure how POAM identifiers are generated and formatted in your system.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">POAM ID Prefix</label>
+                            <input type="text" id="settings-poam-id-prefix" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g., POAM-2024-" onchange="updateSettingsIDPreview()">
+                            <p class="text-xs text-slate-500 mt-2">Prefix for all POAM identifiers</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Starting Number</label>
+                            <input type="number" id="settings-poam-id-start" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g., 001" min="1" onchange="updateSettingsIDPreview()">
+                            <p class="text-xs text-slate-500 mt-2">Initial counter value for new POAMs</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 rounded-lg p-6 border border-slate-200 mb-6">
+                        <label class="block text-sm font-semibold text-slate-700 mb-3">Current ID Structure Preview</label>
+                        <div class="px-6 py-4 bg-white rounded-lg font-mono text-lg border-2 border-indigo-200 text-center" id="settings-id-preview">
+                            POAM-2024-001
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3">
+                        <button onclick="resetPOAMIdCounter()" class="px-6 py-2 border border-orange-300 rounded-lg text-sm font-medium text-orange-700 bg-orange-50 hover:bg-orange-100 transition-colors">
+                            <i class="fas fa-redo mr-2"></i>Reset Counter
+                        </button>
+                        <button onclick="savePOAMIdConfigFromSettings()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-save mr-2"></i>Update Configuration
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Configuration Tab -->
+            <div id="settings-api-config" class="settings-tab hidden">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
+                        <i class="fas fa-sync-alt text-indigo-600 mr-3"></i>
+                        API Configuration
+                    </h3>
+                    <p class="text-slate-600 mb-6">Configure automated vulnerability scan retrieval from scanner APIs</p>
+
+                    <!-- Scanner Connections -->
+                    <div class="mb-6">
+                        <h4 class="font-semibold text-slate-800 mb-4">Scanner Connections</h4>
+                        
+                        <!-- Qualys VM -->
+                        <div class="bg-slate-50 rounded-lg p-4 mb-4 border border-slate-200">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-chart-line text-blue-600 text-2xl"></i>
+                                    <div>
+                                        <h5 class="font-semibold text-slate-800">Qualys VM</h5>
+                                        <p class="text-xs text-slate-500">Vulnerability Management Platform</p>
+                                    </div>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="qualys-enabled" class="sr-only peer" checked>
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">API URL</label>
+                                    <input type="text" id="qualys-url" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="https://qualysapi.qualys.com">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">API Key</label>
+                                    <input type="password" id="qualys-key" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="Enter API key">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Schedule</label>
+                                    <select id="qualys-schedule" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                                        <option value="daily">Daily at 2:00 AM</option>
+                                        <option value="weekly">Weekly on Monday</option>
+                                        <option value="monthly">Monthly on 1st</option>
+                                        <option value="manual">Manual Only</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Last Pull</label>
+                                    <input type="text" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-slate-100" value="Never" disabled>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tenable/Nessus -->
+                        <div class="bg-slate-50 rounded-lg p-4 mb-4 border border-slate-200">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-shield-alt text-green-600 text-2xl"></i>
+                                    <div>
+                                        <h5 class="font-semibold text-slate-800">Tenable/Nessus</h5>
+                                        <p class="text-xs text-slate-500">Security Center & Nessus Professional</p>
+                                    </div>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="tenable-enabled" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">API URL</label>
+                                    <input type="text" id="tenable-url" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="https://cloud.tenable.com">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Access Key</label>
+                                    <input type="password" id="tenable-key" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="Enter access key">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Schedule</label>
+                                    <select id="tenable-schedule" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                                        <option value="daily">Daily at 2:00 AM</option>
+                                        <option value="weekly" selected>Weekly on Monday</option>
+                                        <option value="monthly">Monthly on 1st</option>
+                                        <option value="manual">Manual Only</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Last Pull</label>
+                                    <input type="text" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-slate-100" value="Never" disabled>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Wiz Cloud -->
+                        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-cloud text-purple-600 text-2xl"></i>
+                                    <div>
+                                        <h5 class="font-semibold text-slate-800">Wiz Cloud Security</h5>
+                                        <p class="text-xs text-slate-500">Cloud Security Platform</p>
+                                    </div>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="wiz-enabled" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">API Endpoint</label>
+                                    <input type="text" id="wiz-url" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="https://api.wiz.io">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Client Secret</label>
+                                    <input type="password" id="wiz-secret" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="Enter client secret">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Schedule</label>
+                                    <select id="wiz-schedule" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                                        <option value="daily">Daily at 2:00 AM</option>
+                                        <option value="weekly">Weekly on Monday</option>
+                                        <option value="monthly">Monthly on 1st</option>
+                                        <option value="manual" selected>Manual Only</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Last Pull</label>
+                                    <input type="text" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-slate-100" value="Never" disabled>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3">
+                        <button onclick="testAPIConnections()" class="px-6 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition-colors">
+                            <i class="fas fa-plug mr-2"></i>Test Connections
+                        </button>
+                        <button onclick="saveAPIConfig()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-save mr-2"></i>Save Configuration
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        <!-- Administration Module -->
+        <div id="admin-module" class="module hidden">
             <div class="mb-8">
                 <button onclick="showModule('dashboard')" class="text-indigo-600 hover:text-indigo-800 mb-4">
                     <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
@@ -1797,40 +2053,34 @@
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                     <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
                         <i class="fas fa-clock text-indigo-600 mr-3"></i>
-                        SLA Configuration
+                        User Preferences & SLA Configuration
                     </h3>
-                    <p class="text-slate-600 mb-6">Define Service Level Agreement (SLA) thresholds for different risk levels. These thresholds determine when a POAM is considered overdue.</p>
+                    <p class="text-slate-600 mb-6">Define Service Level Agreement (SLA) thresholds and general user preferences.</p>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                         <div class="bg-red-50 rounded-lg p-4 border border-red-200">
                             <label class="block text-sm font-semibold text-red-900 mb-2">Critical Risk (days)</label>
                             <input type="number" id="sla-critical" class="w-full px-4 py-2 border border-red-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" value="15" min="1">
-                            <p class="text-xs text-red-700 mt-2">Highest priority vulnerabilities requiring immediate action</p>
                         </div>
                         <div class="bg-orange-50 rounded-lg p-4 border border-orange-200">
                             <label class="block text-sm font-semibold text-orange-900 mb-2">High Risk (days)</label>
                             <input type="number" id="sla-high" class="w-full px-4 py-2 border border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" value="30" min="1">
-                            <p class="text-xs text-orange-700 mt-2">Significant vulnerabilities requiring prompt remediation</p>
-                        </div>
-                        <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-                            <label class="block text-sm font-semibold text-yellow-900 mb-2">Medium Risk (days)</label>
-                            <input type="number" id="sla-medium" class="w-full px-4 py-2 border border-yellow-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500" value="60" min="1">
-                            <p class="text-xs text-yellow-700 mt-2">Moderate vulnerabilities with standard remediation timeline</p>
-                        </div>
-                        <div class="bg-green-50 rounded-lg p-4 border border-green-200">
-                            <label class="block text-sm font-semibold text-green-900 mb-2">Low Risk (days)</label>
-                            <input type="number" id="sla-low" class="w-full px-4 py-2 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" value="90" min="1">
-                            <p class="text-xs text-green-700 mt-2">Lower priority items with extended remediation window</p>
                         </div>
                     </div>
 
-                    <div class="flex justify-end gap-3">
-                        <button onclick="resetSLADefaults()" class="px-6 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition-colors">
-                            <i class="fas fa-undo mr-2"></i>Reset to Defaults
-                        </button>
+                    <div class="flex justify-end gap-3 border-b border-slate-100 pb-8 mb-8">
                         <button onclick="saveSLAConfig()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
-                            <i class="fas fa-save mr-2"></i>Save SLA Configuration
+                            <i class="fas fa-save mr-2"></i>Save Preferences
                         </button>
+                    </div>
+
+                    <div class="mt-8 border-t border-slate-100 pt-8">
+                        <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
+                            <i class="fas fa-server text-indigo-600 mr-3"></i>
+                            User Access Permissions
+                        </h3>
+                        <p class="text-slate-600 mb-6">Manage organization and group access permissions for the enclave.</p>
+                        <!-- Permissions mapping content could go here if needed later -->
                     </div>
                 </div>
             </div>
@@ -2128,57 +2378,49 @@
                             </div>
                         </div>
 
-                        <!-- Display Settings -->
-                        <div class="border-b border-slate-200 pb-6">
-                            <h4 class="font-semibold text-slate-800 mb-4">Display</h4>
-                            <div class="space-y-4">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="font-medium text-slate-700">Dark Mode</p>
-                                        <p class="text-sm text-slate-500">Enable dark theme for the interface</p>
-                                    </div>
-                                    <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" class="sr-only peer">
-                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                                    </label>
+                        <!-- System Configuration Section (Consolidated) -->
+                        <div class="pt-6">
+                            <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
+                                <i class="fas fa-server text-indigo-600 mr-3"></i>
+                                System Configuration
+                            </h3>
+                            <p class="text-slate-600 mb-6">Manage system inventory and tie them to organization/group access permissions.</p>
+                            
+                            <div class="bg-white border border-slate-200 rounded-xl overflow-hidden mb-6">
+                                <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                                    <h4 class="font-bold text-slate-700">System Inventory</h4>
+                                    <button onclick="openAddSystemModal()" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-xs font-bold transition-all">
+                                        <i class="fas fa-plus mr-1"></i> Add System
+                                    </button>
                                 </div>
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="font-medium text-slate-700">Compact View</p>
-                                        <p class="text-sm text-slate-500">Show more items per page with reduced spacing</p>
-                                    </div>
-                                    <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" class="sr-only peer">
-                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Data & Privacy -->
-                        <div>
-                            <h4 class="font-semibold text-slate-800 mb-4">Data & Privacy</h4>
-                            <div class="space-y-4">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="font-medium text-slate-700">Activity Tracking</p>
-                                        <p class="text-sm text-slate-500">Log your actions for audit purposes</p>
-                                    </div>
-                                    <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" class="sr-only peer" checked disabled>
-                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 opacity-50"></div>
-                                    </label>
-                                </div>
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-slate-50 border-b border-slate-200 text-slate-500">
+                                        <tr>
+                                            <th class="px-6 py-3 font-semibold uppercase tracking-wider">System ID</th>
+                                            <th class="px-6 py-3 font-semibold uppercase tracking-wider">Display Name</th>
+                                            <th class="px-6 py-3 font-semibold uppercase tracking-wider">Group/Permissions</th>
+                                            <th class="px-6 py-3 font-semibold uppercase tracking-wider text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="systems-settings-list" class="divide-y divide-slate-100">
+                                        <!-- Populated via settings-manager.js -->
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
 
                     <div class="flex justify-end mt-6">
                         <button onclick="saveUserPreferences()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
-                            <i class="fas fa-save mr-2"></i>Save Preferences
+                            <i class="fas fa-save mr-2"></i>Save Settings
                         </button>
                     </div>
                 </div>
+            </div>
+
+            <!-- System Configuration Tab -->
+            <div id="settings-systems" class="settings-tab hidden">
+                <!-- Redirected to User Preferences tab -->
             </div>
         </div>
 
@@ -2352,10 +2594,8 @@
         </div>
 
             </div>
-        </main>
-    </div>
-
-    <!-- POAM ID Configuration Popup -->
+        
+        <!-- POAM ID Configuration Popup -->
     <div id="poam-id-config-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
         <div class="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4">
             <div class="flex justify-between items-center mb-6">
@@ -2393,6 +2633,56 @@
                     Cancel
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- System Configuration Modal -->
+    <div id="system-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="system-modal-title" class="text-2xl font-bold text-slate-900">Add New System</h2>
+                <button onclick="closeSystemModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <form id="system-form" onsubmit="handleSystemSubmit(event)">
+                <input type="hidden" id="system-id-hidden" value="">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">System ID *</label>
+                        <input type="text" id="system-id-input" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required placeholder="e.g., ehr-system">
+                        <p class="text-xs text-slate-500 mt-1">Unique identifier for the system (no spaces, lowercase)</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Display Name *</label>
+                        <input type="text" id="system-name-input" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required placeholder="e.g., Electronic Health Record System">
+                        <p class="text-xs text-slate-500 mt-1">User-friendly name that appears in the interface</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Group/Permissions</label>
+                        <select id="system-group-input" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="">All Users (Public)</option>
+                            <option value="admin">Administrators Only</option>
+                            <option value="security">Security Team</option>
+                            <option value="compliance">Compliance Officers</option>
+                        </select>
+                        <p class="text-xs text-slate-500 mt-1">Restrict access to specific user groups (leave empty for all users)</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Description</label>
+                        <textarea id="system-desc-input" rows="3" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Brief description of the system and its purpose..."></textarea>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 mt-6 pt-6 border-t border-slate-200">
+                    <button type="button" onclick="closeSystemModal()" class="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save System</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -2570,45 +2860,23 @@
                 </div>
             </form>
         </div>
-    </div>
-
-        <!-- Security Control POAMs Module -->
-        <div id="security-controls-module" class="module hidden">
-            <div class="mb-8">
-                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Security Control POAMs</h1>
-                <p class="text-slate-500 mt-1">Manage POAMs organized by security control families and compliance frameworks</p>
-            </div>
-
-            <!-- Security Control Content -->
-            <div class="text-center py-12">
-                <i class="fas fa-shield-virus text-6xl text-slate-300 mb-4"></i>
-                <h3 class="text-xl font-semibold text-slate-700 mb-2">Security Control Analysis</h3>
-                <p class="text-slate-500 mb-6">View and manage POAMs by security control families, NIST controls, and compliance frameworks.</p>
-                <div class="flex justify-center gap-4">
-                    <button class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                        <i class="fas fa-filter mr-2"></i>Filter by Control Family
-                    </button>
-                    <button class="px-6 py-3 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors">
-                        <i class="fas fa-clipboard-check mr-2"></i>Compliance Dashboard
-                    </button>
-                </div>
-            </div>
-        </div>
-        </main>
-    </div>
+    </main>
+</div>
 
     <!-- Application Scripts -->
     <script src="poam-database.js?v=20260114-5"></script>
     <script src="vulnerability-analysis-engine.js"></script>
     <script src="vulnerability-analysis-engine-v2.js?v=20260114-1"></script>
-    <script src="vulnerability-analysis-engine-v3.js?v=20260114-34"></script>
+    <script src="vulnerability-analysis-engine-v3.js?v=20260114-35"></script>
     <script src="csv-format-processors.js?v=20260114-2"></script>
     <script src="evidence-functions.js"></script>
     <script src="sidebar-navigation.js"></script>
     <script src="column-filters.js"></script>
     <script src="bulk-operations.js"></script>
-    <script src="poam-detail-redesign.js?v=20260114-24"></script>
-    <script src="vulnerability-tracking.js?v=20260114-21"></script>
+    <script src="poam-detail-redesign.js?v=20260114-25"></script>
+    <script src="vulnerability-tracking.js?v=20260114-22"></script>
+    <script src="settings-manager.js?v=20260114-22"></script>
+    <!-- security-controls-manager.js removed -->
     <script src="script.js?v=20260114-7"></script>
 
 </body>
