@@ -4,6 +4,17 @@
 
 let currentPOAMDetail = null;
 
+// Get description for Resources Required options
+function getResourcesDescription(resourceType) {
+    const descriptions = {
+        'Personnel Time': 'Remediation requires allocation of internal personnel time to plan, implement, and validate corrective actions.',
+        'Personnel Time and System Maintenance Window': 'Remediation requires internal personnel time and scheduled system maintenance windows to implement changes without impacting operations.',
+        'Personnel Time and Funding': 'Remediation requires internal personnel time and approved funding to support software upgrades, licensing, or infrastructure changes.',
+        'Risk Acceptance (No Additional Resources)': 'No additional remediation resources are required as the risk has been formally accepted in accordance with organizational risk management procedures.'
+    };
+    return descriptions[resourceType] || descriptions['Personnel Time'];
+}
+
 // Toggle description edit mode
 function toggleDescriptionEdit(poamId) {
     const readonlyDiv = document.getElementById(`desc-readonly-${poamId}`);
@@ -363,11 +374,26 @@ function renderFocusedPOAMDetailPage(poam, scanData) {
                     <!-- Resources Required -->
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Resources Required</label>
-                        <input type="text" 
-                               value="${displayPOAM.resourcesRequired}" 
-                               placeholder="Personnel, tools, budget..."
-                               class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                               onchange="updatePOAMField('${poam.id}', 'resourcesRequired', this.value)">
+                        <select class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                onchange="updatePOAMField('${poam.id}', 'resourcesRequired', this.value)">
+                            <option value="Personnel Time" ${displayPOAM.resourcesRequired === 'Personnel Time' ? 'selected' : ''}>
+                                Personnel Time
+                            </option>
+                            <option value="Personnel Time and System Maintenance Window" ${displayPOAM.resourcesRequired === 'Personnel Time and System Maintenance Window' ? 'selected' : ''}>
+                                Personnel Time and System Maintenance Window
+                            </option>
+                            <option value="Personnel Time and Funding" ${displayPOAM.resourcesRequired === 'Personnel Time and Funding' ? 'selected' : ''}>
+                                Personnel Time and Funding
+                            </option>
+                            ${poam.findingStatus === 'risk-accepted' || poam.status === 'risk-accepted' ? `
+                            <option value="Risk Acceptance (No Additional Resources)" ${displayPOAM.resourcesRequired === 'Risk Acceptance (No Additional Resources)' ? 'selected' : ''}>
+                                Risk Acceptance (No Additional Resources)
+                            </option>
+                            ` : ''}
+                        </select>
+                        <p class="text-xs text-slate-500 mt-1" id="resources-description-${poam.id}">
+                            ${getResourcesDescription(displayPOAM.resourcesRequired || 'Personnel Time')}
+                        </p>
                         
                         <label class="block text-sm font-medium text-slate-700 mb-1 mt-3">Notes</label>
                         <textarea rows="2" 
