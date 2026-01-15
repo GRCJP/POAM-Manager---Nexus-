@@ -413,6 +413,34 @@ function renderAssetsList(assets) {
     `;
 }
 
+function renderMilestonesList(milestones) {
+    if (!milestones || milestones.length === 0) {
+        return '<div class="text-xs text-slate-500 italic">No milestones added</div>';
+    }
+
+    return `
+        <div class="space-y-3">
+            ${milestones.map((milestone, index) => {
+                const status = milestone.status || 'pending';
+                const statusClass = status === 'completed'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : status === 'in-progress'
+                        ? 'bg-blue-50 text-blue-700 border-blue-200'
+                        : 'bg-slate-50 text-slate-600 border-slate-200';
+                return `
+                    <div class="border border-slate-200 rounded-lg p-3">
+                        <div class="flex items-center justify-between">
+                            <div class="text-xs font-semibold text-slate-800">${milestone.name || milestone.step || `Milestone ${index + 1}`}</div>
+                            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${statusClass}">${status}</span>
+                        </div>
+                        <div class="mt-1 text-[11px] text-slate-500">${milestone.targetDate || milestone.date || 'No target date'}</div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+}
+
 function getSeverityColor(s) {
     if (!s) return 'bg-slate-100 text-slate-700';
     const l = s.toLowerCase();
