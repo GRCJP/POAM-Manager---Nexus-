@@ -262,14 +262,30 @@ function renderFocusedPOAMDetailPage(poam, scanData) {
                     </div>
                 </div>
                 
-                <!-- Description -->
+                <!-- Description (Read-only from scan data) -->
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-slate-700 mb-1">Finding Description</label>
-                    <textarea rows="3" 
-                              class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
-                              placeholder="Describe the finding..."
-                              onchange="updatePOAMField('${poam.id}', 'description', this.value)">${displayPOAM.description}</textarea>
+                    <div class="w-full px-3 py-2 border border-slate-200 rounded bg-slate-50 text-slate-700 min-h-[72px]">
+                        ${displayPOAM.description || 'No description available'}
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">This description is from the scan data and cannot be edited</p>
                 </div>
+                
+                <!-- CVE References -->
+                ${poam.cves && poam.cves.length > 0 ? `
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Related CVEs</label>
+                    <div class="flex flex-wrap gap-2">
+                        ${poam.cves.map(cve => `
+                            <a href="https://nvd.nist.gov/vuln/detail/${cve}" target="_blank" 
+                               class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium hover:bg-blue-100 transition-colors">
+                                ${cve}
+                                <i class="fas fa-external-link-alt text-xs ml-1"></i>
+                            </a>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
                 
                 <!-- AFFECTED ASSETS - Always Visible -->
                 <div class="mb-6">
