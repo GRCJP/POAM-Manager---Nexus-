@@ -31,6 +31,17 @@
                     
                     <input type="file" id="scan-file-input" accept=".csv" class="hidden" onchange="handleScanFileSelect(event)">
                     
+                    <div id="upload-progress" class="mt-4 hidden">
+                        <div class="flex items-center justify-between text-xs font-semibold text-slate-600">
+                            <span id="upload-progress-text">Preparing import...</span>
+                            <span id="upload-progress-percent">0%</span>
+                        </div>
+                        <div class="mt-2 h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                            <div id="upload-progress-bar" class="h-2 bg-indigo-600 transition-all" style="width: 0%"></div>
+                        </div>
+                        <div id="upload-progress-detail" class="mt-2 text-[11px] text-slate-500">Waiting for file...</div>
+                    </div>
+
                     <div class="mt-4 flex justify-end gap-3">
                         <button onclick="closeUploadModal()" class="px-4 py-2 text-slate-600 hover:text-slate-800">Cancel</button>
                         <button onclick="document.getElementById('scan-file-input').click()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Choose File</button>
