@@ -97,6 +97,7 @@
                     <a href="#" onclick="showModule('vulnerability-tracking')" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 transition-colors">
                         <i class="fas fa-bug w-5"></i>
                         <span>Vulnerability Management</span>
+                        <span id="review-count-badge" class="hidden ml-auto px-2 py-0.5 bg-amber-500 text-white text-xs font-bold rounded-full">0</span>
                     </a>
 
                     <!-- Security Control POAMs -->
@@ -1110,21 +1111,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Needs Review Section -->
-            <div class="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-6 shadow-sm">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center">
-                        <i class="fas fa-exclamation-triangle text-amber-600 mr-3"></i>
-                        <h3 class="text-lg font-semibold text-amber-900">Needs Review</h3>
-                        <span class="ml-2 px-2 py-1 bg-amber-100 text-amber-800 text-xs font-medium rounded-full" id="needs-review-badge">0</span>
-                    </div>
-                    <a href="#" onclick="return false;" class="text-sm text-amber-400 font-medium cursor-not-allowed" title="Needs Review filter has been disabled">View all →</a>
-                </div>
-                <div class="space-y-2" id="needs-review-items">
-                    <p class="text-sm text-amber-700">No POAMs require review at this time.</p>
                 </div>
             </div>
 
@@ -2542,7 +2528,7 @@
     <script src="column-filters.js"></script>
     <script src="bulk-operations.js"></script>
     <script src="poam-detail-redesign.js?v=20260114-20"></script>
-    <script src="vulnerability-tracking.js?v=20260114-16"></script>
+    <script src="vulnerability-tracking.js?v=20260114-17"></script>
     <script src="script.js?v=20260114-7"></script>
 
 </body>
