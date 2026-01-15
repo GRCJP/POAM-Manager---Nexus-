@@ -7,8 +7,12 @@ console.log('📦 poam-database.js loading...');
 class POAMDatabase {
     constructor() {
         this.dbName = 'POAMDatabase';
-        this.version = 6;
+        this.version = 7;
         this.db = null;
+    }
+
+    hasStore(storeName) {
+        return !!(this.db && this.db.objectStoreNames && this.db.objectStoreNames.contains(storeName));
     }
 
     async init() {
@@ -451,6 +455,11 @@ class POAMDatabase {
         if (!this.db) {
             await this.init();
         }
+
+        if (!this.hasStore('milestones')) {
+            console.warn('⚠️ milestones store missing; skipping milestone add');
+            return null;
+        }
         
         const transaction = this.db.transaction(['milestones'], 'readwrite');
         const store = transaction.objectStore('milestones');
@@ -477,6 +486,11 @@ class POAMDatabase {
         if (!this.db) {
             await this.init();
         }
+
+        if (!this.hasStore('milestones')) {
+            console.warn('⚠️ milestones store missing; returning empty milestones');
+            return [];
+        }
         
         const transaction = this.db.transaction(['milestones'], 'readonly');
         const store = transaction.objectStore('milestones');
@@ -492,6 +506,11 @@ class POAMDatabase {
     async updateMilestone(milestoneId, updates) {
         if (!this.db) {
             await this.init();
+        }
+
+        if (!this.hasStore('milestones')) {
+            console.warn('⚠️ milestones store missing; skipping milestone update');
+            return null;
         }
         
         const transaction = this.db.transaction(['milestones'], 'readwrite');
@@ -532,6 +551,11 @@ class POAMDatabase {
         if (!this.db) {
             await this.init();
         }
+
+        if (!this.hasStore('comments')) {
+            console.warn('⚠️ comments store missing; skipping comment add');
+            return null;
+        }
         
         const transaction = this.db.transaction(['comments'], 'readwrite');
         const store = transaction.objectStore('comments');
@@ -554,6 +578,11 @@ class POAMDatabase {
     async getComments(poamId) {
         if (!this.db) {
             await this.init();
+        }
+
+        if (!this.hasStore('comments')) {
+            console.warn('⚠️ comments store missing; returning empty comments');
+            return [];
         }
         
         const transaction = this.db.transaction(['comments'], 'readonly');
