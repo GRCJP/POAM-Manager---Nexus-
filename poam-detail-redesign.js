@@ -209,7 +209,7 @@ function renderFocusedPOAMDetailPage(poam) {
                                         class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
                                         onchange="updatePOAMField('${poam.id}', 'systemId', this.value)">
                                     <option value="">Unassigned</option>
-                                    ${settingsManager.systems.map(sys => `
+                                    ${((window.settingsManager && settingsManager.systems) ? settingsManager.systems : []).map(sys => `
                                         <option value="${sys.id}" ${displayPOAM.systemId === sys.id ? 'selected' : ''}>${sys.name}</option>
                                     `).join('')}
                                 </select>
