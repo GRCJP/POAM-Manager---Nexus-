@@ -180,9 +180,6 @@ function renderFocusedPOAMDetailPage(poam) {
                     <button onclick="switchMainTab('assets')" id="main-tab-assets" class="px-1 py-4 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-all flex items-center gap-2">
                         <i class="fas fa-server"></i> Affected Assets (${displayPOAM.totalAffectedAssets || 0})
                     </button>
-                    <button onclick="switchMainTab('raw')" id="main-tab-raw" class="px-1 py-4 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-all flex items-center gap-2">
-                        <i class="fas fa-bug"></i> Raw Findings (${displayPOAM.rawFindings?.length || 0})
-                    </button>
                 </nav>
             </div>
             
@@ -321,12 +318,6 @@ function renderFocusedPOAMDetailPage(poam) {
                     </div>
                 </div>
 
-                <div id="section-raw" class="main-tab-section hidden h-full">
-                    <div class="h-full border border-slate-200 rounded-lg overflow-hidden flex flex-col">
-                        <div class="bg-slate-50 border-b border-slate-200 px-4 py-2"><span class="text-xs font-bold text-slate-600 uppercase tracking-wider">Source Scan Records</span></div>
-                        <div class="flex-1 overflow-y-auto">${renderRawFindings(displayPOAM.rawFindings || [])}</div>
-                    </div>
-                </div>
             </div>
             
             <div class="bg-slate-50 px-6 py-3 flex justify-end gap-3 border-t border-slate-200">
@@ -341,7 +332,7 @@ function renderFocusedPOAMDetailPage(poam) {
 
 function switchMainTab(tabName) {
     document.querySelectorAll('.main-tab-section').forEach(s => s.classList.add('hidden'));
-    ['details', 'assets', 'raw'].forEach(t => {
+    ['details', 'assets'].forEach(t => {
         const btn = document.getElementById(`main-tab-${t}`);
         if (btn) {
             btn.classList.remove('text-indigo-600', 'border-b-2', 'border-indigo-600', 'font-bold');
@@ -386,15 +377,6 @@ function renderAssetsList(assets) {
             </tbody>
         </table>
     `;
-}
-
-function renderRawFindings(findings) {
-    if (!findings || findings.length === 0) return '<div class="p-4 text-center text-slate-500">No raw findings</div>';
-    let html = `<div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-slate-100 border-b border-slate-200"><tr><th class="px-4 py-2 text-left font-semibold text-slate-700">Finding</th><th class="px-4 py-2 text-left font-semibold text-slate-700">Severity</th><th class="px-4 py-2 text-left font-semibold text-slate-700">First Detected</th></tr></thead><tbody class="divide-y divide-slate-100">`;
-    findings.forEach(f => {
-        html += `<tr class="hover:bg-slate-50"><td class="px-4 py-3"><div class="font-medium text-slate-900">${f.title || 'Unknown'}</div><div class="text-xs text-slate-500 mt-1">${f.description || 'No description'}</div></td><td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs font-semibold ${getSeverityColor(f.severity)}">${f.severity || 'Unknown'}</span></td><td class="px-4 py-3 text-slate-600">${f.firstDetected || 'N/A'}</td></tr>`;
-    });
-    return html + '</tbody></table></div>';
 }
 
 function getSeverityColor(s) {
