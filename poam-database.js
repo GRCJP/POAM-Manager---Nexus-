@@ -41,6 +41,20 @@ class POAMDatabase {
                     poamStore.createIndex('systemId', 'systemId', { unique: false });
                     poamStore.createIndex('findingStatus', 'findingStatus', { unique: false });
                     poamStore.createIndex('riskLevel', 'riskLevel', { unique: false });
+                    poamStore.createIndex('status', 'status', { unique: false });
+                    poamStore.createIndex('risk', 'risk', { unique: false });
+                } else {
+                    try {
+                        const poamStore = event.target.transaction.objectStore('poams');
+                        if (!poamStore.indexNames.contains('status')) {
+                            poamStore.createIndex('status', 'status', { unique: false });
+                        }
+                        if (!poamStore.indexNames.contains('risk')) {
+                            poamStore.createIndex('risk', 'risk', { unique: false });
+                        }
+                    } catch (e) {
+                        // ignore
+                    }
                 }
                 
                 // Create scans object store
@@ -64,6 +78,29 @@ class POAMDatabase {
                     console.log('📦 Creating systems object store');
                     const systemStore = db.createObjectStore('systems', { keyPath: 'id' });
                     systemStore.createIndex('name', 'name', { unique: false });
+                }
+
+                // Create milestones object store
+                if (!db.objectStoreNames.contains('milestones')) {
+                    console.log('📦 Creating milestones object store');
+                    const milestoneStore = db.createObjectStore('milestones', { keyPath: 'id', autoIncrement: true });
+                    milestoneStore.createIndex('poamId', 'poamId', { unique: false });
+                }
+
+                // Create comments object store
+                if (!db.objectStoreNames.contains('comments')) {
+                    console.log('📦 Creating comments object store');
+                    const commentStore = db.createObjectStore('comments', { keyPath: 'id', autoIncrement: true });
+                    commentStore.createIndex('poamId', 'poamId', { unique: false });
+                }
+
+                // Create poamScanSummaries object store
+                if (!db.objectStoreNames.contains('poamScanSummaries')) {
+                    console.log('📦 Creating poamScanSummaries object store');
+                    const summaryStore = db.createObjectStore('poamScanSummaries', { keyPath: 'id' });
+                    summaryStore.createIndex('poamId', 'poamId', { unique: false });
+                    summaryStore.createIndex('scanId', 'scanId', { unique: false });
+                    summaryStore.createIndex('poamScanId', ['poamId', 'scanId'], { unique: true });
                 }
                 
                 console.log('✅ Database upgrade complete');
