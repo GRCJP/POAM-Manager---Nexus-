@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 let currentPOAMDetail = null;
+let isPOAMEditMode = false;
 
 // UI Helpers for Detail View
 function getRiskBadge(risk) {
@@ -167,8 +168,9 @@ function renderFocusedPOAMDetailPage(poam) {
                     <span class="text-sm font-mono bg-slate-700 px-2 py-1 rounded">${poam.id}</span>
                     <h1 class="text-base font-semibold truncate" title="${displayPOAM.vulnerability}">${displayPOAM.vulnerability}</h1>
                 </div>
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-3">
                     ${getRiskBadge(displayPOAM.risk)}
+                    <button id="poam-edit-toggle" onclick="togglePOAMEditMode()" class="text-xs font-semibold px-3 py-1 rounded bg-slate-700 text-white hover:bg-slate-600">Edit</button>
                     <button onclick="closePOAMDetails()" class="text-slate-400 hover:text-white transition-colors"><i class="fas fa-times"></i></button>
                 </div>
             </div>
@@ -186,123 +188,134 @@ function renderFocusedPOAMDetailPage(poam) {
             
             <div class="flex-1 overflow-y-auto p-6 bg-white">
                 <div id="section-details" class="main-tab-section space-y-6">
-                    <!-- Key Information Grid -->
-                    <div class="grid grid-cols-2 gap-6">
-                        <!-- Left Column -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                            <div>
-                                <label for="poam-status-${poam.id}" class="block text-sm font-semibold text-slate-700 mb-1">Finding Status</label>
-                                <select id="poam-status-${poam.id}" 
-                                        class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
-                                        onchange="updatePOAMField('${poam.id}', 'findingStatus', this.value)">
-                                    <option value="open" ${displayPOAM.findingStatus === 'open' ? 'selected' : ''}>Open</option>
-                                    <option value="in-progress" ${displayPOAM.findingStatus === 'in-progress' ? 'selected' : ''}>In Progress</option>
-                                    <option value="completed" ${displayPOAM.findingStatus === 'completed' ? 'selected' : ''}>Completed</option>
-                                    <option value="risk-accepted" ${displayPOAM.findingStatus === 'risk-accepted' ? 'selected' : ''}>Risk Accepted</option>
-                                </select>
+                    <div class="grid grid-cols-12 gap-6">
+                        <div class="col-span-12 lg:col-span-8 space-y-4">
+                            <div class="border border-slate-200 rounded-lg p-4 space-y-4">
+                                <div>
+                                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Vulnerability Title</label>
+                                    <div data-edit="display" class="text-base font-semibold text-slate-900">${displayPOAM.vulnerability}</div>
+                                    <input data-edit="input" disabled
+                                           class="hidden w-full text-base font-semibold text-slate-900 border border-slate-200 rounded px-3 py-2"
+                                           value="${displayPOAM.vulnerability}" 
+                                           onchange="updatePOAMField('${poam.id}', 'vulnerabilityName', this.value)">
+                                </div>
+                                <div>
+                                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Finding Description</label>
+                                    <div data-edit="display" class="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">${displayPOAM.description || 'No description available'}</div>
+                                    <textarea data-edit="input" disabled
+                                              rows="4" class="hidden w-full text-sm text-slate-700 border border-slate-200 rounded px-3 py-2 resize-none"
+                                              onchange="updatePOAMField('${poam.id}', 'description', this.value)">${displayPOAM.description || ''}</textarea>
+                                </div>
+                                <div class="bg-emerald-50/60 border border-emerald-100 rounded-lg p-4">
+                                    <label class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Mitigation Strategy</label>
+                                    <div data-edit="display" class="text-sm text-emerald-900 leading-relaxed whitespace-pre-wrap">${displayPOAM.mitigation || 'No mitigation specified'}</div>
+                                    <textarea data-edit="input" disabled
+                                              rows="3" class="hidden w-full text-sm text-emerald-900 border border-emerald-200 rounded px-3 py-2 resize-none"
+                                              onchange="updatePOAMField('${poam.id}', 'mitigation', this.value)">${displayPOAM.mitigation || ''}</textarea>
+                                </div>
                             </div>
-                            <div>
-                                <label for="poam-system-${poam.id}" class="block text-sm font-semibold text-slate-700 mb-1">Assigned System</label>
-                                <select id="poam-system-${poam.id}" 
-                                        class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
-                                        onchange="updatePOAMField('${poam.id}', 'systemId', this.value)">
-                                    <option value="">Unassigned</option>
-                                    ${((window.settingsManager && settingsManager.systems) ? settingsManager.systems : []).map(sys => `
-                                        <option value="${sys.id}" ${displayPOAM.systemId === sys.id ? 'selected' : ''}>${sys.name}</option>
-                                    `).join('')}
-                                </select>
-                            </div>
-                        </div>
-                        <!-- Right Column -->
-                        <div class="space-y-4">
-                            <div>
-                                <label for="poam-risk-${poam.id}" class="block text-sm font-medium text-slate-700 mb-1">Risk Level</label>
-                                <select id="poam-risk-${poam.id}" 
-                                        class="w-full px-3 py-2 border border-slate-300 rounded" 
-                                        onchange="updatePOAMField('${poam.id}', 'riskLevel', this.value)">
-                                    ${getRiskOptions(displayPOAM.risk)}
-                                </select>
-                            </div>
-                            <div>
-                                <label for="poam-poc-${poam.id}" class="block text-sm font-medium text-slate-700 mb-1">Point of Contact</label>
-                                <input id="poam-poc-${poam.id}" 
-                                       type="text" value="${displayPOAM.poc}" 
-                                       class="w-full px-3 py-2 border border-slate-300 rounded" 
-                                       onchange="updatePOAMField('${poam.id}', 'poc', this.value)">
-                            </div>
-                            <div>
-                                <label for="poam-family-${poam.id}" class="block text-sm font-medium text-slate-700 mb-1">Control Family</label>
-                                <select id="poam-family-${poam.id}" 
-                                        class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                                        onchange="updatePOAMField('${poam.id}', 'controlFamily', this.value)">
-                                    ${getControlFamilyOptions(displayPOAM.controlFamily)}
-                                </select>
+                            <div class="border border-slate-200 rounded-lg p-4 space-y-4">
+                                <div>
+                                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Impacted Components / URL Details</label>
+                                    <div data-edit="display" class="text-sm text-slate-700 whitespace-pre-wrap">${displayPOAM.impactedComponents || 'Not specified'}</div>
+                                    <textarea data-edit="input" disabled
+                                              rows="2" class="hidden w-full text-sm text-slate-700 border border-slate-200 rounded px-3 py-2 resize-none"
+                                              onchange="updatePOAMField('${poam.id}', 'impactedComponents', this.value)">${displayPOAM.impactedComponents || ''}</textarea>
+                                </div>
+                                <div>
+                                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Internal Notes</label>
+                                    <div data-edit="display" class="text-sm text-slate-700 whitespace-pre-wrap">${displayPOAM.notes || 'No notes added'}</div>
+                                    <textarea data-edit="input" disabled
+                                              rows="3" class="hidden w-full text-sm text-slate-700 border border-slate-200 rounded px-3 py-2 resize-none"
+                                              onchange="updatePOAMField('${poam.id}', 'notes', this.value)">${displayPOAM.notes || ''}</textarea>
+                                </div>
                             </div>
                         </div>
-                        <!-- Right Column -->
-                        <div class="space-y-4">
-                            <div>
-                                <label for="poam-initial-date-${poam.id}" class="block text-sm font-medium text-slate-700 mb-1">Initial Scheduled Completion</label>
-                                <input id="poam-initial-date-${poam.id}" 
-                                       type="date" value="${displayPOAM.initialDate}" 
-                                       class="w-full px-3 py-2 border border-slate-300 rounded" 
-                                       onchange="updatePOAMField('${poam.id}', 'initialScheduledCompletionDate', this.value)">
+                        <div class="col-span-12 lg:col-span-4 space-y-4">
+                            <div class="border border-slate-200 rounded-lg p-4 space-y-4">
+                                <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Admin & Timeline</div>
+                                <div>
+                                    <label class="text-[10px] font-bold text-slate-500 uppercase">POC</label>
+                                    <div data-edit="display" class="text-sm font-semibold text-slate-800">${displayPOAM.poc || 'Unassigned'}</div>
+                                    <input data-edit="input" disabled
+                                           class="hidden w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded px-3 py-2"
+                                           value="${displayPOAM.poc || ''}"
+                                           onchange="updatePOAMField('${poam.id}', 'poc', this.value)">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] font-bold text-slate-500 uppercase">Finding Status</label>
+                                    <div data-edit="display" class="text-sm font-semibold text-slate-800">${displayPOAM.status}</div>
+                                    <select data-edit="input" disabled
+                                            class="hidden w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded px-3 py-2"
+                                            onchange="updatePOAMField('${poam.id}', 'findingStatus', this.value)">
+                                        <option value="open" ${displayPOAM.findingStatus === 'open' ? 'selected' : ''}>Open</option>
+                                        <option value="in-progress" ${displayPOAM.findingStatus === 'in-progress' ? 'selected' : ''}>In Progress</option>
+                                        <option value="completed" ${displayPOAM.findingStatus === 'completed' ? 'selected' : ''}>Completed</option>
+                                        <option value="risk-accepted" ${displayPOAM.findingStatus === 'risk-accepted' ? 'selected' : ''}>Risk Accepted</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] font-bold text-slate-500 uppercase">Risk Level</label>
+                                    <div data-edit="display" class="text-sm font-semibold text-slate-800">${displayPOAM.risk}</div>
+                                    <select data-edit="input" disabled
+                                            class="hidden w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded px-3 py-2"
+                                            onchange="updatePOAMField('${poam.id}', 'riskLevel', this.value)">
+                                        ${getRiskOptions(displayPOAM.risk)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] font-bold text-slate-500 uppercase">Control Family</label>
+                                    <div data-edit="display" class="text-sm font-semibold text-slate-800">${displayPOAM.controlFamily}</div>
+                                    <select data-edit="input" disabled
+                                            class="hidden w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded px-3 py-2"
+                                            onchange="updatePOAMField('${poam.id}', 'controlFamily', this.value)">
+                                        ${getControlFamilyOptions(displayPOAM.controlFamily)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] font-bold text-slate-500 uppercase">Resources Required</label>
+                                    <div data-edit="display" class="text-sm text-slate-700">${displayPOAM.resources}</div>
+                                    <select data-edit="input" disabled
+                                            class="hidden w-full text-sm text-slate-700 border border-slate-200 rounded px-3 py-2"
+                                            onchange="updatePOAMField('${poam.id}', 'resourcesRequired', this.value)">
+                                        <option value="Human Capital" ${displayPOAM.resources === 'Human Capital' ? 'selected' : ''}>Human Capital</option>
+                                        <option value="Application Coordination and Testing" ${displayPOAM.resources === 'Application Coordination and Testing' ? 'selected' : ''}>Application Coordination and Testing</option>
+                                        <option value="Financial / Budgetary Resources" ${displayPOAM.resources === 'Financial / Budgetary Resources' ? 'selected' : ''}>Financial / Budgetary Resources</option>
+                                        <option value="Third-Party or Vendor Resources" ${displayPOAM.resources === 'Third-Party or Vendor Resources' ? 'selected' : ''}>Third-Party or Vendor Resources</option>
+                                    </select>
+                                </div>
+                                <div class="grid grid-cols-1 gap-3 pt-2">
+                                    <div>
+                                        <label class="text-[10px] font-bold text-slate-500 uppercase">Initial Completion</label>
+                                        <div data-edit="display" class="text-sm font-semibold text-slate-800">${displayPOAM.initialDate || 'N/A'}</div>
+                                        <input data-edit="input" disabled
+                                               type="date" value="${displayPOAM.initialDate}"
+                                               class="hidden w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded px-3 py-2"
+                                               onchange="updatePOAMField('${poam.id}', 'initialScheduledCompletionDate', this.value)">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] font-bold text-slate-500 uppercase">Updated Completion</label>
+                                        <div data-edit="display" class="text-sm font-semibold text-slate-800">${displayPOAM.dueDate || 'N/A'}</div>
+                                        <input data-edit="input" disabled
+                                               type="date" value="${displayPOAM.dueDate}"
+                                               class="hidden w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded px-3 py-2"
+                                               onchange="updatePOAMField('${poam.id}', 'updatedScheduledCompletionDate', this.value)">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] font-bold text-slate-500 uppercase">Actual Completion</label>
+                                        <div data-edit="display" class="text-sm font-semibold text-slate-800">${displayPOAM.actualDate || 'N/A'}</div>
+                                        <input data-edit="input" disabled
+                                               type="date" value="${displayPOAM.actualDate}"
+                                               class="hidden w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded px-3 py-2"
+                                               onchange="updatePOAMField('${poam.id}', 'actualCompletionDate', this.value)">
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <label for="poam-due-date-${poam.id}" class="block text-sm font-medium text-slate-700 mb-1">Updated Scheduled Completion</label>
-                                <input id="poam-due-date-${poam.id}" 
-                                       type="date" value="${displayPOAM.dueDate}" 
-                                       class="w-full px-3 py-2 border border-slate-300 rounded" 
-                                       onchange="updatePOAMField('${poam.id}', 'updatedScheduledCompletionDate', this.value)">
-                            </div>
-                            <div>
-                                <label for="poam-actual-date-${poam.id}" class="block text-sm font-medium text-slate-700 mb-1">Actual Completion</label>
-                                <input id="poam-actual-date-${poam.id}" 
-                                       type="date" value="${displayPOAM.actualDate}" 
-                                       class="w-full px-3 py-2 border border-slate-300 rounded" 
-                                       onchange="updatePOAMField('${poam.id}', 'actualCompletionDate', this.value)">
-                            </div>
-                            <div>
-                                <label for="poam-resources-${poam.id}" class="block text-sm font-medium text-slate-700 mb-1">Resources Required</label>
-                                <select id="poam-resources-${poam.id}" 
-                                        class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                                        onchange="updatePOAMField('${poam.id}', 'resourcesRequired', this.value)">
-                                    <option value="Human Capital" ${displayPOAM.resources === 'Human Capital' ? 'selected' : ''}>Human Capital</option>
-                                    <option value="Application Coordination and Testing" ${displayPOAM.resources === 'Application Coordination and Testing' ? 'selected' : ''}>Application Coordination and Testing</option>
-                                    <option value="Financial / Budgetary Resources" ${displayPOAM.resources === 'Financial / Budgetary Resources' ? 'selected' : ''}>Financial / Budgetary Resources</option>
-                                    <option value="Third-Party or Vendor Resources" ${displayPOAM.resources === 'Third-Party or Vendor Resources' ? 'selected' : ''}>Third-Party or Vendor Resources</option>
-                                </select>
+                            <div class="border border-slate-200 rounded-lg p-4">
+                                <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-3">Milestones</div>
+                                ${renderMilestonesList(poam.milestones || [])}
                             </div>
                         </div>
-                    </div>
-                    <div>
-                        <div class="flex items-center justify-between mb-1">
-                            <label for="desc-editable-${poam.id}" class="block text-sm font-medium text-slate-700">Finding Description</label>
-                            <button onclick="toggleDescriptionEdit('${poam.id}')" class="text-xs text-indigo-600 font-medium flex items-center gap-1">
-                                <i class="fas fa-edit"></i> <span id="desc-edit-btn-${poam.id}">Edit</span>
-                            </button>
-                        </div>
-                        <div id="desc-readonly-${poam.id}" class="w-full px-3 py-2 border border-slate-200 rounded bg-slate-50 text-slate-700 min-h-[72px] whitespace-pre-wrap">${displayPOAM.description || 'No description available'}</div>
-                        <textarea id="desc-editable-${poam.id}" rows="3" class="hidden w-full px-3 py-2 border border-slate-300 rounded resize-none" onblur="saveDescriptionEdit('${poam.id}')">${displayPOAM.description || ''}</textarea>
-                    </div>
-                    <div>
-                        <label for="poam-mitigation-${poam.id}" class="block text-sm font-medium text-slate-700 mb-1">Mitigation Strategy</label>
-                        <textarea id="poam-mitigation-${poam.id}" 
-                                  rows="6" class="w-full px-3 py-2 border border-slate-300 rounded resize-y min-h-[150px]" 
-                                  onchange="updatePOAMField('${poam.id}', 'mitigation', this.value)">${displayPOAM.mitigation || ''}</textarea>
-                    </div>
-                    <div>
-                        <label for="poam-impacted-components-${poam.id}" class="block text-sm font-semibold text-slate-700 mb-1">Impacted Components / URL Details</label>
-                        <textarea id="poam-impacted-components-${poam.id}" 
-                                  rows="2" class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
-                                  onchange="updatePOAMField('${poam.id}', 'impactedComponents', this.value)"
-                                  placeholder="List affected servers, applications, or URLs...">${displayPOAM.impactedComponents || ''}</textarea>
-                    </div>
-                    <div>
-                        <label for="poam-notes-${poam.id}" class="block text-sm font-semibold text-slate-700 mb-1">Internal Notes / Comments</label>
-                        <textarea id="poam-notes-${poam.id}" 
-                                  rows="4" class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none resize-y" 
-                                  onchange="updatePOAMField('${poam.id}', 'notes', this.value)">${displayPOAM.notes}</textarea>
                     </div>
                 </div>
 
@@ -329,6 +342,26 @@ function renderFocusedPOAMDetailPage(poam) {
             </div>
         </div>
     `;
+
+    isPOAMEditMode = false;
+    const editBtn = document.getElementById('poam-edit-toggle');
+    if (editBtn) editBtn.textContent = 'Edit';
+}
+
+function togglePOAMEditMode() {
+    isPOAMEditMode = !isPOAMEditMode;
+    document.querySelectorAll('[data-edit="display"]').forEach(el => {
+        el.classList.toggle('hidden', isPOAMEditMode);
+    });
+    document.querySelectorAll('[data-edit="input"]').forEach(el => {
+        el.classList.toggle('hidden', !isPOAMEditMode);
+        if ('disabled' in el) {
+            el.disabled = !isPOAMEditMode;
+        }
+    });
+
+    const editBtn = document.getElementById('poam-edit-toggle');
+    if (editBtn) editBtn.textContent = isPOAMEditMode ? 'Done' : 'Edit';
 }
 
 function switchMainTab(tabName) {
