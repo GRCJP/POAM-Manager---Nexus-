@@ -173,7 +173,7 @@ class QualysProcessor {
                 risk: this.mapSeverityToRisk(severity),
                 
                 // Vulnerability details
-                description: row['CVE-Description']?.trim() || row['Title']?.trim() || 'No description available',
+                description: row['CVE-Description']?.trim() || row['Description']?.trim() || row['Title']?.trim() || 'No description available',
                 solution: row['Solution']?.trim() || 'No solution available',
                 results: row['Results']?.trim() || '',
                 
