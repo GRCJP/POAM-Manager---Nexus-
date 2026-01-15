@@ -4,6 +4,19 @@
 
 let currentPOAMDetail = null;
 let isPOAMEditMode = false;
+if (!window.pocTeams) {
+    window.pocTeams = [
+        'Unassigned',
+        'Windows Systems Team',
+        'Linux Systems Team',
+        'Network Security Team',
+        'Application Security Team',
+        'Database Security Team',
+        'Cloud Security Team',
+        'Endpoint Security Team',
+        'Critical Systems Team'
+    ];
+}
 
 // UI Helpers for Detail View
 function getRiskBadge(risk) {
