@@ -165,11 +165,6 @@ function renderFocusedPOAMDetailPage(poam) {
                 <div class="flex items-center gap-4">
                     <span class="text-sm font-mono bg-slate-700 px-2 py-1 rounded">${poam.id}</span>
                     <h1 class="text-base font-semibold truncate" title="${displayPOAM.vulnerability}">${displayPOAM.vulnerability}</h1>
-                    <span class="text-[10px] text-slate-400 font-mono ml-4">
-                        rawFindings=${displayPOAM.rawFindings?.length || 0} 
-                        affectedAssets=${displayPOAM.affectedAssets?.length || 0} 
-                        totalAffectedAssets=${displayPOAM.totalAffectedAssets || 0}
-                    </span>
                 </div>
                 <div class="flex items-center gap-4">
                     ${getRiskBadge(displayPOAM.risk)}
