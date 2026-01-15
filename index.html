@@ -1114,62 +1114,62 @@
                 </div>
             </div>
 
-            <!-- Review Issues Panel -->
-            <div id="review-issues-panel" class="hidden bg-amber-50 border border-amber-200 rounded-xl p-6 mb-6">
-                <div class="flex items-center justify-between mb-4">
+            <!-- Review Issues Panel (Collapsible) -->
+            <div id="review-issues-panel" class="hidden mb-6">
+                <button onclick="toggleReviewIssuesPanel()" class="w-full flex items-center justify-between p-4 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors">
                     <div class="flex items-center gap-3">
-                        <i class="fas fa-exclamation-triangle text-amber-600 text-xl"></i>
-                        <div>
-                            <h3 class="text-lg font-bold text-amber-900">POAMs Requiring Review</h3>
-                            <p class="text-sm text-amber-700">These POAMs have missing or incomplete data</p>
-                        </div>
+                        <i class="fas fa-exclamation-triangle text-amber-600"></i>
+                        <span class="text-sm font-semibold text-amber-900">POAMs Requiring Review</span>
+                        <span class="px-2 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full" id="review-issues-count">0</span>
                     </div>
-                    <span class="px-3 py-1 bg-amber-100 text-amber-800 text-sm font-bold rounded-full" id="review-issues-count">0</span>
-                </div>
+                    <i class="fas fa-chevron-down text-amber-600" id="review-issues-chevron"></i>
+                </button>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                    <!-- Missing POC -->
-                    <div class="bg-white rounded-lg border border-amber-200 p-4">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-sm font-semibold text-slate-700">Missing POC</span>
-                            <span class="px-2 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full" id="missing-poc-count">0</span>
+                <div id="review-issues-content" class="hidden mt-2 bg-white border border-amber-200 rounded-lg p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                        <!-- Missing POC -->
+                        <div class="bg-amber-50 rounded-lg border border-amber-200 p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-semibold text-slate-700">Missing POC</span>
+                                <span class="px-2 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full" id="missing-poc-count">0</span>
+                            </div>
+                            <p class="text-xs text-slate-600">POAMs without assigned Point of Contact</p>
                         </div>
-                        <p class="text-xs text-slate-600">POAMs without assigned Point of Contact</p>
+                        
+                        <!-- Missing Dates -->
+                        <div class="bg-amber-50 rounded-lg border border-amber-200 p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-semibold text-slate-700">Missing Dates</span>
+                                <span class="px-2 py-1 bg-orange-100 text-orange-800 text-xs font-bold rounded-full" id="missing-dates-count">0</span>
+                            </div>
+                            <p class="text-xs text-slate-600">POAMs without due dates</p>
+                        </div>
+                        
+                        <!-- Missing Control Family -->
+                        <div class="bg-amber-50 rounded-lg border border-amber-200 p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-semibold text-slate-700">Missing Controls</span>
+                                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-bold rounded-full" id="missing-controls-count">0</span>
+                            </div>
+                            <p class="text-xs text-slate-600">POAMs without control family assignment</p>
+                        </div>
+                        
+                        <!-- Low Confidence -->
+                        <div class="bg-amber-50 rounded-lg border border-amber-200 p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-semibold text-slate-700">Low Confidence</span>
+                                <span class="px-2 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full" id="low-confidence-count">0</span>
+                            </div>
+                            <p class="text-xs text-slate-600">POAMs flagged for manual review</p>
+                        </div>
                     </div>
                     
-                    <!-- Missing Dates -->
-                    <div class="bg-white rounded-lg border border-amber-200 p-4">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-sm font-semibold text-slate-700">Missing Dates</span>
-                            <span class="px-2 py-1 bg-orange-100 text-orange-800 text-xs font-bold rounded-full" id="missing-dates-count">0</span>
-                        </div>
-                        <p class="text-xs text-slate-600">POAMs without due dates</p>
+                    <div class="flex items-center justify-between">
+                        <p class="text-sm text-slate-600">Click on a POAM in the table below to review and fix these issues</p>
+                        <button onclick="showAllReviewIssues()" class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium">
+                            View All Issues
+                        </button>
                     </div>
-                    
-                    <!-- Missing Control Family -->
-                    <div class="bg-white rounded-lg border border-amber-200 p-4">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-sm font-semibold text-slate-700">Missing Controls</span>
-                            <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-bold rounded-full" id="missing-controls-count">0</span>
-                        </div>
-                        <p class="text-xs text-slate-600">POAMs without control family assignment</p>
-                    </div>
-                    
-                    <!-- Low Confidence -->
-                    <div class="bg-white rounded-lg border border-amber-200 p-4">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-sm font-semibold text-slate-700">Low Confidence</span>
-                            <span class="px-2 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full" id="low-confidence-count">0</span>
-                        </div>
-                        <p class="text-xs text-slate-600">POAMs flagged for manual review</p>
-                    </div>
-                </div>
-                
-                <div class="flex items-center justify-between">
-                    <p class="text-sm text-amber-700">Click on a POAM in the table below to review and fix these issues</p>
-                    <button onclick="showAllReviewIssues()" class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium">
-                        View All Issues
-                    </button>
                 </div>
             </div>
 
@@ -2601,14 +2601,14 @@
     <script src="poam-database.js?v=20260114-5"></script>
     <script src="vulnerability-analysis-engine.js"></script>
     <script src="vulnerability-analysis-engine-v2.js?v=20260114-1"></script>
-    <script src="vulnerability-analysis-engine-v3.js?v=20260114-32"></script>
+    <script src="vulnerability-analysis-engine-v3.js?v=20260114-33"></script>
     <script src="csv-format-processors.js?v=20260114-2"></script>
     <script src="evidence-functions.js"></script>
     <script src="sidebar-navigation.js"></script>
     <script src="column-filters.js"></script>
     <script src="bulk-operations.js"></script>
     <script src="poam-detail-redesign.js?v=20260114-23"></script>
-    <script src="vulnerability-tracking.js?v=20260114-20"></script>
+    <script src="vulnerability-tracking.js?v=20260114-21"></script>
     <script src="script.js?v=20260114-7"></script>
 
 </body>
