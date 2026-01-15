@@ -4,6 +4,49 @@
 
 let currentPOAMDetail = null;
 
+// Toggle description edit mode
+function toggleDescriptionEdit(poamId) {
+    const readonlyDiv = document.getElementById(`desc-readonly-${poamId}`);
+    const editableTextarea = document.getElementById(`desc-editable-${poamId}`);
+    const editBtn = document.getElementById(`desc-edit-btn-${poamId}`);
+    
+    if (readonlyDiv.classList.contains('hidden')) {
+        // Currently editing - switch to readonly
+        readonlyDiv.classList.remove('hidden');
+        editableTextarea.classList.add('hidden');
+        editBtn.textContent = 'Edit';
+    } else {
+        // Currently readonly - switch to editing
+        readonlyDiv.classList.add('hidden');
+        editableTextarea.classList.remove('hidden');
+        editableTextarea.focus();
+        editBtn.textContent = 'Cancel';
+    }
+}
+
+// Save description edit
+async function saveDescriptionEdit(poamId) {
+    const readonlyDiv = document.getElementById(`desc-readonly-${poamId}`);
+    const editableTextarea = document.getElementById(`desc-editable-${poamId}`);
+    const editBtn = document.getElementById(`desc-edit-btn-${poamId}`);
+    
+    // Get new value
+    const newDescription = editableTextarea.value.trim();
+    
+    // Update readonly display
+    readonlyDiv.textContent = newDescription || 'No description available';
+    
+    // Switch back to readonly mode
+    readonlyDiv.classList.remove('hidden');
+    editableTextarea.classList.add('hidden');
+    editBtn.textContent = 'Edit';
+    
+    // Save to database
+    await updatePOAMField(poamId, 'description', newDescription);
+    
+    console.log(`✅ Updated description for ${poamId}`);
+}
+
 async function showPOAMDetails(poamId) {
     console.log(`🔍 Loading POAM details for: ${poamId}`);
     
@@ -262,13 +305,24 @@ function renderFocusedPOAMDetailPage(poam, scanData) {
                     </div>
                 </div>
                 
-                <!-- Description (Read-only from scan data) -->
+                <!-- Description (Editable with button) -->
                 <div class="mb-6">
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Finding Description</label>
-                    <div class="w-full px-3 py-2 border border-slate-200 rounded bg-slate-50 text-slate-700 min-h-[72px]">
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-sm font-medium text-slate-700">Finding Description</label>
+                        <button onclick="toggleDescriptionEdit('${poam.id}')" 
+                                class="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1">
+                            <i class="fas fa-edit"></i>
+                            <span id="desc-edit-btn-${poam.id}">Edit</span>
+                        </button>
+                    </div>
+                    <div id="desc-readonly-${poam.id}" class="w-full px-3 py-2 border border-slate-200 rounded bg-slate-50 text-slate-700 min-h-[72px]">
                         ${displayPOAM.description || 'No description available'}
                     </div>
-                    <p class="text-xs text-slate-500 mt-1">This description is from the scan data and cannot be edited</p>
+                    <textarea id="desc-editable-${poam.id}" 
+                              rows="3" 
+                              class="hidden w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+                              onblur="saveDescriptionEdit('${poam.id}')">${displayPOAM.description || ''}</textarea>
+                    <p class="text-xs text-slate-500 mt-1">From scan data - click Edit to modify if needed</p>
                 </div>
                 
                 <!-- CVE References -->
