@@ -6,18 +6,25 @@ console.log('📦 poam-database.js loading...');
 
 class POAMDatabase {
     constructor() {
-        this.dbName = 'POAMVulnerabilityDB';
-        this.version = 3; // Increment to trigger schema upgrade for scan snapshots
+        this.dbName = 'POAMDatabase';
+        this.version = 6;
         this.db = null;
     }
 
     async init() {
         return new Promise((resolve, reject) => {
-            const request = indexedDB.open('POAMDatabase', 3);
+            const request = indexedDB.open(this.dbName, this.version);
             
             request.onerror = () => reject(request.error);
             request.onsuccess = () => {
                 this.db = request.result;
+                this.db.onversionchange = () => {
+                    try {
+                        this.db.close();
+                    } catch (e) {
+                        // ignore
+                    }
+                };
                 resolve();
             };
             
@@ -25,52 +32,41 @@ class POAMDatabase {
                 const db = event.target.result;
                 const oldVersion = event.oldVersion;
                 
-                // Create POAMs object store
+                console.log(`🔄 Upgrading database from version ${oldVersion} to ${db.version}`);
+                
+                // Create poams object store
                 if (!db.objectStoreNames.contains('poams')) {
+                    console.log('📦 Creating poams object store');
                     const poamStore = db.createObjectStore('poams', { keyPath: 'id' });
-                    poamStore.createIndex('status', 'status', { unique: false });
-                    poamStore.createIndex('risk', 'risk', { unique: false });
-                    poamStore.createIndex('dueDate', 'dueDate', { unique: false });
-                    poamStore.createIndex('controlFamily', 'controlFamily', { unique: false });
-                    poamStore.createIndex('poc', 'poc', { unique: false });
+                    poamStore.createIndex('systemId', 'systemId', { unique: false });
+                    poamStore.createIndex('findingStatus', 'findingStatus', { unique: false });
+                    poamStore.createIndex('riskLevel', 'riskLevel', { unique: false });
                 }
                 
-                // Create scan results object store
-                if (!db.objectStoreNames.contains('scanResults')) {
-                    const scanStore = db.createObjectStore('scanResults', { keyPath: 'id', autoIncrement: true });
-                    scanStore.createIndex('poamId', 'poamId', { unique: false });
-                    scanStore.createIndex('scanDate', 'scanDate', { unique: false });
-                    scanStore.createIndex('assetId', 'assetId', { unique: false });
+                // Create scans object store
+                if (!db.objectStoreNames.contains('scans')) {
+                    console.log('📦 Creating scans object store');
+                    const scanStore = db.createObjectStore('scans', { keyPath: 'id' });
+                    scanStore.createIndex('timestamp', 'timestamp', { unique: false });
+                    scanStore.createIndex('scanType', 'scanType', { unique: false });
                 }
-                
-                // Create milestones object store
-                if (!db.objectStoreNames.contains('milestones')) {
-                    const milestoneStore = db.createObjectStore('milestones', { keyPath: 'id', autoIncrement: true });
-                    milestoneStore.createIndex('poamId', 'poamId', { unique: false });
-                    milestoneStore.createIndex('targetDate', 'targetDate', { unique: false });
-                }
-                
-                // Create ScanRun object store for scan snapshots
+
+                // Create scanRuns object store (compat with code paths that use scanRuns)
                 if (!db.objectStoreNames.contains('scanRuns')) {
-                    const scanRunStore = db.createObjectStore('scanRuns', { keyPath: 'scanId' });
-                    scanRunStore.createIndex('importedAt', 'importedAt', { unique: false });
-                    scanRunStore.createIndex('source', 'source', { unique: false });
+                    console.log('📦 Creating scanRuns object store');
+                    const scanRunStore = db.createObjectStore('scanRuns', { keyPath: 'id' });
+                    scanRunStore.createIndex('timestamp', 'timestamp', { unique: false });
+                    scanRunStore.createIndex('scanType', 'scanType', { unique: false });
                 }
                 
-                // Create PoamScanSummary object store for POAM-scan relationships
-                if (!db.objectStoreNames.contains('poamScanSummaries')) {
-                    const summaryStore = db.createObjectStore('poamScanSummaries', { keyPath: 'id', autoIncrement: true });
-                    summaryStore.createIndex('poamId', 'poamId', { unique: false });
-                    summaryStore.createIndex('scanId', 'scanId', { unique: false });
-                    summaryStore.createIndex('poamScanId', ['poamId', 'scanId'], { unique: true });
+                // Create systems object store
+                if (!db.objectStoreNames.contains('systems')) {
+                    console.log('📦 Creating systems object store');
+                    const systemStore = db.createObjectStore('systems', { keyPath: 'id' });
+                    systemStore.createIndex('name', 'name', { unique: false });
                 }
                 
-                // Create comments object store
-                if (!db.objectStoreNames.contains('comments')) {
-                    const commentStore = db.createObjectStore('comments', { keyPath: 'id', autoIncrement: true });
-                    commentStore.createIndex('poamId', 'poamId', { unique: false });
-                    commentStore.createIndex('timestamp', 'timestamp', { unique: false });
-                }
+                console.log('✅ Database upgrade complete');
             };
         });
     }
@@ -145,31 +141,33 @@ class POAMDatabase {
             // Metadata
             createdDate: poam.createdDate || new Date().toISOString(),
             lastModifiedDate: new Date().toISOString(),
-            
-            // Asset information
-            totalAffectedAssets: poam.totalAffectedAssets || poam.assets?.length || 0,
-            breachedAssets: poam.breachedAssets || 0,
-            
-            // Additional fields
-            confidenceLevel: poam.confidenceLevel || '',
+            scanId: poam.scanId || null,
             needsReview: poam.needsReview || false,
+            notes: poam.notes || '',
             
-            // Asset details with scan metadata
-            assets: this.transformAssetsWithMetadata(poam.assets || [])
+            // Data preservation (Critical Fix: Phase 6.20)
+            affectedAssets: poam.affectedAssets || [],
+            totalAffectedAssets: poam.totalAffectedAssets || poam.affectedAssets?.length || 0,
+            rawFindings: poam.rawFindings || []
         };
     }
 
     transformAssetsWithMetadata(assets) {
         return assets.map(asset => ({
-            id: asset.id || asset.assetId || asset.name || 'Unknown',
-            name: asset.name || asset.assetId || 'Unknown Asset',
+            id: asset.id || asset.assetId || asset.asset_id || asset.name || 'Unknown',
+            name: asset.name || asset.assetName || asset.asset_name || asset.assetId || 'Unknown Asset',
+            asset_id: asset.asset_id || asset.assetId || asset.id || 'Unknown',
+            asset_name: asset.asset_name || asset.assetName || asset.name || 'Unknown Asset',
+            ipv4: asset.ipv4 || asset.ip || asset.asset_ipv4 || '',
+            os: asset.os || asset.operatingSystem || 'Unknown',
+            source_field: asset.source_field || '',
             status: asset.status || 'affected',
             firstDetected: asset.firstDetected || asset.scanDate || new Date().toISOString().split('T')[0],
             lastDetected: asset.lastDetected || asset.scanDate || new Date().toISOString().split('T')[0],
             result: asset.result || asset.vulnerability || 'Scan metadata not available for this asset',
             solution: asset.solution || asset.remediation || 'Scan metadata not available for this asset',
             raw: asset.raw || asset.rawData || 'No raw scan data available',
-            ip: asset.ip || '',
+            ip: asset.ip || asset.ipv4 || asset.asset_ipv4 || '',
             port: asset.port || '',
             protocol: asset.protocol || '',
             operatingSystem: asset.operatingSystem || asset.os || 'Unknown'
@@ -219,6 +217,38 @@ class POAMDatabase {
             const request = store.put(formalPOAM);
             request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
+        });
+    }
+
+    async updatePOAM(id, updates) {
+        if (!this.db) {
+            await this.init();
+        }
+
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['poams'], 'readwrite');
+            const store = transaction.objectStore('poams');
+
+            const getRequest = store.get(id);
+            getRequest.onsuccess = () => {
+                const poam = getRequest.result;
+                if (!poam) {
+                    reject(new Error(`POAM with ID ${id} not found`));
+                    return;
+                }
+
+                // Merge updates and set last modified
+                const updatedPoam = {
+                    ...poam,
+                    ...updates,
+                    lastModifiedDate: new Date().toISOString()
+                };
+
+                const putRequest = store.put(updatedPoam);
+                putRequest.onsuccess = () => resolve(putRequest.result);
+                putRequest.onerror = () => reject(putRequest.error);
+            };
+            getRequest.onerror = () => reject(getRequest.error);
         });
     }
 
@@ -286,6 +316,43 @@ class POAMDatabase {
                 console.error('Failed to clear POAMs:', request.error);
                 reject(request.error);
             };
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // SYSTEM MANAGEMENT
+    // ═══════════════════════════════════════════════════════════════
+
+    async getSystems() {
+        if (!this.db) await this.init();
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['systems'], 'readonly');
+            const store = transaction.objectStore('systems');
+            const request = store.getAll();
+            request.onsuccess = () => resolve(request.result || []);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async addSystem(system) {
+        if (!this.db) await this.init();
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['systems'], 'readwrite');
+            const store = transaction.objectStore('systems');
+            const request = store.put(system);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async deleteSystem(id) {
+        if (!this.db) await this.init();
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['systems'], 'readwrite');
+            const store = transaction.objectStore('systems');
+            const request = store.delete(id);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
         });
     }
 
@@ -472,13 +539,25 @@ class POAMDatabase {
     // SCAN RUN MANAGEMENT
     // ═══════════════════════════════════════════════════════════════
 
+    getScanRunStoreName() {
+        if (!this.db) return 'scanRuns';
+        if (this.db.objectStoreNames.contains('scanRuns')) return 'scanRuns';
+        if (this.db.objectStoreNames.contains('scans')) return 'scans';
+        return 'scanRuns';
+    }
+
     async saveScanRun(scanRun) {
         if (!this.db) {
             await this.init();
         }
-        
-        const transaction = this.db.transaction(['scanRuns'], 'readwrite');
-        const store = transaction.objectStore('scanRuns');
+
+        const storeName = this.getScanRunStoreName();
+        if (!this.db.objectStoreNames.contains(storeName)) {
+            throw new Error(`Scan store '${storeName}' not found in IndexedDB`);
+        }
+
+        const transaction = this.db.transaction([storeName], 'readwrite');
+        const store = transaction.objectStore(storeName);
         
         return new Promise((resolve, reject) => {
             const request = store.put(scanRun);
@@ -491,9 +570,14 @@ class POAMDatabase {
         if (!this.db) {
             await this.init();
         }
-        
-        const transaction = this.db.transaction(['scanRuns'], 'readonly');
-        const store = transaction.objectStore('scanRuns');
+
+        const storeName = this.getScanRunStoreName();
+        if (!this.db.objectStoreNames.contains(storeName)) {
+            return null;
+        }
+
+        const transaction = this.db.transaction([storeName], 'readonly');
+        const store = transaction.objectStore(storeName);
         
         return new Promise((resolve, reject) => {
             const request = store.get(scanId);
@@ -506,9 +590,14 @@ class POAMDatabase {
         if (!this.db) {
             await this.init();
         }
-        
-        const transaction = this.db.transaction(['scanRuns'], 'readonly');
-        const store = transaction.objectStore('scanRuns');
+
+        const storeName = this.getScanRunStoreName();
+        if (!this.db.objectStoreNames.contains(storeName)) {
+            return [];
+        }
+
+        const transaction = this.db.transaction([storeName], 'readonly');
+        const store = transaction.objectStore(storeName);
         
         return new Promise((resolve, reject) => {
             const request = store.getAll();
