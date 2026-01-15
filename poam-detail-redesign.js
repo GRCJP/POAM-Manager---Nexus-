@@ -428,6 +428,14 @@ async function saveAndClosePOAMDetails(poamId) {
     }
 }
 
+function viewPOAMDetails(poamId) {
+    return showPOAMDetails(poamId);
+}
+
+function closePOAMDetailsModal() {
+    return closePOAMDetails();
+}
+
 async function exportAssetScanData(poamId) {
     try {
         if (!poamDB || !poamDB.db) await poamDB.init();
