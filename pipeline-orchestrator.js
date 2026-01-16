@@ -148,7 +148,8 @@ class PipelineOrchestrator {
         const scanId = scanMetadata.scanId || `SCAN-${new Date().toISOString().replace(/[:.]/g, '-')}`;
         
         this.currentRun = {
-            runId,
+            id: runId,  // Primary key for scanRuns store
+            runId,      // Keep for backward compatibility
             scanId,
             createdAt: new Date().toISOString(),
             status: 'phase_1_gate',
