@@ -553,8 +553,8 @@ class PipelineOrchestrator {
             // Set top N POAMs to "In Progress" status
             const topPoams = sortedByAssets.slice(0, maxPrioritized);
             topPoams.forEach((poam, idx) => {
-                poam.status = 'In Progress';
-                poam.findingStatus = 'In Progress';
+                poam.status = 'in-progress';
+                poam.findingStatus = 'in-progress';
                 this.logger.info(`  #${idx + 1}: ${poam.title?.substring(0, 60)} (${poam.totalAffectedAssets} assets)`);
             });
             
