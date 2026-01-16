@@ -110,6 +110,14 @@ class QualysProcessor {
         console.log(`📋 Using ${headers.length} headers from row ${headerRowIndex + 1}`);
         console.log(`📋 Header names:`, headers);
         
+        // Debug: Find OS-related headers
+        const osHeaders = headers.filter((h, idx) => {
+            const lower = (h || '').toLowerCase();
+            return lower.includes('operat') || lower.includes('os') || lower.includes('system');
+        });
+        console.log(`🔍 OS-related headers found:`, osHeaders);
+        console.log(`🔍 Exact header at expected position (column 30):`, JSON.stringify(headers[30]));
+        
         // Process data rows (skip header row)
         for (let i = headerRowIndex + 1; i < data.length; i++) {
             const rowArray = data[i];
