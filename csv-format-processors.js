@@ -108,6 +108,7 @@ class QualysProcessor {
         // Get headers from the header row
         const headers = data[headerRowIndex];
         console.log(`📋 Using ${headers.length} headers from row ${headerRowIndex + 1}`);
+        console.log(`📋 Header names:`, headers);
         
         // Process data rows (skip header row)
         for (let i = headerRowIndex + 1; i < data.length; i++) {
