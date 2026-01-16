@@ -163,16 +163,8 @@ class QualysProcessor {
             const publishedDate = this.parseQualysDate(row['Published Date']);
             const patchReleased = this.parseQualysDate(row['Patch Released']);
 
-            // Debug: Log OS extraction for first few rows
+            // Extract OS value
             const osValue = row['Operating System']?.trim() || 'unknown';
-            if (Math.random() < 0.01) { // Log ~1% of rows to avoid spam
-                console.log(`🔍 OS extraction sample:`, {
-                    assetName: row['Asset Name'],
-                    rawOS: row['Operating System'],
-                    trimmedOS: osValue,
-                    hasOSColumn: 'Operating System' in row
-                });
-            }
             
             // Clean OS value: remove "OS: " prefix if present
             let cleanedOS = osValue;

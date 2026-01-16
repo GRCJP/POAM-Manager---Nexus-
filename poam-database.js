@@ -7,7 +7,7 @@ console.log('📦 poam-database.js loading...');
 class POAMDatabase {
     constructor() {
         this.dbName = 'POAMDatabase';
-        this.version = 7;
+        this.version = 8;
         this.db = null;
     }
 
@@ -105,6 +105,14 @@ class POAMDatabase {
                     summaryStore.createIndex('poamId', 'poamId', { unique: false });
                     summaryStore.createIndex('scanId', 'scanId', { unique: false });
                     summaryStore.createIndex('poamScanId', ['poamId', 'scanId'], { unique: true });
+                }
+                
+                // Create phaseArtifacts object store for pipeline state management
+                if (!db.objectStoreNames.contains('phaseArtifacts')) {
+                    console.log('📦 Creating phaseArtifacts object store');
+                    const artifactStore = db.createObjectStore('phaseArtifacts', { keyPath: 'id' });
+                    artifactStore.createIndex('runId', 'runId', { unique: false });
+                    artifactStore.createIndex('phaseIndex', 'phaseIndex', { unique: false });
                 }
                 
                 console.log('✅ Database upgrade complete');
@@ -778,6 +786,9 @@ class POAMDatabase {
 
 // Initialize global database instance
 const poamDB = new POAMDatabase();
+
+// Expose to window object for global access
+window.poamDB = poamDB;
 
 console.log('📦 poamDB created:', poamDB);
 console.log('📦 poamDB.getPOAM exists:', typeof poamDB.getPOAM);
