@@ -177,6 +177,7 @@ class POAMDatabase {
             resourcesRequired: poam.resourcesRequired || '',
             
             // Scheduling
+            dueDate: poam.dueDate || poam.initialScheduledCompletionDate || this.calculateDueDate(poam),
             initialScheduledCompletionDate: poam.initialScheduledCompletionDate || poam.dueDate || this.calculateDueDate(poam),
             updatedScheduledCompletionDate: poam.updatedScheduledCompletionDate || poam.dueDate || this.calculateDueDate(poam),
             actualCompletionDate: poam.actualCompletionDate || null,
