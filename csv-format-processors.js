@@ -174,6 +174,19 @@ class QualysProcessor {
                 });
             }
             
+            // Clean OS value: remove "OS: " prefix if present
+            let cleanedOS = osValue;
+            if (cleanedOS && cleanedOS !== 'unknown') {
+                cleanedOS = cleanedOS.replace(/^OS:\s*/i, '').trim();
+                // If after cleaning it's empty, set to empty string (not 'unknown')
+                if (!cleanedOS) {
+                    cleanedOS = '';
+                }
+            } else if (cleanedOS === 'unknown') {
+                // Convert 'unknown' to empty string so checkOSRules can try inference
+                cleanedOS = '';
+            }
+            
             return {
                 // Core vulnerability data
                 title: row['Title']?.trim() || 'Unknown Vulnerability',
@@ -183,7 +196,7 @@ class QualysProcessor {
                     assetId: row['Asset Id']?.trim() || 'unknown',
                     ipv4: row['Asset IPV4']?.trim() || '',
                     ipv6: row['Asset IPV6']?.trim() || '',
-                    operatingSystem: osValue,
+                    operatingSystem: cleanedOS,
                     tags: this.parseAssetTags(row['Asset Tags'])
                 },
                 ip: row['Asset IPV4']?.trim() || '',
