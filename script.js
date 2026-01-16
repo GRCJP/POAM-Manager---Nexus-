@@ -2,24 +2,57 @@
 
 // Module navigation
 function showModule(moduleName) {
+    // Save current module to localStorage for page refresh persistence
+    localStorage.setItem('currentModule', moduleName);
+    
     // Hide all modules
     const modules = document.querySelectorAll('.module');
     modules.forEach(module => {
         module.classList.add('hidden');
     });
     
-    // Show selected module
-    document.getElementById(moduleName + '-module').classList.remove('hidden');
+    // Show selected module with error handling
+    const targetModule = document.getElementById(moduleName + '-module');
+    if (targetModule) {
+        targetModule.classList.remove('hidden');
+        // If a module ends up with a 0x0 rect (common when layout collapses), force a sane box.
+        requestAnimationFrame(() => {
+            try {
+                const rect = targetModule.getBoundingClientRect();
+                if (rect.width === 0 || rect.height === 0) {
+                    targetModule.style.display = 'block';
+                    targetModule.style.width = '100%';
+                    targetModule.style.minHeight = '600px';
+                    targetModule.style.paddingBottom = '24px';
+                }
+            } catch (e) {
+                console.error('❌ Post-showModule layout normalization failed:', e);
+            }
+        });
+    } else {
+        console.warn(`Module '${moduleName}' not found in showModule`);
+        // Default to dashboard if requested module doesn't exist
+        const dashboardModule = document.getElementById('dashboard-module');
+        if (dashboardModule) {
+            dashboardModule.classList.remove('hidden');
+        }
+        // Clear the invalid module from localStorage
+        localStorage.removeItem('currentModule');
+        return;
+    }
     
     // Load module-specific data
     if (moduleName === 'poam') {
         // Load POAM ID configuration when POAM Repository is shown
         loadPOAMIdConfig();
         updateApplicationPOAMCounts();
+    } else if (moduleName === 'scan-history') {
+        // Load scan history when history module is shown
+        renderScanHistory();
     } else if (moduleName === 'vulnerability') {
         // Initialize vulnerability tracking
         showVulnerabilityTab('upload');
-        updateSLAMetrics();
+        // updateSLAMetrics(); // Disabled - using new Security Posture Overview instead
     } else if (moduleName === 'evidence') {
         // Load evidence vault data
         loadEvidenceFiles();
@@ -32,11 +65,19 @@ function showModule(moduleName) {
         loadPOAMIdConfig();
     }
     
-    // Highlight active nav link
+    // Highlight active sidebar link
+    // First remove highlight from all sidebar links
+    const allSidebarLinks = document.querySelectorAll('.sidebar-link');
+    allSidebarLinks.forEach(link => {
+        link.classList.remove('bg-indigo-600', 'text-white');
+        link.classList.add('text-slate-400');
+    });
+    
+    // Then add highlight to the active module link
     const activeLink = document.querySelector(`[onclick="showModule('${moduleName}')"]`);
-    if (activeLink && activeLink.classList.contains('nav-link')) {
-        activeLink.classList.remove('text-slate-600');
-        activeLink.classList.add('text-indigo-600');
+    if (activeLink && activeLink.classList.contains('sidebar-link')) {
+        activeLink.classList.remove('text-slate-400');
+        activeLink.classList.add('bg-indigo-600', 'text-white');
     }
 }
 
@@ -166,9 +207,7 @@ function loadApplicationPOAMList() {
                         <button onclick="viewPOAMDetails('${poam.poam_id}')" class="text-slate-600 hover:text-slate-800 p-2" title="View Details">
                             <i class="fas fa-eye"></i>
                         </button>
-                        <button onclick="updatePOAMStatus('${poam.poam_id}')" class="text-blue-600 hover:text-blue-800 p-2" title="Update Status">
-                            <i class="fas fa-edit"></i>
-                        </button>
+                        <!-- Status update removed - use vulnerability tracker for status changes -->
                     </div>
                 </div>
             </div>
@@ -189,25 +228,158 @@ function contactSecurityTeam() {
     alert(`Security team contact for ${applicationData[currentApplication].name}:\n\nEmail: security@company.com\nPhone: x1234\nSlack: #security-help\n\nHours: Monday-Friday 9AM-5PM`);
 }
 
-function updatePOAMStatus(poamId) {
-    const newStatus = prompt('Update POAM status:', 'open');
-    if (newStatus && ['open', 'in_progress', 'completed'].includes(newStatus)) {
-        // Update POAM status in localStorage
-        const allPOAMs = JSON.parse(localStorage.getItem('poamData') || '{}');
-        if (allPOAMs[poamId]) {
-            allPOAMs[poamId].status = newStatus;
-            localStorage.setItem('poamData', JSON.stringify(allPOAMs));
-            
-            // Refresh the view
-            loadApplicationDashboard();
-            loadApplicationPOAMList();
-            
-            alert(`POAM ${poamId} status updated to ${newStatus}`);
+// updatePOAMStatus function moved to vulnerability-tracking.js (IndexedDB-based)
+
+// ═══════════════════════════════════════════════════════════════
+// POAM DEBUGGING UTILITIES
+// ═══════════════════════════════════════════════════════════════
+
+async function debugPOAMById(poamId) {
+    try {
+        if (typeof poamDB === 'undefined') {
+            console.error('poamDB is not available');
+            return;
         }
+        if (!poamDB.db) {
+            await poamDB.init();
+        }
+
+        const poam = await poamDB.getPOAM(poamId);
+        if (!poam) {
+            console.warn(`POAM ${poamId} not found in IndexedDB`);
+            return;
+        }
+
+        console.log('🔎 POAM DEBUG:', {
+            id: poam.id,
+            groupKey: poam.groupKey,
+            riskLevel: poam.riskLevel,
+            findingStatus: poam.findingStatus,
+            rawFindingsCount: poam.rawFindings?.length || 0,
+            affectedAssetsCount: poam.affectedAssets?.length || 0,
+            totalAffectedAssets: poam.totalAffectedAssets,
+            description: poam.description
+        });
+
+        if (poam.rawFindings && poam.rawFindings.length > 0) {
+            const first = poam.rawFindings[0].raw || poam.rawFindings[0];
+            console.log('🔎 First raw finding keys:', Object.keys(first));
+            console.log('🔎 First raw finding sample asset fields:', {
+                asset_id: first['Asset Id'] || first.asset_id,
+                asset_name: first['Asset Name'] || first.asset_name,
+                ipv4: first['Asset IPV4'] || first.asset_ipv4
+            });
+            console.log('🔎 First raw finding text:', {
+                title: (first.Title || poam.rawFindings[0].title || '').substring(0, 120),
+                solution: (first.Solution || poam.rawFindings[0].solution || '').substring(0, 120),
+                results: (first.Results || poam.rawFindings[0].results || '').substring(0, 120)
+            });
+        }
+
+        if (poam.affectedAssets && poam.affectedAssets.length > 0) {
+            console.log('🔎 Affected assets sample:', poam.affectedAssets.slice(0, 5));
+        }
+    } catch (error) {
+        console.error('Failed to debug POAM:', error);
     }
 }
 
-// Application Management Functions
+// ═══════════════════════════════════════════════════════════════
+// SCAN HISTORY MANAGEMENT
+// ═══════════════════════════════════════════════════════════════
+
+async function renderScanHistory() {
+    const historyList = document.getElementById('scan-history-list');
+    if (!historyList) return;
+
+    try {
+        const scanRuns = await poamDB.getAllScanRuns();
+        
+        if (!scanRuns || scanRuns.length === 0) {
+            historyList.innerHTML = `
+                <tr>
+                    <td colspan="5" class="px-6 py-12 text-center text-slate-500">
+                        <i class="fas fa-history text-4xl mb-3 opacity-20"></i>
+                        <p>No scan history found. Data will appear here once scans are uploaded.</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        historyList.innerHTML = scanRuns.map(run => {
+            const date = new Date(run.importedAt).toLocaleString();
+            return `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4">
+                        <div class="font-mono text-xs font-bold text-indigo-600">${run.scanId}</div>
+                        <div class="text-xs text-slate-500 mt-1">${date}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="font-medium text-slate-900">${run.source || 'Manual Upload'}</div>
+                        <div class="text-xs text-slate-500 mt-1">${run.fileName || 'N/A'}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold">
+                            ${run.totalFindings || run.rawFindings?.length || 0} findings
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                            <i class="fas fa-check-circle"></i> Persistent
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <button onclick="revertToScan('${run.scanId}')" 
+                                class="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1">
+                            <i class="fas fa-undo"></i> Revert
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+    } catch (error) {
+        console.error('Error rendering scan history:', error);
+        historyList.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Error loading history</td></tr>`;
+    }
+}
+
+async function revertToScan(scanId) {
+    if (!confirm(`Are you sure you want to revert to scan ${scanId}? Current POAM data will be replaced with the state from this scan snapshot.`)) {
+        return;
+    }
+
+    try {
+        const scanRun = await poamDB.getScanRun(scanId);
+        if (!scanRun || !scanRun.rawFindings) {
+            alert('Could not find raw findings for this scan snapshot.');
+            return;
+        }
+
+        showUpdateFeedback('Reverting system state to snapshot...', 'info');
+        
+        // Re-process the raw findings
+        const analysisEngine = new VulnerabilityAnalysisEngineV3();
+        const poams = await analysisEngine.analyzeAndGroup(scanRun.rawFindings, scanId);
+        
+        // Clear and reload
+        await poamDB.clearAllPOAMs();
+        await poamDB.addPOAMsBatch(poams);
+        
+        showUpdateFeedback('System state reverted successfully!', 'success');
+        
+        // Refresh UI
+        if (typeof displayVulnerabilityPOAMs === 'function') await displayVulnerabilityPOAMs();
+        if (typeof updateStoredPOAMCount === 'function') updateStoredPOAMCount();
+        
+    } catch (error) {
+        console.error('Revert error:', error);
+        showUpdateFeedback('Failed to revert scan state.', 'error');
+    }
+}
+
+// Initialize application management
 let currentApplication = null;
 
 const applicationData = {
@@ -1279,10 +1451,12 @@ function showVulnerabilityTab(tabName) {
     const tabs = ['upload-tab', 'jobs-tab', 'reports-tab'];
     tabs.forEach(tabId => {
         const tab = document.getElementById(tabId);
-        if (tabId === tabName + '-tab') {
-            tab.className = 'flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium transition-colors';
-        } else {
-            tab.className = 'flex-1 px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors';
+        if (tab) {
+            if (tabId === tabName + '-tab') {
+                tab.className = 'flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium transition-colors';
+            } else {
+                tab.className = 'flex-1 px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors';
+            }
         }
     });
     
@@ -1294,96 +1468,23 @@ function showVulnerabilityTab(tabName) {
     }
 }
 
-function handleVulnerabilityUpload(event) {
-    console.log('Unified upload function called');
-    const file = event.target.files[0];
-    if (!file) {
-        console.log('No file selected');
-        return;
+// Update vulnerability processing progress
+function updateVulnerabilityProgress(percent, message) {
+    const progressBar = document.getElementById('vulnerability-progress-bar');
+    const progressText = document.getElementById('vulnerability-progress-text');
+    
+    if (progressBar) {
+        progressBar.style.width = percent + '%';
     }
     
-    console.log('File selected:', file.name);
-    
-    // Validate file type
-    if (!file.name.toLowerCase().endsWith('.csv')) {
-        alert('Please upload a CSV file');
-        return;
+    if (progressText) {
+        progressText.textContent = message;
     }
     
-    // Show progress
-    console.log('Showing progress');
-    document.getElementById('vulnerability-progress').classList.remove('hidden');
-    
-    // Process file locally within POAM Manager
-    processLocalCSV(file);
+    console.log(`Progress: ${percent}% - ${message}`);
 }
 
-async function processLocalCSV(file) {
-    try {
-        updateVulnerabilityProgress(0, 'Reading CSV file...');
-        
-        // Read CSV file
-        const text = await file.text();
-        const lines = text.split('\n').filter(line => line.trim());
-        
-        if (lines.length < 2) {
-            throw new Error('CSV file appears to be empty or invalid');
-        }
-        
-        updateVulnerabilityProgress(25, 'Parsing scan data...');
-        
-        // Parse CSV headers and data
-        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-        const dataLines = lines.slice(1);
-        
-        updateVulnerabilityProgress(50, 'Analyzing SLA compliance...');
-        
-        // Process scan data and identify SLA-exceeded vulnerabilities
-        const scanResults = processScanDataForSLA(headers, dataLines, file.name);
-        
-        updateVulnerabilityProgress(75, 'Creating POAM items...');
-        
-        // Generate POAMs for SLA-exceeded vulnerabilities
-        const generatedPOAMs = createPOAMsFromSLAViolations(scanResults);
-        
-        // Add POAMs to the repository
-        addPOAMsToRepository(generatedPOAMs);
-        
-        // Store job info for jobs tab
-        const jobId = 'job_' + Date.now();
-        const jobInfo = {
-            id: jobId,
-            filename: file.name,
-            application: 'sla_processing',
-            application_name: 'SLA Processing',
-            status: 'completed',
-            created_at: new Date().toISOString(),
-            poams_generated: generatedPOAMs.length,
-            file_size: file.size,
-            scan_type: 'sla_violation_detection',
-            sla_violations: scanResults.slaViolations.length,
-            total_findings: scanResults.totalFindings
-        };
-        
-        // Save to local storage for jobs tracking
-        saveUnifiedJob(jobInfo);
-        
-        updateVulnerabilityProgress(100, 'Processing complete!');
-        
-        setTimeout(() => {
-            alert(`Successfully processed ${file.name}!\n\nTotal Findings: ${scanResults.totalFindings}\nSLA Violations: ${scanResults.slaViolations.length}\nPOAMs Created: ${generatedPOAMs.length}\n\nCritical POAMs: ${generatedPOAMs.filter(p => p.risk_level === 'critical').length}\nHigh POAMs: ${generatedPOAMs.filter(p => p.risk_level === 'high').length}`);
-            resetVulnerabilityProgress();
-            loadUnifiedJobs(); // Refresh jobs list
-            updateSLAMetrics(); // Update SLA dashboard metrics
-            updateApplicationPOAMCounts(); // Update counts in POAM Repository
-        }, 1000);
-        
-    } catch (error) {
-        console.error('CSV processing error:', error);
-        alert('Failed to process CSV file: ' + error.message);
-        resetVulnerabilityProgress();
-    }
-}
+// Note: handleVulnerabilityUpload and processLocalCSV are now in vulnerability-tracking.js
 
 function processScanDataForSLA(headers, dataLines, filename) {
     const scannerInfo = detectScannerType(headers, filename);
@@ -1651,17 +1752,49 @@ function buildSLAMilestoneDescription(violation) {
     return description;
 }
 
-function updateSLAMetrics() {
-    const allPOAMs = JSON.parse(localStorage.getItem('poamData') || '{}');
-    const poamArray = Object.values(allPOAMs);
+async function updateSLAMetrics() {
+    console.log('📊 updateSLAMetrics called');
+    
+    // Get manual POAMs from localStorage
+    const manualPOAMs = JSON.parse(localStorage.getItem('poamData') || '{}');
+    const manualArray = Object.values(manualPOAMs);
+    console.log(`📝 Manual POAMs from localStorage: ${manualArray.length}`);
+    
+    // Get vulnerability POAMs from IndexedDB
+    let vulnerabilityArray = [];
+    if (typeof poamDB !== 'undefined' && poamDB) {
+        try {
+            vulnerabilityArray = await poamDB.getAllPOAMs();
+            console.log(`🐛 Vulnerability POAMs from IndexedDB: ${vulnerabilityArray.length}`);
+        } catch (error) {
+            console.error('❌ Failed to load vulnerability POAMs:', error);
+        }
+    } else {
+        console.warn('⚠️ poamDB not available');
+    }
+    
+    // Combine both sources
+    const poamArray = [...manualArray, ...vulnerabilityArray];
+    console.log(`📊 Total POAMs combined: ${poamArray.length}`);
+    
+    // Normalize field names for vulnerability POAMs
+    const normalizedArray = poamArray.map(p => ({
+        ...p,
+        risk_level: p.risk_level || p.risk,
+        scheduled_completion_date: p.scheduled_completion_date || p.dueDate,
+        affected_asset: p.affected_asset || p.asset || (p.affectedAssets ? p.affectedAssets.join(', ') : ''),
+        asset_name: p.asset_name || p.asset
+    }));
     
     // Calculate POAM metrics by severity
-    const totalPOAMs = poamArray.length;
-    const criticalPOAMs = poamArray.filter(p => p.risk_level === 'critical').length;
-    const riskAcceptedPOAMs = poamArray.filter(p => p.status === 'risk-accepted').length;
+    const totalPOAMs = normalizedArray.length;
+    const criticalPOAMs = normalizedArray.filter(p => p.risk_level === 'critical').length;
+    const riskAcceptedPOAMs = normalizedArray.filter(p => p.status === 'risk-accepted').length;
+    
+    console.log(`📈 Metrics calculated - Total: ${totalPOAMs}, Critical: ${criticalPOAMs}, Risk Accepted: ${riskAcceptedPOAMs}`);
     
     // Calculate overdue POAMs
-    const overduePOAMs = poamArray.filter(p => {
+    const overduePOAMs = normalizedArray.filter(p => {
         if (p.status === 'completed' || p.status === 'closed' || p.status === 'risk-accepted') return false;
         return new Date(p.scheduled_completion_date) < new Date();
     }).length;
@@ -1672,27 +1805,26 @@ function updateSLAMetrics() {
     const sixtyDaysFromNow = new Date(now.getTime() + (60 * 24 * 60 * 60 * 1000));
     const ninetyDaysFromNow = new Date(now.getTime() + (90 * 24 * 60 * 60 * 1000));
     
-    const dueIn30Days = poamArray.filter(p => {
+    const dueIn30Days = normalizedArray.filter(p => {
         if (p.status === 'completed' || p.status === 'closed' || p.status === 'risk-accepted') return false;
         const dueDate = new Date(p.scheduled_completion_date);
         return dueDate >= now && dueDate <= thirtyDaysFromNow;
     }).length;
     
-    const dueIn60Days = poamArray.filter(p => {
+    const dueIn60Days = normalizedArray.filter(p => {
         if (p.status === 'completed' || p.status === 'closed' || p.status === 'risk-accepted') return false;
         const dueDate = new Date(p.scheduled_completion_date);
         return dueDate > thirtyDaysFromNow && dueDate <= sixtyDaysFromNow;
     }).length;
     
-    const dueIn90Days = poamArray.filter(p => {
-        if (p.status === 'completed' || p.status === 'closed' || p.status === 'risk-accepted') return false;
-        const dueDate = new Date(p.scheduled_completion_date);
-        return dueDate > sixtyDaysFromNow && dueDate <= ninetyDaysFromNow;
+    // Calculate closed POAMs (completed or closed status)
+    const closedPOAMs = normalizedArray.filter(p => {
+        return p.status === 'completed' || p.status === 'closed';
     }).length;
     
     // Calculate OS breakdown
     const osCounts = {};
-    poamArray.forEach(poam => {
+    normalizedArray.forEach(poam => {
         // Extract OS from affected_asset or other fields
         const asset = poam.affected_asset || poam.asset_name || '';
         let os = 'Unknown';
@@ -1726,8 +1858,8 @@ function updateSLAMetrics() {
     document.getElementById('overdue-poams-count').textContent = overduePOAMs;
     document.getElementById('due-30-days-count').textContent = dueIn30Days;
     document.getElementById('due-60-days-count').textContent = dueIn60Days;
-    document.getElementById('due-90-days-count').textContent = dueIn90Days;
-    document.getElementById('os-breakdown').textContent = osBreakdown;
+    document.getElementById('poams-closed-count').textContent = closedPOAMs;
+    document.getElementById('os-breakdown-container').textContent = osBreakdown;
 }
 
 function loadSLAConfig() {
@@ -1786,40 +1918,72 @@ function loadSettings() {
 }
 
 // Module initialization
-function initializeModule(moduleName) {
-    // Hide all modules
-    document.querySelectorAll('.module').forEach(module => {
-        module.classList.add('hidden');
-    });
-    
-    // Show selected module
-    document.getElementById(moduleName + '-module').classList.remove('hidden');
-    
-    // Load module-specific data
-    if (moduleName === 'poam') {
-        // Load POAM ID configuration when POAM Repository is shown
-        loadPOAMIdConfig();
-        updateApplicationPOAMCounts();
-    } else if (moduleName === 'vulnerability') {
-        // Initialize vulnerability tracking
-        showVulnerabilityTab('upload');
-        updateSLAMetrics();
-    } else if (moduleName === 'evidence') {
-        // Load evidence vault data
-        loadEvidenceFiles();
-    } else if (moduleName === 'reporting') {
-        // Load reporting data
-        loadReportingData();
-    } else if (moduleName === 'settings') {
-        // Load settings including risk framework and SLA
-        loadRiskFramework();
-        loadSLAConfig();
-        loadPOAMIdConfig();
+async function initializeModule(moduleName) {
+    try {
+        document.querySelectorAll('.module').forEach(module => {
+            module.classList.add('hidden');
+        });
+
+        const targetModule = document.getElementById(moduleName + '-module');
+        if (targetModule) {
+            targetModule.classList.remove('hidden');
+        } else {
+            console.warn(`Module '${moduleName}' not found, defaulting to dashboard`);
+            const dashboardModule = document.getElementById('dashboard-module');
+            if (dashboardModule) {
+                dashboardModule.classList.remove('hidden');
+            }
+            localStorage.removeItem('currentModule');
+        }
+
+        if (moduleName === 'dashboard') {
+            console.log('🔄 Loading dashboard metrics...');
+            console.log('✅ Dashboard metrics loaded');
+        } else if (moduleName === 'poam') {
+            loadPOAMIdConfig();
+            updateApplicationPOAMCounts();
+        } else if (moduleName === 'vulnerability' || moduleName === 'vulnerability-tracking') {
+            if (typeof showVulnerabilityTab === 'function') {
+                showVulnerabilityTab('upload');
+            }
+            if (typeof updateVulnerabilityModuleMetrics === 'function') {
+                updateVulnerabilityModuleMetrics();
+            }
+            if (typeof activeFilters !== 'undefined' && activeFilters.custom === 'needs-review') {
+                activeFilters.custom = '';
+                console.log('🧹 Cleared disabled needs-review filter');
+            }
+        } else if (moduleName === 'evidence') {
+            loadEvidenceFiles();
+        } else if (moduleName === 'reporting') {
+            loadReportingData();
+        } else if (moduleName === 'settings') {
+            loadRiskFramework();
+            loadSLAConfig();
+            loadPOAMIdConfig();
+        }
+    } catch (e) {
+        console.error('❌ initializeModule failed; falling back to dashboard:', e);
+        localStorage.removeItem('currentModule');
+        const dashboardModule = document.getElementById('dashboard-module');
+        if (dashboardModule) {
+            dashboardModule.classList.remove('hidden');
+        }
     }
 }
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
-    // Load initial module
-    initializeModule('poam');
+    // Restore last active module or default to dashboard
+    const savedModule = localStorage.getItem('currentModule') || 'dashboard';
+    try {
+        initializeModule(savedModule);
+    } catch (e) {
+        console.error('❌ Startup initializeModule failed; falling back to dashboard:', e);
+        localStorage.removeItem('currentModule');
+        const dashboardModule = document.getElementById('dashboard-module');
+        if (dashboardModule) {
+            dashboardModule.classList.remove('hidden');
+        }
+    }
 });

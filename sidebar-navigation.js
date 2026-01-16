@@ -31,48 +31,6 @@ function toggleSidebarSection(sectionId) {
     }
 }
 
-// Update showModule function to handle sidebar active states
-function showModule(moduleName) {
-    // Hide all modules
-    const modules = document.querySelectorAll('.module');
-    modules.forEach(module => {
-        module.classList.add('hidden');
-    });
-    
-    // Show selected module
-    const targetModule = document.getElementById(moduleName + '-module');
-    if (targetModule) {
-        targetModule.classList.remove('hidden');
-    }
-    
-    // Update sidebar active states
-    updateSidebarActiveState(moduleName);
-    
-    // Load module-specific data
-    if (moduleName === 'poam') {
-        loadPOAMIdConfig();
-        updateApplicationPOAMCounts();
-    } else if (moduleName === 'vulnerability') {
-        showVulnerabilityTab('upload');
-        updateSLAMetrics();
-    } else if (moduleName === 'evidence') {
-        loadEvidenceFiles();
-    } else if (moduleName === 'reporting') {
-        loadReportingData();
-    } else if (moduleName === 'settings') {
-        // Show default settings tab (SLA)
-        showSettingsTab('sla');
-    } else if (moduleName === 'admin') {
-        // Show default admin tab (users)
-        showAdminTab('users');
-    }
-    
-    // Close mobile sidebar after selection
-    if (window.innerWidth < 1024) {
-        toggleSidebar();
-    }
-}
-
 // Update sidebar active state
 function updateSidebarActiveState(moduleName) {
     // Remove active class from all sidebar links
@@ -92,34 +50,37 @@ function updateSidebarActiveState(moduleName) {
 
 // Show specific settings tab
 function showSettingsTab(tabName) {
+    // If the requested tab is 'systems', redirect to the consolidated view in 'preferences'
+    const finalTabName = tabName === 'systems' ? 'preferences' : tabName;
+
     // First, show the settings module
     const settingsModule = document.getElementById('settings-module');
     if (settingsModule && settingsModule.classList.contains('hidden')) {
         showModule('settings');
     }
-    
-    // Hide all settings tabs
-    const settingsTabs = document.querySelectorAll('.settings-tab');
-    settingsTabs.forEach(tab => {
+
+    // Hide all tabs
+    document.querySelectorAll('.settings-tab').forEach(tab => {
         tab.classList.add('hidden');
     });
-    
+
     // Show selected tab
-    const targetTab = document.getElementById('settings-' + tabName);
-    if (targetTab) {
-        targetTab.classList.remove('hidden');
+    const selectedTab = document.getElementById(`settings-${finalTabName}`);
+    if (selectedTab) {
+        selectedTab.classList.remove('hidden');
     }
-    
-    // Update sidebar active state for settings submenu
-    updateSettingsSubmenuActiveState(tabName);
+
+    // Update sidebar active state
+    updateSettingsSubmenuActiveState(finalTabName);
     
     // Load tab-specific data
-    if (tabName === 'sla') {
+    if (finalTabName === 'sla') {
         loadSLAConfig();
-    } else if (tabName === 'risk-framework') {
-        loadRiskFramework();
-    } else if (tabName === 'poam-id') {
-        loadPOAMIdConfig();
+    } else if (finalTabName === 'preferences') {
+        // Preference tab now contains systems, ensure they are rendered
+        if (typeof settingsManager !== 'undefined') {
+            settingsManager.renderSystemsSettings();
+        }
     }
     
     // Close mobile sidebar after selection
@@ -363,8 +324,9 @@ function testAPIConnections() {
 
 // Load API Configuration
 function loadAPIConfig() {
-    const savedConfig = localStorage.getItem('apiConfig');
-    if (savedConfig) {
+    try {
+        const savedConfig = localStorage.getItem('apiConfig');
+        if (!savedConfig) return;
         const config = JSON.parse(savedConfig);
         
         // Load Qualys config
@@ -390,6 +352,8 @@ function loadAPIConfig() {
             document.getElementById('wiz-secret').value = config.wiz?.secret || '';
             document.getElementById('wiz-schedule').value = config.wiz?.schedule || 'manual';
         }
+    } catch (error) {
+        console.error('❌ Failed to load API config:', error);
     }
 }
 
