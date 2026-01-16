@@ -537,6 +537,27 @@ class PipelineOrchestrator {
         engine.groupedPOAMs = poamDrafts;
         engine.calculatePOAMConfidence();
         
+        // Auto-prioritize top POAMs by asset count during baseline import
+        if (isBaselineImport && poamDrafts.length > 0) {
+            const maxPrioritized = 8;
+            
+            // Sort POAMs by total affected assets (descending)
+            const sortedByAssets = [...poamDrafts].sort((a, b) => {
+                const aCount = a.totalAffectedAssets || 0;
+                const bCount = b.totalAffectedAssets || 0;
+                return bCount - aCount;
+            });
+            
+            // Set top N POAMs to "In Progress" status
+            const topPoams = sortedByAssets.slice(0, maxPrioritized);
+            topPoams.forEach(poam => {
+                poam.status = 'In Progress';
+                poam.findingStatus = 'In Progress';
+            });
+            
+            this.logger.info(`Auto-prioritized ${topPoams.length} POAMs with highest asset counts to 'In Progress' status`);
+        }
+        
         // Update counts
         this.currentRun.counts.poamsCreated = engine.poamsCreated;
         this.currentRun.counts.poamsSkipped = engine.poamsSkipped;
