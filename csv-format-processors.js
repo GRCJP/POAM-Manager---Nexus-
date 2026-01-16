@@ -154,15 +154,6 @@ class QualysProcessor {
             const lastDetected = this.parseQualysDate(row['Last Detected']);
             const publishedDate = this.parseQualysDate(row['Published Date']);
             const patchReleased = this.parseQualysDate(row['Patch Released']);
-            
-            // Debug OS extraction for first few rows
-            if (vulnerabilities.length < 3) {
-                console.log(`🔍 Row ${vulnerabilities.length + 1} OS data:`, {
-                    'Operating System': row['Operating System'],
-                    'Asset Name': row['Asset Name'],
-                    'Asset IPV4': row['Asset IPV4']
-                });
-            }
 
             return {
                 // Core vulnerability data
