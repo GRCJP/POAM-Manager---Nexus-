@@ -538,6 +538,8 @@ class PipelineOrchestrator {
         engine.calculatePOAMConfidence();
         
         // Auto-prioritize top POAMs by asset count during baseline import
+        this.logger.info(`Auto-prioritization check: isBaselineImport=${isBaselineImport}, poamCount=${poamDrafts.length}`);
+        
         if (isBaselineImport && poamDrafts.length > 0) {
             const maxPrioritized = 8;
             
@@ -550,12 +552,15 @@ class PipelineOrchestrator {
             
             // Set top N POAMs to "In Progress" status
             const topPoams = sortedByAssets.slice(0, maxPrioritized);
-            topPoams.forEach(poam => {
+            topPoams.forEach((poam, idx) => {
                 poam.status = 'In Progress';
                 poam.findingStatus = 'In Progress';
+                this.logger.info(`  #${idx + 1}: ${poam.title?.substring(0, 60)} (${poam.totalAffectedAssets} assets)`);
             });
             
-            this.logger.info(`Auto-prioritized ${topPoams.length} POAMs with highest asset counts to 'In Progress' status`);
+            this.logger.info(`✅ Auto-prioritized ${topPoams.length} POAMs with highest asset counts to 'In Progress' status`);
+        } else if (!isBaselineImport) {
+            this.logger.info(`Skipping auto-prioritization: Not a baseline import (existing POAMs found)`);
         }
         
         // Update counts
