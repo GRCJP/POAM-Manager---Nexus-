@@ -172,7 +172,8 @@ class POAMDatabase {
             findingSource: poam.findingSource || 'Vulnerability Scan',
             
             // Responsibility
-            poc: poam.poc || '',
+            poc: poam.poc || poam.pocTeam || '',
+            pocTeam: poam.pocTeam || poam.poc || '',
             resourcesRequired: poam.resourcesRequired || '',
             
             // Scheduling
@@ -195,7 +196,7 @@ class POAMDatabase {
             notes: poam.notes || '',
             
             // Data preservation (Critical Fix: Phase 6.20)
-            affectedAssets: poam.affectedAssets || [],
+            affectedAssets: poam.affectedAssets ? this.transformAssetsWithMetadata(poam.affectedAssets) : [],
             totalAffectedAssets: poam.totalAffectedAssets || poam.affectedAssets?.length || 0,
             rawFindings: poam.rawFindings || []
         };
