@@ -24,7 +24,7 @@ class PipelineDatabase {
 
         // Otherwise initialize our own connection
         return new Promise((resolve, reject) => {
-            const request = indexedDB.open(this.dbName, 7);
+            const request = indexedDB.open(this.dbName, 8);
             
             request.onerror = () => reject(request.error);
             request.onsuccess = () => {
