@@ -787,6 +787,9 @@ class POAMDatabase {
 // Initialize global database instance
 const poamDB = new POAMDatabase();
 
+// Expose to window object for global access
+window.poamDB = poamDB;
+
 console.log('📦 poamDB created:', poamDB);
 console.log('📦 poamDB.getPOAM exists:', typeof poamDB.getPOAM);
 console.log('📦 poamDB.getAllPOAMs exists:', typeof poamDB.getAllPOAMs);
