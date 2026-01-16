@@ -501,7 +501,16 @@ class PipelineOrchestrator {
         engine.scanId = this.currentRun.scanId;
         
         // Check if this is a baseline import
-        const existingPOAMs = await window.poamDB.getAllPOAMs();
+        // Ensure poamDB is initialized
+        if (!window.poamDB || !window.poamDB.db) {
+            if (window.poamDB) {
+                await window.poamDB.init();
+            } else {
+                this.logger.warn('poamDB not available, assuming baseline import');
+            }
+        }
+        
+        const existingPOAMs = window.poamDB ? await window.poamDB.getAllPOAMs() : [];
         const isBaselineImport = existingPOAMs.length === 0;
         engine.setBaselineMode(isBaselineImport);
         
