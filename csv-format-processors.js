@@ -155,6 +155,17 @@ class QualysProcessor {
             const publishedDate = this.parseQualysDate(row['Published Date']);
             const patchReleased = this.parseQualysDate(row['Patch Released']);
 
+            // Debug: Log OS extraction for first few rows
+            const osValue = row['Operating System']?.trim() || 'unknown';
+            if (Math.random() < 0.01) { // Log ~1% of rows to avoid spam
+                console.log(`🔍 OS extraction sample:`, {
+                    assetName: row['Asset Name'],
+                    rawOS: row['Operating System'],
+                    trimmedOS: osValue,
+                    hasOSColumn: 'Operating System' in row
+                });
+            }
+            
             return {
                 // Core vulnerability data
                 title: row['Title']?.trim() || 'Unknown Vulnerability',
@@ -164,7 +175,7 @@ class QualysProcessor {
                     assetId: row['Asset Id']?.trim() || 'unknown',
                     ipv4: row['Asset IPV4']?.trim() || '',
                     ipv6: row['Asset IPV6']?.trim() || '',
-                    operatingSystem: row['Operating System']?.trim() || 'unknown',
+                    operatingSystem: osValue,
                     tags: this.parseAssetTags(row['Asset Tags'])
                 },
                 ip: row['Asset IPV4']?.trim() || '',
