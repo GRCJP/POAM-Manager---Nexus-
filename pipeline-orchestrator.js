@@ -589,6 +589,15 @@ class PipelineOrchestrator {
         await this.db.saveScanRun(this.currentRun);
         this.updateProgress();
         
+        // Ensure poamDB is initialized
+        if (!window.poamDB || !window.poamDB.db) {
+            if (window.poamDB) {
+                await window.poamDB.init();
+            } else {
+                throw new Error('POAMDatabase not available - cannot persist POAMs');
+            }
+        }
+        
         // Atomically persist POAMs to main store
         this.logger.info(`Persisting ${poamDrafts.length} POAMs to database...`);
         
