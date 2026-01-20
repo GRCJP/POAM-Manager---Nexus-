@@ -6,6 +6,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <title>POAM Nexus | Management Dashboard</title>
 </head>
 <body class="bg-slate-50 font-sans antialiased text-slate-900">
@@ -21,7 +22,6 @@
                             <i class="fas fa-times text-xl"></i>
                         </button>
                     </div>
-                    
                     <div class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-indigo-400 transition-colors cursor-pointer" onclick="document.getElementById('scan-file-input').click()">
                         <i class="fas fa-cloud-upload-alt text-4xl text-slate-400 mb-4"></i>
                         <h4 class="text-lg font-semibold text-slate-700 mb-2">Drop CSV file here</h4>
@@ -126,6 +126,11 @@
                                 <i class="fas fa-history text-xs w-4 text-blue-400"></i>
                                 <span>Scan History</span>
                                 <span class="ml-auto text-xs text-slate-400">Audit Trail</span>
+                            </a>
+                            <a href="#" onclick="showModule('security-control-monitoring')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
+                                <i class="fas fa-table text-xs w-4 text-indigo-400"></i>
+                                <span>Security Control Monitoring</span>
+                                <span class="ml-auto text-xs text-slate-400">Workbook</span>
                             </a>
                             <a href="#" onclick="showReviewIssuesSidebar()" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
                                 <i class="fas fa-exclamation-triangle text-xs w-4 text-amber-400"></i>
@@ -1598,6 +1603,148 @@
             </div>
         </div>
 
+        <!-- Security Control Monitoring (POAM Workbook) Module -->
+        <div id="security-control-monitoring-module" class="module hidden">
+            <div class="mb-8 flex items-start justify-between gap-4">
+                <div>
+                    <button onclick="showModule('dashboard')" class="text-indigo-600 hover:text-indigo-800 mb-4">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                    </button>
+                    <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Security Control Monitoring</h1>
+                    <p class="text-slate-500 mt-1">Workbook-based POAM tracking (isolated from scan pipeline)</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="poamWorkbookExportAll()" class="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 text-sm font-semibold">
+                        <i class="fas fa-file-export mr-2"></i>Export All Systems
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                <div class="bg-slate-100 border-b border-slate-200 px-6">
+                    <nav class="flex -mb-px gap-6">
+                        <button onclick="poamWorkbookSwitchTab('overview')" id="poam-workbook-btn-overview" class="poam-workbook-tabbtn px-1 py-4 text-sm font-bold border-b-2 border-indigo-600 text-indigo-600 transition-all flex items-center gap-2">
+                            <i class="fas fa-chart-pie"></i> Overview
+                        </button>
+                        <button onclick="poamWorkbookSwitchTab('systems')" id="poam-workbook-btn-systems" class="poam-workbook-tabbtn px-1 py-4 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-all flex items-center gap-2">
+                            <i class="fas fa-server"></i> Systems
+                        </button>
+                    </nav>
+                </div>
+
+                <div id="poam-workbook-tab-overview" class="poam-workbook-tab p-6 space-y-6">
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                        <div class="flex items-center justify-between gap-4 flex-wrap">
+                            <div class="flex items-center gap-3">
+                                <div class="text-sm font-semibold text-slate-800">Import Workbook</div>
+                                <select id="poam-workbook-import-system" class="text-sm border border-slate-200 rounded px-3 py-2 bg-white"></select>
+                                <label class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 cursor-pointer text-sm font-semibold">
+                                    <i class="fas fa-file-import mr-2"></i>Import XLSX
+                                    <input type="file" accept=".xlsx" class="hidden" onchange="poamWorkbookHandleImportInput(event)">
+                                </label>
+                            </div>
+                            <div class="text-xs text-slate-500">Import/export applies only to workbook records stored in <span class="font-mono">POAMWorkbookDB</span>.</div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-white rounded-xl p-5 border border-slate-200">
+                            <div class="flex items-center justify-between mb-1">
+                                <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total POAMs</div>
+                                <i class="fas fa-list text-indigo-600"></i>
+                            </div>
+                            <div class="text-3xl font-extrabold text-slate-900" id="poam-workbook-metric-total">0</div>
+                        </div>
+                        <div class="bg-white rounded-xl p-5 border border-slate-200">
+                            <div class="flex items-center justify-between mb-1">
+                                <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Overdue</div>
+                                <i class="fas fa-clock text-red-600"></i>
+                            </div>
+                            <div class="text-3xl font-extrabold text-slate-900" id="poam-workbook-metric-overdue">0</div>
+                        </div>
+                        <div class="bg-white rounded-xl p-5 border border-slate-200">
+                            <div class="flex items-center justify-between mb-1">
+                                <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Missing POC</div>
+                                <i class="fas fa-user-slash text-amber-600"></i>
+                            </div>
+                            <div class="text-3xl font-extrabold text-slate-900" id="poam-workbook-metric-missing-poc">0</div>
+                        </div>
+                        <div class="bg-white rounded-xl p-5 border border-slate-200">
+                            <div class="flex items-center justify-between mb-1">
+                                <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Breakdown</div>
+                                <i class="fas fa-chart-bar text-slate-600"></i>
+                            </div>
+                            <div class="space-y-1" id="poam-workbook-metric-status"></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-xl p-5 border border-slate-200">
+                            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Severity</div>
+                            <div class="space-y-1" id="poam-workbook-metric-severity"></div>
+                        </div>
+                        <div class="bg-white rounded-xl p-5 border border-slate-200">
+                            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Top Recurring Vulnerability Names</div>
+                            <div class="space-y-1" id="poam-workbook-top-vulns"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl p-5 border border-slate-200">
+                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Impacted Security Controls Distribution</div>
+                        <div class="space-y-1" id="poam-workbook-controls-dist"></div>
+                    </div>
+                </div>
+
+                <div id="poam-workbook-tab-systems" class="poam-workbook-tab hidden p-6">
+                    <div class="grid grid-cols-12 gap-6">
+                        <div class="col-span-12 lg:col-span-4 space-y-4">
+                            <div class="bg-white border border-slate-200 rounded-xl p-4">
+                                <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Systems</div>
+                                <div id="poam-workbook-systems-list" class="space-y-2"></div>
+                            </div>
+                        </div>
+                        <div class="col-span-12 lg:col-span-8 space-y-4">
+                            <div class="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between gap-3 flex-wrap">
+                                <div class="flex items-center gap-2">
+                                    <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Active System</div>
+                                    <select id="poam-workbook-system-select" class="text-sm border border-slate-200 rounded px-3 py-2 bg-white" onchange="poamWorkbookOpenSystem(this.value)"></select>
+                                    <div class="text-sm font-semibold text-slate-800">Total:</div>
+                                    <div class="text-sm font-bold text-slate-900" id="poam-workbook-system-total">0</div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button onclick="poamWorkbookCreateItem()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-semibold">
+                                        <i class="fas fa-plus mr-2"></i>Create POAM
+                                    </button>
+                                    <button onclick="poamWorkbookExportSystem()" class="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 text-sm font-semibold">
+                                        <i class="fas fa-file-export mr-2"></i>Export System
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full">
+                                        <thead class="bg-slate-50 border-b border-slate-200">
+                                            <tr>
+                                                <th class="px-3 py-3 text-left text-xs font-semibold text-slate-600">Item #</th>
+                                                <th class="px-3 py-3 text-left text-xs font-semibold text-slate-600">Vulnerability Name</th>
+                                                <th class="px-3 py-3 text-left text-xs font-semibold text-slate-600">POC Name</th>
+                                                <th class="px-3 py-3 text-left text-xs font-semibold text-slate-600">Detecting Source</th>
+                                                <th class="px-3 py-3 text-left text-xs font-semibold text-slate-600">Severity</th>
+                                                <th class="px-3 py-3 text-left text-xs font-semibold text-slate-600">Status</th>
+                                                <th class="px-3 py-3 text-left text-xs font-semibold text-slate-600">Scheduled Completion</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="poam-workbook-table-body" class="divide-y divide-slate-100"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Settings Module -->
         <div id="settings-module" class="module hidden">
             <div class="mb-8 border-b border-slate-200 pb-6">
@@ -2894,6 +3041,11 @@
     <script src="vulnerability-tracking.js?v=20260120-1"></script>
     <script src="milestone-pipeline-orchestrator-v2.js?v=20260120-1"></script>
     <script src="vulnerability-tracking-milestones.js?v=20260120-1"></script>
+    <script src="poam-workbook-constants.js?v=20260120-1"></script>
+    <script src="poam-workbook-db.js?v=20260120-1"></script>
+    <script src="poam-workbook-import.js?v=20260120-1"></script>
+    <script src="poam-workbook-export.js?v=20260120-1"></script>
+    <script src="poam-workbook-ui.js?v=20260120-1"></script>
     <!-- security-controls-manager.js removed -->
     <script src="script.js?v=20260120-1"></script>
 

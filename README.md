@@ -32,6 +32,47 @@ A comprehensive Plan of Action and Milestones (POA&M) management system for secu
 - **Audit Logs**: Complete system activity tracking
 - **Settings**: User preferences and configuration management
 
+### Security Control Monitoring (POAM Workbook)
+- **Purpose**: Workbook-based POAM tracking that is isolated from vulnerability scan upload processing and the phased scan pipeline.
+- **UI Location**: Sidebar → Vulnerability Management → Security Control Monitoring.
+- **Data Storage Isolation**: Uses a separate IndexedDB database named `POAMWorkbookDB` with dedicated stores:
+  - `poamWorkbookItems` (workbook-native records)
+  - `poamWorkbookSystems`
+  - `poamWorkbookLookups` (POCs, security controls, enums)
+- **Import/Export Isolation**:
+  - Workbook XLSX import/export applies only to `POAMWorkbookDB`.
+  - Scan upload processing applies only to the scan pipeline and its stores.
+
+#### Workbook Columns (authoritative)
+Workbook import/export uses the exact column headers and order defined in `poam-workbook-constants.js`:
+1. Item number
+2. Vulnerability Name
+3. Vulnerability Description
+4. Detection Date
+5. Impacted Security Controls
+6. Office/Org
+7. POC Name
+8. Identifying Detecting Source
+9. Mitigations
+10. Severity Value
+11. Resources Required
+12. Scheduled Completion Date
+13. Milestone with Completion Dates
+14. Milestone Changes
+15. Affected Components/URLs
+16. Status
+17. Comments
+
+#### Workbook-only field: Assets Impacted
+`Assets Impacted` is stored internally on workbook items, but is not exported as a separate column.
+
+Export mapping rule:
+- If `Assets Impacted` is non-empty, it is appended into `Affected Components/URLs` as a block:
+  - `Assets Impacted:`
+  - `<value>`
+
+On import, if `Affected Components/URLs` contains an `Assets Impacted:` block, it is parsed back into the internal `Assets Impacted` field.
+
 ## Technology Stack
 
 - **Frontend**: HTML5, CSS3, JavaScript (ES6+)

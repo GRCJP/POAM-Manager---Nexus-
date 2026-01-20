@@ -1,0 +1,556 @@
+// Workbook UI module (isolated)
+
+window.poamWorkbookState = {
+  activeTab: 'overview',
+  activeSystemId: 'default',
+  _version: 0,
+  _analyticsCache: new Map()
+};
+
+window.poamWorkbookNotifyMutation = function () {
+  window.poamWorkbookState._version++;
+  window.poamWorkbookState._analyticsCache.clear();
+};
+
+async function initPOAMWorkbookModule() {
+  if (!window.poamWorkbookDB) {
+    console.error('Workbook DB missing');
+    return;
+  }
+
+  if (!window.poamWorkbookDB.db) {
+    await window.poamWorkbookDB.init();
+    await window.poamWorkbookDB.seedDefaultsIfNeeded();
+  }
+
+  await renderWorkbookSystemsSelects();
+  await renderWorkbookOverview();
+  await renderWorkbookSystemsPage();
+  poamWorkbookSwitchTab(window.poamWorkbookState.activeTab);
+}
+
+function poamWorkbookSwitchTab(tab, systemId) {
+  window.poamWorkbookState.activeTab = tab;
+  if (systemId) window.poamWorkbookState.activeSystemId = systemId;
+
+  document.querySelectorAll('.poam-workbook-tab').forEach(el => el.classList.add('hidden'));
+  const target = document.getElementById(`poam-workbook-tab-${tab}`);
+  if (target) target.classList.remove('hidden');
+
+  document.querySelectorAll('.poam-workbook-tabbtn').forEach(btn => {
+    btn.classList.remove('border-indigo-600', 'text-indigo-600', 'font-bold');
+    btn.classList.add('border-transparent', 'text-slate-500', 'font-medium');
+  });
+  const activeBtn = document.getElementById(`poam-workbook-btn-${tab}`);
+  if (activeBtn) {
+    activeBtn.classList.add('border-indigo-600', 'text-indigo-600', 'font-bold');
+    activeBtn.classList.remove('border-transparent', 'text-slate-500', 'font-medium');
+  }
+}
+
+async function renderWorkbookSystemsSelects() {
+  const systems = await window.poamWorkbookDB.getSystems();
+
+  const overviewSelect = document.getElementById('poam-workbook-import-system');
+  const systemsSelect = document.getElementById('poam-workbook-system-select');
+
+  const options = systems.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+
+  if (overviewSelect) {
+    overviewSelect.innerHTML = options;
+    overviewSelect.value = window.poamWorkbookState.activeSystemId;
+  }
+
+  if (systemsSelect) {
+    systemsSelect.innerHTML = options;
+    systemsSelect.value = window.poamWorkbookState.activeSystemId;
+  }
+
+  // Sidebar systems list
+  const list = document.getElementById('poam-workbook-systems-list');
+  if (list) {
+    list.innerHTML = systems.map(s => {
+      const active = s.id === window.poamWorkbookState.activeSystemId;
+      return `
+        <button onclick="poamWorkbookOpenSystem('${s.id}')" class="w-full text-left px-3 py-2 rounded-lg border ${active ? 'border-indigo-400 bg-indigo-50' : 'border-slate-200 bg-white hover:bg-slate-50'}">
+          <div class="text-sm font-semibold text-slate-800">${escapeHtml(s.name)}</div>
+          <div class="text-xs text-slate-500">${escapeHtml(s.description || '')}</div>
+        </button>
+      `;
+    }).join('');
+  }
+}
+
+async function poamWorkbookOpenSystem(systemId) {
+  window.poamWorkbookState.activeSystemId = systemId;
+  await renderWorkbookSystemsSelects();
+  await renderWorkbookSystemTable(systemId);
+  poamWorkbookSwitchTab('systems', systemId);
+}
+
+async function renderWorkbookOverview() {
+  const items = await window.poamWorkbookDB.getAllItems();
+  const analytics = computeWorkbookAnalytics(items, 'overview');
+
+  const total = document.getElementById('poam-workbook-metric-total');
+  if (total) total.textContent = analytics.total;
+
+  const overdue = document.getElementById('poam-workbook-metric-overdue');
+  if (overdue) overdue.textContent = analytics.overdue;
+
+  const missingPoc = document.getElementById('poam-workbook-metric-missing-poc');
+  if (missingPoc) missingPoc.textContent = analytics.missingPoc;
+
+  const byStatus = document.getElementById('poam-workbook-metric-status');
+  if (byStatus) byStatus.innerHTML = renderMiniBreakdown(analytics.byStatus);
+
+  const bySeverity = document.getElementById('poam-workbook-metric-severity');
+  if (bySeverity) bySeverity.innerHTML = renderMiniBreakdown(analytics.bySeverity);
+
+  const topVulns = document.getElementById('poam-workbook-top-vulns');
+  if (topVulns) topVulns.innerHTML = renderTopList(analytics.topVulns);
+
+  const controlsDist = document.getElementById('poam-workbook-controls-dist');
+  if (controlsDist) controlsDist.innerHTML = renderTopList(analytics.controlsDist);
+}
+
+async function renderWorkbookSystemsPage() {
+  const systemId = window.poamWorkbookState.activeSystemId;
+  await renderWorkbookSystemTable(systemId);
+}
+
+async function renderWorkbookSystemTable(systemId) {
+  const items = await window.poamWorkbookDB.getItemsBySystem(systemId);
+  const analytics = computeWorkbookAnalytics(items, `system:${systemId}`);
+
+  const sysTotal = document.getElementById('poam-workbook-system-total');
+  if (sysTotal) sysTotal.textContent = analytics.total;
+
+  const tableBody = document.getElementById('poam-workbook-table-body');
+  if (!tableBody) return;
+
+  const pocs = (await window.poamWorkbookDB.getLookup('pocs')) || [];
+  const statuses = (await window.poamWorkbookDB.getLookup('statusValues')) || window.POAM_WORKBOOK_ENUMS.statusValues;
+  const severities = (await window.poamWorkbookDB.getLookup('severityValues')) || window.POAM_WORKBOOK_ENUMS.severityValues;
+  const sources = (await window.poamWorkbookDB.getLookup('detectingSources')) || window.POAM_WORKBOOK_ENUMS.detectingSources;
+
+  tableBody.innerHTML = items
+    .sort((a, b) => {
+      const an = parseInt(String(a['Item number'] || 0), 10) || 0;
+      const bn = parseInt(String(b['Item number'] || 0), 10) || 0;
+      return an - bn;
+    })
+    .map(item => {
+      const id = item.id;
+      return `
+      <tr class="border-b border-slate-100 hover:bg-indigo-50 transition-colors cursor-pointer" onclick="poamWorkbookOpenItemDetails('${id}')">
+        <td class="px-3 py-2 text-xs text-slate-700 font-mono">${escapeHtml(item['Item number'] || '')}</td>
+        <td class="px-3 py-2 text-sm text-slate-900">${escapeHtml(item['Vulnerability Name'] || '')}</td>
+        <td class="px-3 py-2" onclick="event.stopPropagation()">
+          ${renderInlineSelect(id, 'POC Name', item['POC Name'], pocs)}
+        </td>
+        <td class="px-3 py-2" onclick="event.stopPropagation()">
+          ${renderInlineSelect(id, 'Identifying Detecting Source', item['Identifying Detecting Source'], sources)}
+        </td>
+        <td class="px-3 py-2" onclick="event.stopPropagation()">
+          ${renderInlineSelect(id, 'Severity Value', item['Severity Value'], severities)}
+        </td>
+        <td class="px-3 py-2" onclick="event.stopPropagation()">
+          ${renderInlineSelect(id, 'Status', item['Status'], statuses)}
+        </td>
+        <td class="px-3 py-2" onclick="event.stopPropagation()">
+          ${renderInlineDate(id, 'Scheduled Completion Date', item['Scheduled Completion Date'])}
+        </td>
+      </tr>
+      `;
+    })
+    .join('');
+}
+
+function renderInlineSelect(id, field, value, options) {
+  const safeVal = value == null ? '' : String(value);
+  return `
+    <select class="w-full text-xs border border-slate-200 rounded px-2 py-1 bg-white" onchange="poamWorkbookInlineUpdate('${id}', '${escapeAttr(field)}', this.value)">
+      ${options.map(o => {
+        const v = String(o);
+        return `<option value="${escapeAttr(v)}" ${v === safeVal ? 'selected' : ''}>${escapeHtml(v)}</option>`;
+      }).join('')}
+    </select>
+  `;
+}
+
+function renderInlineDate(id, field, value) {
+  const safe = value ? String(value).split('T')[0] : '';
+  return `<input type="date" value="${escapeAttr(safe)}" class="w-full text-xs border border-slate-200 rounded px-2 py-1 bg-white" onchange="poamWorkbookInlineUpdate('${id}', '${escapeAttr(field)}', this.value)">`;
+}
+
+async function poamWorkbookInlineUpdate(id, field, value) {
+  const item = await window.poamWorkbookDB.getItem(id);
+  if (!item) return;
+
+  // Validate enums for known dropdown fields
+  const enums = window.POAM_WORKBOOK_ENUMS;
+  if (field === 'Severity Value' && value && !enums.severityValues.includes(value)) return;
+  if (field === 'Status' && value && !enums.statusValues.includes(value)) return;
+  if (field === 'Identifying Detecting Source' && value && !enums.detectingSources.includes(value)) return;
+
+  item[field] = value;
+  item.updatedAt = new Date().toISOString();
+  await window.poamWorkbookDB.saveItem(item);
+  window.poamWorkbookNotifyMutation();
+
+  // Refresh small metrics in system view
+  await renderWorkbookSystemTable(item.systemId);
+}
+
+async function poamWorkbookCreateItem() {
+  const systemId = document.getElementById('poam-workbook-system-select')?.value || window.poamWorkbookState.activeSystemId;
+  const nextNum = await window.poamWorkbookDB.getNextItemNumber(systemId);
+
+  const now = new Date().toISOString();
+  const newItem = {
+    id: `WB-${systemId}-${Date.now()}`,
+    systemId,
+    createdAt: now,
+    updatedAt: now,
+    ...Object.fromEntries((window.POAM_WORKBOOK_COLUMNS || []).map(c => [c, ''])),
+    [window.POAM_WORKBOOK_INTERNAL_FIELDS.assetsImpacted]: ''
+  };
+
+  newItem['Item number'] = nextNum;
+  newItem['Status'] = 'Open';
+  newItem['Severity Value'] = 'Medium';
+  newItem['POC Name'] = 'Unassigned';
+  newItem['Identifying Detecting Source'] = 'Continuous Monitoring';
+
+  await window.poamWorkbookDB.saveItem(newItem);
+  window.poamWorkbookNotifyMutation();
+
+  await renderWorkbookSystemTable(systemId);
+  await renderWorkbookOverview();
+}
+
+async function poamWorkbookHandleImportInput(evt) {
+  const input = evt.target;
+  const file = input.files && input.files[0];
+  if (!file) return;
+
+  const systemId = document.getElementById('poam-workbook-import-system')?.value || 'default';
+  try {
+    const result = await poamWorkbookImportXlsx(file, systemId);
+    showUpdateFeedback(`Imported ${result.saved} workbook POAMs`, 'success');
+    await renderWorkbookSystemsSelects();
+    await renderWorkbookOverview();
+    await renderWorkbookSystemTable(window.poamWorkbookState.activeSystemId);
+  } catch (e) {
+    console.error(e);
+    showUpdateFeedback(`Import failed: ${e.message}`, 'error');
+  } finally {
+    input.value = '';
+  }
+}
+
+async function poamWorkbookExportAll() {
+  try {
+    await poamWorkbookExportXlsx({ systemId: null });
+    showUpdateFeedback('Export started', 'success');
+  } catch (e) {
+    console.error(e);
+    showUpdateFeedback(`Export failed: ${e.message}`, 'error');
+  }
+}
+
+async function poamWorkbookExportSystem() {
+  const systemId = document.getElementById('poam-workbook-system-select')?.value || window.poamWorkbookState.activeSystemId;
+  try {
+    await poamWorkbookExportXlsx({ systemId });
+    showUpdateFeedback('Export started', 'success');
+  } catch (e) {
+    console.error(e);
+    showUpdateFeedback(`Export failed: ${e.message}`, 'error');
+  }
+}
+
+async function poamWorkbookOpenItemDetails(id) {
+  const item = await window.poamWorkbookDB.getItem(id);
+  if (!item) return;
+
+  const pocs = (await window.poamWorkbookDB.getLookup('pocs')) || [];
+  const controls = (await window.poamWorkbookDB.getLookup('securityControls')) || { families: [], controls: [] };
+
+  const systems = await window.poamWorkbookDB.getSystems();
+
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+  modal.innerHTML = `
+    <div class="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+      <div class="bg-slate-900 text-white px-6 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="text-xs font-mono bg-slate-700 px-2 py-1 rounded">WB</span>
+          <div class="text-sm font-semibold truncate">${escapeHtml(item['Vulnerability Name'] || 'Workbook POAM')}</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="wb-save" class="text-xs font-semibold px-3 py-1 rounded bg-indigo-600 hover:bg-indigo-700">Save</button>
+          <button id="wb-cancel" class="text-slate-300 hover:text-white"><i class="fas fa-times"></i></button>
+        </div>
+      </div>
+
+      <div class="p-6 overflow-y-auto">
+        <div class="grid grid-cols-12 gap-6">
+          <div class="col-span-12 lg:col-span-8 space-y-4">
+            ${renderFieldText('Item number', item['Item number'], true)}
+            ${renderFieldText('Vulnerability Name', item['Vulnerability Name'])}
+            ${renderFieldTextarea('Vulnerability Description', item['Vulnerability Description'])}
+            <div class="grid grid-cols-2 gap-4">
+              ${renderFieldDate('Detection Date', item['Detection Date'])}
+              ${renderFieldDate('Scheduled Completion Date', item['Scheduled Completion Date'])}
+            </div>
+            ${renderFieldTextarea('Impacted Security Controls', item['Impacted Security Controls'], false, 'wb-controls')}
+            ${renderFieldText('Office/Org', item['Office/Org'])}
+            ${renderFieldSelect('POC Name', item['POC Name'], pocs)}
+            ${renderFieldSelect('Identifying Detecting Source', item['Identifying Detecting Source'], window.POAM_WORKBOOK_ENUMS.detectingSources)}
+            ${renderFieldTextarea('Mitigations', item['Mitigations'])}
+            <div class="grid grid-cols-2 gap-4">
+              ${renderFieldSelect('Severity Value', item['Severity Value'], window.POAM_WORKBOOK_ENUMS.severityValues)}
+              ${renderFieldSelect('Status', item['Status'], window.POAM_WORKBOOK_ENUMS.statusValues)}
+            </div>
+            ${renderFieldText('Resources Required', item['Resources Required'])}
+            ${renderFieldTextarea('Milestone with Completion Dates', item['Milestone with Completion Dates'])}
+            ${renderFieldTextarea('Milestone Changes', item['Milestone Changes'])}
+            ${renderFieldTextarea('Affected Components/URLs', item['Affected Components/URLs'])}
+            ${renderFieldTextarea('Comments', item['Comments'])}
+          </div>
+
+          <div class="col-span-12 lg:col-span-4 space-y-4">
+            <div class="border border-slate-200 rounded-lg p-4 space-y-3">
+              <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">System</div>
+              <label class="text-[10px] font-bold text-slate-500 uppercase">Assigned System</label>
+              <select id="wb-systemId" class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded px-3 py-2">
+                ${systems.map(s => `<option value="${escapeAttr(s.id)}" ${s.id === item.systemId ? 'selected' : ''}>${escapeHtml(s.name)}</option>`).join('')}
+              </select>
+            </div>
+
+            <div class="border border-slate-200 rounded-lg p-4 space-y-3">
+              <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Workbook Internal</div>
+              ${renderFieldTextarea(window.POAM_WORKBOOK_INTERNAL_FIELDS.assetsImpacted, item[window.POAM_WORKBOOK_INTERNAL_FIELDS.assetsImpacted] || '', false, 'wb-assetsImpacted')}
+              <div class="text-[10px] text-slate-500">Export mapping rule: Assets Impacted is exported inside "Affected Components/URLs" as a block starting with "Assets Impacted:".</div>
+            </div>
+
+            <div class="border border-slate-200 rounded-lg p-4 space-y-3">
+              <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Control Picker (helper)</div>
+              <div class="text-xs text-slate-600">Families</div>
+              <div class="flex flex-wrap gap-1">
+                ${controls.families.map(f => `<button type="button" class="px-2 py-1 text-xs bg-slate-100 rounded" onclick="wbAppendControl('${escapeAttr(f)}')">${escapeHtml(f)}</button>`).join('')}
+              </div>
+              <div class="text-xs text-slate-600 mt-2">Controls</div>
+              <div class="flex flex-wrap gap-1">
+                ${controls.controls.map(c => `<button type="button" class="px-2 py-1 text-xs bg-slate-100 rounded" onclick="wbAppendControl('${escapeAttr(c)}')">${escapeHtml(c)}</button>`).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  window.wbAppendControl = function (control) {
+    const ta = modal.querySelector('#wb-controls');
+    if (!ta) return;
+    const current = ta.value || '';
+    const sep = current && !current.trim().endsWith(',') ? ', ' : '';
+    ta.value = current + sep + control;
+  };
+
+  const close = () => {
+    modal.remove();
+    delete window.wbAppendControl;
+  };
+
+  modal.querySelector('#wb-cancel')?.addEventListener('click', close);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) close();
+  });
+
+  modal.querySelector('#wb-save')?.addEventListener('click', async () => {
+    try {
+      const updated = { ...item };
+      updated.systemId = modal.querySelector('#wb-systemId')?.value || updated.systemId;
+
+      for (const col of window.POAM_WORKBOOK_COLUMNS) {
+        const el = modal.querySelector(`[data-wb-field="${cssEscape(col)}"]`);
+        if (!el) continue;
+        updated[col] = el.value;
+      }
+
+      const assetsEl = modal.querySelector('#wb-assetsImpacted');
+      if (assetsEl) {
+        updated[window.POAM_WORKBOOK_INTERNAL_FIELDS.assetsImpacted] = assetsEl.value;
+      }
+
+      // Validate enums
+      const enums = window.POAM_WORKBOOK_ENUMS;
+      if (updated['Severity Value'] && !enums.severityValues.includes(updated['Severity Value'])) {
+        throw new Error('Invalid Severity Value');
+      }
+      if (updated['Status'] && !enums.statusValues.includes(updated['Status'])) {
+        throw new Error('Invalid Status');
+      }
+      if (updated['Identifying Detecting Source'] && !enums.detectingSources.includes(updated['Identifying Detecting Source'])) {
+        throw new Error('Invalid Identifying Detecting Source');
+      }
+
+      // Ensure Item number uniqueness within system
+      const itemsInSystem = await window.poamWorkbookDB.getItemsBySystem(updated.systemId);
+      const dup = itemsInSystem.find(x => x.id !== updated.id && String(x['Item number']) === String(updated['Item number']));
+      if (dup) {
+        throw new Error('Item number must be unique within system');
+      }
+
+      updated.updatedAt = new Date().toISOString();
+      await window.poamWorkbookDB.saveItem(updated);
+      window.poamWorkbookNotifyMutation();
+
+      await renderWorkbookSystemsSelects();
+      await renderWorkbookOverview();
+      await renderWorkbookSystemTable(updated.systemId);
+
+      showUpdateFeedback('Workbook POAM saved', 'success');
+      close();
+    } catch (e) {
+      console.error(e);
+      showUpdateFeedback(`Save failed: ${e.message}`, 'error');
+    }
+  });
+}
+
+function renderFieldText(label, value, readonly = false) {
+  return `
+    <div>
+      <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">${escapeHtml(label)}</label>
+      <input data-wb-field="${escapeAttr(label)}" ${readonly ? 'readonly' : ''} value="${escapeAttr(value || '')}" class="w-full text-sm text-slate-800 border border-slate-200 rounded px-3 py-2 ${readonly ? 'bg-slate-50' : 'bg-white'}">
+    </div>
+  `;
+}
+
+function renderFieldTextarea(label, value, readonly = false, id = null) {
+  return `
+    <div>
+      <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">${escapeHtml(label)}</label>
+      <textarea ${id ? `id=\"${id}\"` : ''} data-wb-field="${escapeAttr(label)}" ${readonly ? 'readonly' : ''} rows="3" class="w-full text-sm text-slate-800 border border-slate-200 rounded px-3 py-2 ${readonly ? 'bg-slate-50' : 'bg-white'}">${escapeHtml(value || '')}</textarea>
+    </div>
+  `;
+}
+
+function renderFieldSelect(label, value, options) {
+  const val = value == null ? '' : String(value);
+  return `
+    <div>
+      <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">${escapeHtml(label)}</label>
+      <select data-wb-field="${escapeAttr(label)}" class="w-full text-sm text-slate-800 border border-slate-200 rounded px-3 py-2 bg-white">
+        ${options.map(o => {
+          const v = String(o);
+          return `<option value="${escapeAttr(v)}" ${v === val ? 'selected' : ''}>${escapeHtml(v)}</option>`;
+        }).join('')}
+      </select>
+    </div>
+  `;
+}
+
+function renderFieldDate(label, value) {
+  const safe = value ? String(value).split('T')[0] : '';
+  return `
+    <div>
+      <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">${escapeHtml(label)}</label>
+      <input type="date" data-wb-field="${escapeAttr(label)}" value="${escapeAttr(safe)}" class="w-full text-sm text-slate-800 border border-slate-200 rounded px-3 py-2 bg-white">
+    </div>
+  `;
+}
+
+function computeWorkbookAnalytics(items, scopeKey) {
+  const cacheKey = `${scopeKey}|${window.poamWorkbookState._version}`;
+  const cached = window.poamWorkbookState._analyticsCache.get(cacheKey);
+  if (cached) return cached;
+
+  const byStatus = {};
+  const bySeverity = {};
+  const topVulnMap = new Map();
+  const controlsMap = new Map();
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  let overdue = 0;
+  let missingPoc = 0;
+
+  for (const item of items) {
+    const st = String(item['Status'] || '').trim() || 'Open';
+    byStatus[st] = (byStatus[st] || 0) + 1;
+
+    const sev = String(item['Severity Value'] || '').trim() || 'Medium';
+    bySeverity[sev] = (bySeverity[sev] || 0) + 1;
+
+    const poc = String(item['POC Name'] || '').trim();
+    if (!poc || poc === 'Unassigned') missingPoc++;
+
+    const due = String(item['Scheduled Completion Date'] || '').trim();
+    if (due) {
+      const d = new Date(due);
+      if (!isNaN(d.getTime())) {
+        d.setHours(0, 0, 0, 0);
+        if (d < today && st !== 'Completed' && st !== 'Closed') overdue++;
+      }
+    }
+
+    const vn = String(item['Vulnerability Name'] || '').trim();
+    if (vn) topVulnMap.set(vn, (topVulnMap.get(vn) || 0) + 1);
+
+    const impacted = String(item['Impacted Security Controls'] || '').trim();
+    if (impacted) {
+      impacted.split(/[;,\n]/).map(s => s.trim()).filter(Boolean).forEach(tok => {
+        controlsMap.set(tok, (controlsMap.get(tok) || 0) + 1);
+      });
+    }
+  }
+
+  const toTop = (m) => Array.from(m.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+  const result = {
+    total: items.length,
+    overdue,
+    missingPoc,
+    byStatus,
+    bySeverity,
+    topVulns: toTop(topVulnMap),
+    controlsDist: toTop(controlsMap)
+  };
+
+  window.poamWorkbookState._analyticsCache.set(cacheKey, result);
+  return result;
+}
+
+function renderMiniBreakdown(obj) {
+  const entries = Object.entries(obj).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  return entries.map(([k, v]) => `<div class="flex justify-between text-xs"><span class="text-slate-600">${escapeHtml(k)}</span><span class="font-semibold text-slate-800">${v}</span></div>`).join('');
+}
+
+function renderTopList(entries) {
+  if (!entries || entries.length === 0) {
+    return '<div class="text-xs text-slate-500">No data</div>';
+  }
+  return entries.map(([k, v]) => `<div class="flex justify-between text-xs"><span class="text-slate-600 truncate pr-2" title="${escapeAttr(k)}">${escapeHtml(k)}</span><span class="font-semibold text-slate-800">${v}</span></div>`).join('');
+}
+
+function escapeHtml(str) {
+  return String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function escapeAttr(str) {
+  return escapeHtml(str).replace(/\n/g, ' ');
+}
+
+function cssEscape(str) {
+  // minimal escape for attribute selectors
+  return String(str).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
