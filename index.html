@@ -127,11 +127,6 @@
                                 <span>Scan History</span>
                                 <span class="ml-auto text-xs text-slate-400">Audit Trail</span>
                             </a>
-                            <a href="#" onclick="showModule('security-control-monitoring')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
-                                <i class="fas fa-table text-xs w-4 text-indigo-400"></i>
-                                <span>Security Control Monitoring</span>
-                                <span class="ml-auto text-xs text-slate-400">Workbook</span>
-                            </a>
                             <a href="#" onclick="showReviewIssuesSidebar()" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors group">
                                 <i class="fas fa-exclamation-triangle text-xs w-4 text-amber-400"></i>
                                 <span>POAMs Requiring Review</span>
@@ -139,6 +134,12 @@
                             </a>
                         </div>
                     </div>
+
+                    <!-- Security Control Monitoring (Workbook POAMs) -->
+                    <a href="#" onclick="showModule('security-control-monitoring')" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 transition-colors">
+                        <i class="fas fa-table w-5"></i>
+                        <span>Security Control Monitoring</span>
+                    </a>
 
                     <!-- Evidence Vault -->
                     <a href="#" onclick="showModule('evidence')" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 transition-colors">
