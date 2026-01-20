@@ -4,6 +4,7 @@ window.poamWorkbookState = {
   activeTab: 'overview',
   activeSystemId: 'default',
   pendingOpenSystemId: null,
+  selectedItemIds: new Set(),
   _version: 0,
   _analyticsCache: new Map()
 };
@@ -453,6 +454,7 @@ async function poamWorkbookNavigateToSystem(systemId) {
 
 async function poamWorkbookOpenSystem(systemId) {
   window.poamWorkbookState.activeSystemId = systemId;
+  poamWorkbookClearSelection();
   await renderWorkbookSidebarSystems();
   await renderWorkbookSystemTable(systemId);
 
@@ -503,6 +505,17 @@ async function renderWorkbookSystemTable(systemId) {
   const tableBody = document.getElementById('poam-workbook-table-body');
   if (!tableBody) return;
 
+  // Sync select-all checkbox state
+  const selectAll = document.getElementById('poam-workbook-select-all');
+  if (selectAll) {
+    const ids = items.map(i => i.id);
+    const selected = window.poamWorkbookState.selectedItemIds;
+    const allSelected = ids.length > 0 && ids.every(id => selected.has(id));
+    const anySelected = ids.some(id => selected.has(id));
+    selectAll.checked = allSelected;
+    selectAll.indeterminate = anySelected && !allSelected;
+  }
+
   const pocs = (await window.poamWorkbookDB.getLookup('pocs')) || [];
   const statuses = (await window.poamWorkbookDB.getLookup('statusValues')) || window.POAM_WORKBOOK_ENUMS.statusValues;
   const severities = (await window.poamWorkbookDB.getLookup('severityValues')) || window.POAM_WORKBOOK_ENUMS.severityValues;
@@ -516,8 +529,12 @@ async function renderWorkbookSystemTable(systemId) {
     })
     .map(item => {
       const id = item.id;
+      const checked = window.poamWorkbookState.selectedItemIds.has(id);
       return `
       <tr class="border-b border-slate-100 hover:bg-indigo-50 transition-colors cursor-pointer" onclick="poamWorkbookOpenItemDetails('${id}')">
+        <td class="px-3 py-2" onclick="event.stopPropagation()">
+          <input type="checkbox" ${checked ? 'checked' : ''} onchange="poamWorkbookToggleRowSelection('${id}', this.checked)" />
+        </td>
         <td class="px-3 py-2 text-xs text-slate-700 font-mono">${escapeHtml(item['Item number'] || '')}</td>
         <td class="px-3 py-2 text-sm text-slate-900">${escapeHtml(item['Vulnerability Name'] || '')}</td>
         <td class="px-3 py-2" onclick="event.stopPropagation()">
@@ -539,6 +556,158 @@ async function renderWorkbookSystemTable(systemId) {
       `;
     })
     .join('');
+
+  poamWorkbookUpdateBulkActionBar();
+}
+
+function poamWorkbookToggleRowSelection(id, checked) {
+  if (!id) return;
+  if (checked) window.poamWorkbookState.selectedItemIds.add(id);
+  else window.poamWorkbookState.selectedItemIds.delete(id);
+  poamWorkbookUpdateBulkActionBar();
+}
+
+async function poamWorkbookToggleSelectAll(checked) {
+  const systemId = window.poamWorkbookState.activeSystemId;
+  const items = await window.poamWorkbookDB.getItemsBySystem(systemId);
+  if (checked) {
+    items.forEach(i => window.poamWorkbookState.selectedItemIds.add(i.id));
+  } else {
+    items.forEach(i => window.poamWorkbookState.selectedItemIds.delete(i.id));
+  }
+  await renderWorkbookSystemTable(systemId);
+}
+
+function poamWorkbookClearSelection() {
+  window.poamWorkbookState.selectedItemIds.clear();
+  poamWorkbookUpdateBulkActionBar();
+  const selectAll = document.getElementById('poam-workbook-select-all');
+  if (selectAll) {
+    selectAll.checked = false;
+    selectAll.indeterminate = false;
+  }
+}
+
+function poamWorkbookUpdateBulkActionBar() {
+  const bar = document.getElementById('poam-workbook-bulk-actions');
+  const countEl = document.getElementById('poam-workbook-selected-count');
+  if (!bar || !countEl) return;
+  const count = window.poamWorkbookState.selectedItemIds.size;
+  countEl.textContent = String(count);
+  if (count > 0) bar.classList.remove('hidden');
+  else bar.classList.add('hidden');
+}
+
+async function poamWorkbookBulkDeleteSelected() {
+  const ids = Array.from(window.poamWorkbookState.selectedItemIds);
+  if (ids.length === 0) return;
+  if (!confirm(`Delete ${ids.length} workbook POAM(s)? This cannot be undone.`)) return;
+
+  try {
+    for (const id of ids) {
+      await window.poamWorkbookDB.deleteItem(id);
+    }
+    window.poamWorkbookNotifyMutation();
+    poamWorkbookClearSelection();
+    await renderWorkbookSystemTable(window.poamWorkbookState.activeSystemId);
+    await renderWorkbookOverview();
+    showUpdateFeedback('Deleted selected workbook POAMs', 'success');
+  } catch (e) {
+    console.error(e);
+    showUpdateFeedback(`Bulk delete failed: ${e.message}`, 'error');
+  }
+}
+
+function poamWorkbookBulkUpdateStatus() {
+  poamWorkbookOpenBulkEditModal({ mode: 'status' });
+}
+
+function poamWorkbookOpenBulkEditModal({ mode } = {}) {
+  const ids = Array.from(window.poamWorkbookState.selectedItemIds);
+  if (ids.length === 0) return;
+
+  const statuses = window.POAM_WORKBOOK_ENUMS?.statusValues || [];
+  const severities = window.POAM_WORKBOOK_ENUMS?.severityValues || [];
+
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+  modal.innerHTML = `
+    <div class="bg-white rounded-2xl shadow-xl max-w-xl w-full p-6">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Bulk Update</h2>
+          <p class="text-sm text-slate-500">Updating <span class="font-bold">${ids.length}</span> workbook POAM(s). Leave fields blank to keep existing values.</p>
+        </div>
+        <button id="wb-bulk-close" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="space-y-4">
+        <div ${mode === 'status' ? '' : ''}>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">Status</label>
+          <select id="wb-bulk-status" class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white">
+            <option value="">(no change)</option>
+            ${statuses.map(s => `<option value="${escapeAttr(s)}">${escapeHtml(s)}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">Severity Value</label>
+          <select id="wb-bulk-severity" class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white">
+            <option value="">(no change)</option>
+            ${severities.map(s => `<option value="${escapeAttr(s)}">${escapeHtml(s)}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">POC Name</label>
+          <input id="wb-bulk-poc" type="text" class="w-full px-3 py-2 border border-slate-200 rounded-lg" placeholder="(no change)">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">Scheduled Completion Date</label>
+          <input id="wb-bulk-due" type="date" class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white">
+          <div class="text-xs text-slate-500 mt-1">(leave blank for no change)</div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-3 mt-6">
+        <button id="wb-bulk-cancel" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">Cancel</button>
+        <button id="wb-bulk-apply" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Apply</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const close = () => modal.remove();
+  modal.querySelector('#wb-bulk-close')?.addEventListener('click', close);
+  modal.querySelector('#wb-bulk-cancel')?.addEventListener('click', close);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) close();
+  });
+
+  modal.querySelector('#wb-bulk-apply')?.addEventListener('click', async () => {
+    try {
+      const status = String(modal.querySelector('#wb-bulk-status')?.value || '').trim();
+      const severity = String(modal.querySelector('#wb-bulk-severity')?.value || '').trim();
+      const poc = String(modal.querySelector('#wb-bulk-poc')?.value || '').trim();
+      const due = String(modal.querySelector('#wb-bulk-due')?.value || '').trim();
+
+      for (const id of ids) {
+        const item = await window.poamWorkbookDB.getItem(id);
+        if (!item) continue;
+        if (status) item['Status'] = status;
+        if (severity) item['Severity Value'] = severity;
+        if (poc) item['POC Name'] = poc;
+        if (due) item['Scheduled Completion Date'] = due;
+        item.updatedAt = new Date().toISOString();
+        await window.poamWorkbookDB.saveItem(item);
+      }
+
+      window.poamWorkbookNotifyMutation();
+      await renderWorkbookSystemTable(window.poamWorkbookState.activeSystemId);
+      await renderWorkbookOverview();
+      showUpdateFeedback('Bulk update applied', 'success');
+      close();
+    } catch (e) {
+      console.error(e);
+      showUpdateFeedback(`Bulk update failed: ${e.message}`, 'error');
+    }
+  });
 }
 
 function renderInlineSelect(id, field, value, options) {
