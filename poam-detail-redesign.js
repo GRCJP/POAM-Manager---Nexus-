@@ -243,7 +243,7 @@ function renderFocusedPOAMDetailPage(poam) {
                                 </div>
                                 <div>
                                     <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Milestones</div>
-                                    <div class="mt-3">${renderMilestonesList(poam.milestones || [])}</div>
+                                    <div class="mt-3">${renderMilestonesList(poam)}</div>
                                 </div>
                             </div>
                         </div>
@@ -428,9 +428,18 @@ function renderAssetsList(assets) {
     `;
 }
 
-function renderMilestonesList(milestones) {
+function renderMilestonesList(poam) {
+    const milestones = poam.milestones || [];
+    
     if (!milestones || milestones.length === 0) {
-        return '<div class="text-xs text-slate-500 italic">No milestones added</div>';
+        return `
+            <div class="space-y-3">
+                <div class="text-xs text-slate-500 italic">No milestones added</div>
+                <button onclick="addMilestoneToPOAM('${poam.id}')" class="text-xs bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700">
+                    <i class="fas fa-plus"></i> Add Milestone
+                </button>
+            </div>
+        `;
     }
 
     return `
@@ -442,16 +451,68 @@ function renderMilestonesList(milestones) {
                     : status === 'in-progress'
                         ? 'bg-blue-50 text-blue-700 border-blue-200'
                         : 'bg-slate-50 text-slate-600 border-slate-200';
+                
                 return `
-                    <div class="border border-slate-200 rounded-lg p-3">
-                        <div class="flex items-center justify-between">
-                            <div class="text-xs font-semibold text-slate-800">${milestone.name || milestone.step || `Milestone ${index + 1}`}</div>
-                            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${statusClass}">${status}</span>
+                    <div class="border border-slate-200 rounded-lg p-3 hover:border-indigo-300 transition-colors">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex-1">
+                                <input type="text" 
+                                       value="${milestone.name || `Milestone ${index + 1}`}" 
+                                       onchange="updateMilestoneField('${poam.id}', ${index}, 'name', this.value)"
+                                       class="text-xs font-semibold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 focus:outline-none w-full"
+                                       placeholder="Milestone name">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <select onchange="updateMilestoneField('${poam.id}', ${index}, 'status', this.value)"
+                                        class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${statusClass} cursor-pointer">
+                                    <option value="pending" ${status === 'pending' ? 'selected' : ''}>Pending</option>
+                                    <option value="in-progress" ${status === 'in-progress' ? 'selected' : ''}>In Progress</option>
+                                    <option value="completed" ${status === 'completed' ? 'selected' : ''}>Completed</option>
+                                </select>
+                                <button onclick="removeMilestoneFromPOAM('${poam.id}', ${index})" 
+                                        class="text-red-500 hover:text-red-700 text-xs">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
                         </div>
-                        <div class="mt-1 text-[11px] text-slate-500">${milestone.targetDate || milestone.date || 'No target date'}</div>
+                        
+                        <div class="grid grid-cols-2 gap-2 mb-2">
+                            <div>
+                                <label class="text-[10px] text-slate-500 uppercase">Target Date</label>
+                                <input type="date" 
+                                       value="${milestone.targetDate || milestone.date || ''}" 
+                                       onchange="updateMilestoneField('${poam.id}', ${index}, 'targetDate', this.value)"
+                                       class="w-full text-xs text-slate-700 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-indigo-500">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-500 uppercase">Weight (%)</label>
+                                <input type="number" 
+                                       value="${milestone.weight || 0}" 
+                                       min="0" max="100"
+                                       onchange="updateMilestoneField('${poam.id}', ${index}, 'weight', parseInt(this.value))"
+                                       class="w-full text-xs text-slate-700 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-indigo-500">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="text-[10px] text-slate-500 uppercase">Description</label>
+                            <textarea onchange="updateMilestoneField('${poam.id}', ${index}, 'description', this.value)"
+                                      class="w-full text-xs text-slate-700 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-indigo-500 resize-none"
+                                      rows="2"
+                                      placeholder="Milestone description">${milestone.description || ''}</textarea>
+                        </div>
                     </div>
                 `;
             }).join('')}
+            
+            <div class="flex justify-between items-center pt-2 border-t border-slate-200">
+                <button onclick="addMilestoneToPOAM('${poam.id}')" class="text-xs bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700">
+                    <i class="fas fa-plus"></i> Add Milestone
+                </button>
+                <button onclick="recalculateMilestoneDates('${poam.id}')" class="text-xs bg-slate-600 text-white px-3 py-1 rounded hover:bg-slate-700">
+                    <i class="fas fa-calculator"></i> Recalculate Dates
+                </button>
+            </div>
         </div>
     `;
 }
@@ -496,49 +557,213 @@ async function exportAssetScanData(poamId) {
         const poam = await poamDB.getPOAM(poamId);
         
         if (!poam || !poam.rawFindings || poam.rawFindings.length === 0) {
-            showUpdateFeedback('No scan data found for this POAM', 'error');
+            showUpdateFeedback('No scan data available for export', 'error');
             return;
         }
-
-        const findings = poam.rawFindings;
         
-        // Extract all unique headers from all raw findings
-        const headerSet = new Set();
-        findings.forEach(f => {
-            const raw = f.raw || f;
-            Object.keys(raw).forEach(key => headerSet.add(key));
-        });
-        const headers = Array.from(headerSet);
-
-        // Create CSV rows
-        const csvRows = [headers.join(',')];
+        // Create CSV content from raw findings
+        const headers = Object.keys(poam.rawFindings[0]);
+        const csvContent = [
+            headers.join(','),
+            ...poam.rawFindings.map(finding => 
+                headers.map(header => `"${finding[header] || ''}"`).join(',')
+            )
+        ].join('\n');
         
-        findings.forEach(f => {
-            const raw = f.raw || f;
-            const rowValues = headers.map(header => {
-                const val = raw[header] || '';
-                // Escape quotes and commas
-                return `"${String(val).replace(/"/g, '""').replace(/\n/g, ' ')}"`;
-            });
-            csvRows.push(rowValues.join(','));
-        });
-
-        const csvContent = csvRows.join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        // Download CSV
+        const blob = new Blob([csvContent], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-        
         a.href = url;
-        a.download = `POAM_Asset_Scan_Data_${poamId}_${timestamp}.csv`;
-        document.body.appendChild(a);
+        a.download = `poam-${poamId}-scan-data.csv`;
         a.click();
-        document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
-
-        showUpdateFeedback(`Exported ${findings.length} scan records`, 'success');
+        
+        showUpdateFeedback('Scan data exported successfully', 'success');
     } catch (error) {
-        console.error('Failed to export asset scan data:', error);
-        showUpdateFeedback('Export failed', 'error');
+        console.error('Error exporting scan data:', error);
+        showUpdateFeedback('Error exporting scan data', 'error');
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MILESTONE MANAGEMENT FUNCTIONS
+// ═══════════════════════════════════════════════════════════════
+
+async function updateMilestoneField(poamId, milestoneIndex, field, value) {
+    try {
+        if (!poamDB || !poamDB.db) await poamDB.init();
+        
+        const poam = await poamDB.getPOAM(poamId);
+        if (!poam) return;
+        
+        // Ensure milestones array exists
+        if (!poam.milestones) poam.milestones = [];
+        
+        // Ensure milestone exists at index
+        if (!poam.milestones[milestoneIndex]) {
+            poam.milestones[milestoneIndex] = {};
+        }
+        
+        // Update the field
+        const oldValue = poam.milestones[milestoneIndex][field];
+        poam.milestones[milestoneIndex][field] = value;
+        
+        // Save to database
+        await poamDB.savePOAM(poam);
+        
+        // Update current display
+        if (currentPOAMDetail && currentPOAMDetail.id === poamId) {
+            currentPOAMDetail.milestones = poam.milestones;
+            
+            // Refresh the milestones section
+            const milestonesContainer = document.querySelector('[data-section="milestones"]');
+            if (milestonesContainer) {
+                milestonesContainer.innerHTML = renderMilestonesList(poam);
+            }
+        }
+        
+        console.log(`✅ Updated milestone ${milestoneIndex + 1} ${field}: ${oldValue} → ${value}`);
+        
+    } catch (error) {
+        console.error('Error updating milestone field:', error);
+        showUpdateFeedback('Error updating milestone', 'error');
+    }
+}
+
+async function addMilestoneToPOAM(poamId) {
+    try {
+        if (!poamDB || !poamDB.db) await poamDB.init();
+        
+        const poam = await poamDB.getPOAM(poamId);
+        if (!poam) return;
+        
+        // Ensure milestones array exists
+        if (!poam.milestones) poam.milestones = [];
+        
+        // Create new milestone
+        const newMilestone = {
+            name: `Milestone ${poam.milestones.length + 1}`,
+            description: '',
+            targetDate: poam.dueDate || new Date().toISOString().split('T')[0],
+            status: 'pending',
+            weight: 0
+        };
+        
+        // Add to milestones array
+        poam.milestones.push(newMilestone);
+        
+        // Save to database
+        await poamDB.savePOAM(poam);
+        
+        // Update current display
+        if (currentPOAMDetail && currentPOAMDetail.id === poamId) {
+            currentPOAMDetail.milestones = poam.milestones;
+            
+            // Refresh the milestones section
+            const milestonesContainer = document.querySelector('[data-section="milestones"]');
+            if (milestonesContainer) {
+                milestonesContainer.innerHTML = renderMilestonesList(poam);
+            }
+        }
+        
+        showUpdateFeedback('Milestone added successfully', 'success');
+        console.log(`✅ Added milestone to POAM ${poamId}`);
+        
+    } catch (error) {
+        console.error('Error adding milestone:', error);
+        showUpdateFeedback('Error adding milestone', 'error');
+    }
+}
+
+async function removeMilestoneFromPOAM(poamId, milestoneIndex) {
+    try {
+        if (!confirm('Are you sure you want to remove this milestone?')) return;
+        
+        if (!poamDB || !poamDB.db) await poamDB.init();
+        
+        const poam = await poamDB.getPOAM(poamId);
+        if (!poam || !poam.milestones) return;
+        
+        // Remove milestone
+        poam.milestones.splice(milestoneIndex, 1);
+        
+        // Save to database
+        await poamDB.savePOAM(poam);
+        
+        // Update current display
+        if (currentPOAMDetail && currentPOAMDetail.id === poamId) {
+            currentPOAMDetail.milestones = poam.milestones;
+            
+            // Refresh the milestones section
+            const milestonesContainer = document.querySelector('[data-section="milestones"]');
+            if (milestonesContainer) {
+                milestonesContainer.innerHTML = renderMilestonesList(poam);
+            }
+        }
+        
+        showUpdateFeedback('Milestone removed successfully', 'success');
+        console.log(`✅ Removed milestone ${milestoneIndex + 1} from POAM ${poamId}`);
+        
+    } catch (error) {
+        console.error('Error removing milestone:', error);
+        showUpdateFeedback('Error removing milestone', 'error');
+    }
+}
+
+async function recalculateMilestoneDates(poamId) {
+    try {
+        if (!poamDB || !poamDB.db) await poamDB.init();
+        
+        const poam = await poamDB.getPOAM(poamId);
+        if (!poam || !poam.milestones || poam.milestones.length === 0) {
+            showUpdateFeedback('No milestones to recalculate', 'error');
+            return;
+        }
+        
+        const startDate = poam.createdDate || poam.initialScheduledCompletionDate || new Date().toISOString().split('T')[0];
+        const dueDate = poam.dueDate || poam.updatedScheduledCompletionDate;
+        
+        if (!startDate || !dueDate) {
+            showUpdateFeedback('Missing start or due date for recalculation', 'error');
+            return;
+        }
+        
+        // Use the milestone generation function to recalculate dates
+        const recalculatedMilestones = generateMilestonesForControlFamily(
+            poam.controlFamily || 'CM', 
+            startDate, 
+            dueDate
+        );
+        
+        // Preserve existing milestone names, descriptions, and statuses but update dates and weights
+        poam.milestones.forEach((milestone, index) => {
+            if (recalculatedMilestones[index]) {
+                milestone.targetDate = recalculatedMilestones[index].targetDate;
+                milestone.weight = recalculatedMilestones[index].weight;
+                // Keep existing name, description, and status
+            }
+        });
+        
+        // Save to database
+        await poamDB.savePOAM(poam);
+        
+        // Update current display
+        if (currentPOAMDetail && currentPOAMDetail.id === poamId) {
+            currentPOAMDetail.milestones = poam.milestones;
+            
+            // Refresh the milestones section
+            const milestonesContainer = document.querySelector('[data-section="milestones"]');
+            if (milestonesContainer) {
+                milestonesContainer.innerHTML = renderMilestonesList(poam);
+            }
+        }
+        
+        showUpdateFeedback('Milestone dates recalculated successfully', 'success');
+        console.log(`✅ Recalculated milestone dates for POAM ${poamId}`);
+        
+    } catch (error) {
+        console.error('Error recalculating milestone dates:', error);
+        showUpdateFeedback('Error recalculating milestone dates', 'error');
     }
 }
