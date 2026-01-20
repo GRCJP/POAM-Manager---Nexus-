@@ -26,13 +26,31 @@ async function poamWorkbookImportXlsx(file, systemId) {
   const dataRows = matrix.slice(1);
 
   const normalizeHeader = (h) => String(h || '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/\n/g, ' ')
+    .replace(/"/g, '')
     .trim()
     .toLowerCase()
     .replace(/\s+/g, ' ')
-    .replace(/[^a-z0-9 ]/g, '');
+    .replace(/[^a-z0-9 /]/g, '');
+
+  const headerAliases = new Map([
+    ['poam id', 'Item number'],
+    ['poam number', 'Item number'],
+    ['id', 'Item number'],
+    ['item', 'Item number'],
+    ['affected components urls', 'Affected Components/URLs'],
+    ['affected components/urls', 'Affected Components/URLs'],
+    ['affected components urls ', 'Affected Components/URLs'],
+    ['identifying detecting source', 'Identifying Detecting Source']
+  ]);
 
   const requiredHeaders = window.POAM_WORKBOOK_COLUMNS || [];
   const canonicalByNorm = new Map(requiredHeaders.map(h => [normalizeHeader(h), h]));
+  for (const [k, v] of headerAliases.entries()) {
+    canonicalByNorm.set(normalizeHeader(k), v);
+  }
   const headerIndexToCanonical = new Map();
 
   for (let i = 0; i < headerRow.length; i++) {
@@ -43,11 +61,9 @@ async function poamWorkbookImportXlsx(file, systemId) {
     }
   }
 
-  // Require a minimal set to proceed.
-  const requiredMinimum = ['Item number', 'Vulnerability Name'];
-  const haveMinimum = requiredMinimum.every(h => Array.from(headerIndexToCanonical.values()).includes(h));
-  if (!haveMinimum) {
-    throw new Error('Workbook is missing required columns (must include: Item number, Vulnerability Name)');
+  // Do not require exact headers; proceed best-effort.
+  if (headerIndexToCanonical.size === 0) {
+    throw new Error('No recognizable columns found in workbook header row');
   }
 
   const enums = window.POAM_WORKBOOK_ENUMS || {};
@@ -73,7 +89,7 @@ async function poamWorkbookImportXlsx(file, systemId) {
     }
 
     // Skip fully empty rows
-    const anyVal = requiredHeaders.some(h => String(r[h] || '').trim() !== '');
+    const anyVal = Object.values(r).some(v => String(v || '').trim() !== '');
     if (!anyVal) continue;
 
     const severity = String(r['Severity Value'] || '').trim();
@@ -107,13 +123,28 @@ async function poamWorkbookImportXlsx(file, systemId) {
     throw new Error(`Invalid enum values found. ${sample}${invalidRows.length > 10 ? '…' : ''}`);
   }
 
+  const formatItemNumber = async (n) => {
+    try {
+      const fmt = await window.poamWorkbookDB.getLookup('poamIdFormat');
+      const year = String(new Date().getFullYear());
+      const replaceN = (template) => template
+        .replace(/\{n:(\d+)\}/g, (_, width) => String(n).padStart(parseInt(width, 10) || 0, '0'))
+        .replace(/\{n\}/g, String(n));
+      return replaceN(String(fmt || 'POAM-{system}-{n:4}'))
+        .replace(/\{system\}/g, systemId)
+        .replace(/\{year\}/g, year);
+    } catch (e) {
+      return n;
+    }
+  };
+
   // Persist (upsert by systemId + Item number where possible)
   let saved = 0;
   let updated = 0;
   for (const entry of parsedRows) {
     const r = entry.row;
     const itemNumberRaw = r['Item number'];
-    const n = parseInt(String(itemNumberRaw || '').trim(), 10);
+    const n = parseInt(String(itemNumberRaw || '').replace(/[^0-9]/g, ''), 10);
 
     const data = {
       ...pickWorkbookColumns(r),
@@ -122,7 +153,7 @@ async function poamWorkbookImportXlsx(file, systemId) {
     data['Affected Components/URLs'] = entry.assets.affectedComponents;
 
     if (Number.isFinite(n) && n > 0 && typeof window.poamWorkbookDB.upsertItemBySystemAndItemNumber === 'function') {
-      data['Item number'] = n;
+      data['Item number'] = String(itemNumberRaw || n);
       const result = await window.poamWorkbookDB.upsertItemBySystemAndItemNumber(systemId, n, data);
       if (result.created) saved++; else updated++;
       continue;
@@ -137,7 +168,7 @@ async function poamWorkbookImportXlsx(file, systemId) {
       updatedAt: new Date().toISOString(),
       ...data
     };
-    item['Item number'] = nextNum;
+    item['Item number'] = await formatItemNumber(nextNum);
     await window.poamWorkbookDB.saveItem(item);
     saved++;
   }
