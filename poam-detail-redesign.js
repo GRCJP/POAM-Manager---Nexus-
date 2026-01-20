@@ -140,12 +140,18 @@ async function showPOAMDetails(poamId) {
     if (!poam) return;
     
     currentPOAMDetail = poam;
-    const [milestones, comments] = await Promise.all([
-        poamDB.getMilestones(poamId),
-        poamDB.getComments(poamId)
-    ]);
-    poam.milestones = milestones;
+    const comments = await poamDB.getComments(poamId);
     poam.comments = comments;
+
+    // Milestones are now stored on the POAM record (embedded) for the detail view.
+    // Do NOT overwrite embedded milestones with the legacy milestones store.
+    // Fallback: if the POAM record has no milestones, try the legacy store.
+    if (!Array.isArray(poam.milestones) || poam.milestones.length === 0) {
+        const legacyMilestones = await poamDB.getMilestones(poamId);
+        if (Array.isArray(legacyMilestones) && legacyMilestones.length > 0) {
+            poam.milestones = legacyMilestones;
+        }
+    }
     
     renderFocusedPOAMDetailPage(poam);
     document.getElementById('poam-detail-page').classList.remove('hidden');
