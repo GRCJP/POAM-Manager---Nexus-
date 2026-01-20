@@ -193,6 +193,9 @@ function renderFocusedPOAMDetailPage(poam) {
                     <button onclick="switchMainTab('details')" id="main-tab-details" class="px-1 py-4 text-sm font-bold border-b-2 border-indigo-600 text-indigo-600 transition-all flex items-center gap-2">
                         <i class="fas fa-edit"></i> POAM Details
                     </button>
+                    <button onclick="switchMainTab('milestones')" id="main-tab-milestones" class="px-1 py-4 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-all flex items-center gap-2">
+                        <i class="fas fa-flag-checkered"></i> Milestones (${poam.milestones ? poam.milestones.length : 0})
+                    </button>
                     <button onclick="switchMainTab('assets')" id="main-tab-assets" class="px-1 py-4 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-all flex items-center gap-2">
                         <i class="fas fa-server"></i> Affected Assets (${displayPOAM.totalAffectedAssets || 0})
                     </button>
@@ -240,10 +243,6 @@ function renderFocusedPOAMDetailPage(poam) {
                                     <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Internal Notes</label>
                                     <textarea rows="3" class="w-full text-sm text-slate-700 border border-slate-200 rounded px-3 py-2 resize-none"
                                               onchange="updatePOAMField('${poam.id}', 'notes', this.value)">${displayPOAM.notes || ''}</textarea>
-                                </div>
-                                <div>
-                                    <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Milestones</div>
-                                    <div class="mt-3">${renderMilestonesList(poam)}</div>
                                 </div>
                             </div>
                         </div>
@@ -330,6 +329,27 @@ function renderFocusedPOAMDetailPage(poam) {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="section-milestones" class="main-tab-section hidden h-full">
+                    <div class="h-full border border-slate-200 rounded-lg overflow-hidden flex flex-col">
+                        <div class="bg-slate-50 border-b border-slate-200 px-4 py-2 flex justify-between items-center">
+                            <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">Milestone Management</span>
+                            <div class="flex gap-2">
+                                <button onclick="addMilestoneToPOAM('${poam.id}')" 
+                                        class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors">
+                                    <i class="fas fa-plus"></i> ${poam.milestones && poam.milestones.length > 0 ? 'Add Milestone' : 'Generate Milestones'}
+                                </button>
+                                <button onclick="recalculateMilestoneDates('${poam.id}')" 
+                                        class="text-xs font-bold text-slate-600 hover:text-slate-800 flex items-center gap-1 transition-colors">
+                                    <i class="fas fa-calculator"></i> Recalculate Dates
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex-1 overflow-y-auto p-4" data-section="milestones">
+                            ${renderMilestonesList(poam)}
                         </div>
                     </div>
                 </div>
@@ -617,9 +637,15 @@ async function updateMilestoneField(poamId, milestoneIndex, field, value) {
             currentPOAMDetail.milestones = poam.milestones;
             
             // Refresh the milestones section
-            const milestonesContainer = document.querySelector('[data-section="milestones"]');
+            const milestonesContainer = document.querySelector('#section-milestones [data-section="milestones"]');
             if (milestonesContainer) {
                 milestonesContainer.innerHTML = renderMilestonesList(poam);
+            }
+            
+            // Update milestone count in tab
+            const milestonesTab = document.getElementById('main-tab-milestones');
+            if (milestonesTab) {
+                milestonesTab.innerHTML = `<i class="fas fa-flag-checkered"></i> Milestones (${poam.milestones.length})`;
             }
         }
         
@@ -687,9 +713,15 @@ async function addMilestoneToPOAM(poamId) {
             currentPOAMDetail.milestones = poam.milestones;
             
             // Refresh the milestones section
-            const milestonesContainer = document.querySelector('[data-section="milestones"]');
+            const milestonesContainer = document.querySelector('#section-milestones [data-section="milestones"]');
             if (milestonesContainer) {
                 milestonesContainer.innerHTML = renderMilestonesList(poam);
+            }
+            
+            // Update milestone count in tab
+            const milestonesTab = document.getElementById('main-tab-milestones');
+            if (milestonesTab) {
+                milestonesTab.innerHTML = `<i class="fas fa-flag-checkered"></i> Milestones (${poam.milestones.length})`;
             }
         }
         
@@ -751,9 +783,15 @@ async function removeMilestoneFromPOAM(poamId, milestoneIndex) {
             currentPOAMDetail.milestones = poam.milestones;
             
             // Refresh the milestones section
-            const milestonesContainer = document.querySelector('[data-section="milestones"]');
+            const milestonesContainer = document.querySelector('#section-milestones [data-section="milestones"]');
             if (milestonesContainer) {
                 milestonesContainer.innerHTML = renderMilestonesList(poam);
+            }
+            
+            // Update milestone count in tab
+            const milestonesTab = document.getElementById('main-tab-milestones');
+            if (milestonesTab) {
+                milestonesTab.innerHTML = `<i class="fas fa-flag-checkered"></i> Milestones (${poam.milestones.length})`;
             }
         }
         
@@ -808,9 +846,15 @@ async function recalculateMilestoneDates(poamId) {
             currentPOAMDetail.milestones = poam.milestones;
             
             // Refresh the milestones section
-            const milestonesContainer = document.querySelector('[data-section="milestones"]');
+            const milestonesContainer = document.querySelector('#section-milestones [data-section="milestones"]');
             if (milestonesContainer) {
                 milestonesContainer.innerHTML = renderMilestonesList(poam);
+            }
+            
+            // Update milestone count in tab
+            const milestonesTab = document.getElementById('main-tab-milestones');
+            if (milestonesTab) {
+                milestonesTab.innerHTML = `<i class="fas fa-flag-checkered"></i> Milestones (${poam.milestones.length})`;
             }
         }
         
