@@ -80,6 +80,221 @@ async function poamWorkbookEnsureDbReady() {
   }
 }
 
+function poamWorkbookOpenPasteModal() {
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+  modal.innerHTML = `
+    <div class="bg-white rounded-2xl p-6 max-w-4xl w-full">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Paste POAMs</h2>
+          <p class="text-sm text-slate-500 mt-1">Paste one or more POAM entries (label: value). Items will be mapped into the workbook columns and saved to the active system.</p>
+        </div>
+        <button id="wb-paste-close" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="space-y-3">
+        <div class="text-xs text-slate-500">Active system: <span class="font-mono">${escapeHtml(window.poamWorkbookState.activeSystemId)}</span></div>
+        <textarea id="wb-paste-text" class="w-full h-64 px-3 py-2 border border-slate-200 rounded-lg font-mono text-xs" placeholder="Example:\nItem number: 12\nVulnerability Name: Weak cipher suites\nVulnerability Description: ...\nStatus: Open\nSeverity Value: High\n\nItem number: 13\n...\n"></textarea>
+      </div>
+      <div class="flex justify-end gap-3 mt-6">
+        <button id="wb-paste-cancel" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">Cancel</button>
+        <button id="wb-paste-import" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Import Paste</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const close = () => modal.remove();
+  modal.querySelector('#wb-paste-close')?.addEventListener('click', close);
+  modal.querySelector('#wb-paste-cancel')?.addEventListener('click', close);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) close();
+  });
+
+  modal.querySelector('#wb-paste-import')?.addEventListener('click', async () => {
+    try {
+      await poamWorkbookEnsureDbReady();
+      const systemId = window.poamWorkbookState.activeSystemId || 'default';
+      const text = String(modal.querySelector('#wb-paste-text')?.value || '').trim();
+      if (!text) throw new Error('Nothing to import');
+
+      const parsed = poamWorkbookParsePastedPOAMs(text);
+      if (parsed.items.length === 0) throw new Error('No POAM items detected');
+
+      let created = 0;
+      let updated = 0;
+      for (const item of parsed.items) {
+        // Ensure we always write all authoritative columns
+        const data = {
+          ...Object.fromEntries((window.POAM_WORKBOOK_COLUMNS || []).map(c => [c, item[c] ?? ''])),
+          [window.POAM_WORKBOOK_INTERNAL_FIELDS.assetsImpacted]: item[window.POAM_WORKBOOK_INTERNAL_FIELDS.assetsImpacted] || ''
+        };
+
+        // Parse embedded Assets Impacted from pasted affected components if present
+        const rawAffected = String(data['Affected Components/URLs'] || '');
+        const extracted = poamWorkbookExtractAssetsImpacted(rawAffected);
+        data['Affected Components/URLs'] = extracted.affectedComponents;
+        if (!data[window.POAM_WORKBOOK_INTERNAL_FIELDS.assetsImpacted]) {
+          data[window.POAM_WORKBOOK_INTERNAL_FIELDS.assetsImpacted] = extracted.assetsImpacted;
+        }
+
+        const n = parseInt(String(data['Item number'] || '').trim(), 10);
+        if (Number.isFinite(n) && n > 0 && typeof window.poamWorkbookDB.upsertItemBySystemAndItemNumber === 'function') {
+          const res = await window.poamWorkbookDB.upsertItemBySystemAndItemNumber(systemId, n, data);
+          if (res.created) created++; else updated++;
+        } else {
+          const nextNum = await window.poamWorkbookDB.getNextItemNumber(systemId);
+          data['Item number'] = nextNum;
+          await window.poamWorkbookDB.saveItem({
+            id: `WB-${systemId}-${Date.now()}-${created}-${updated}`,
+            systemId,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            ...data
+          });
+          created++;
+        }
+      }
+
+      window.poamWorkbookNotifyMutation();
+      await renderWorkbookSidebarSystems();
+      await renderWorkbookOverview();
+
+      const msg = updated > 0 ? `Imported ${created} new, updated ${updated}` : `Imported ${created}`;
+      showUpdateFeedback(msg, 'success');
+      close();
+    } catch (e) {
+      console.error(e);
+      showUpdateFeedback(`Paste import failed: ${e.message}`, 'error');
+    }
+  });
+}
+
+function poamWorkbookParsePastedPOAMs(text) {
+  const normalizeKey = (k) => String(k || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .replace(/[^a-z0-9/ ]/g, '');
+
+  const aliases = new Map([
+    // Item number / POAM ID
+    ['item number', 'Item number'],
+    ['item', 'Item number'],
+    ['poam id', 'Item number'],
+    ['poam', 'Item number'],
+    ['poam number', 'Item number'],
+    // Core fields
+    ['vulnerability name', 'Vulnerability Name'],
+    ['vulnerability', 'Vulnerability Name'],
+    ['vulnerability description', 'Vulnerability Description'],
+    ['description', 'Vulnerability Description'],
+    ['detection date', 'Detection Date'],
+    ['impacted security controls', 'Impacted Security Controls'],
+    ['security controls', 'Impacted Security Controls'],
+    ['office/org', 'Office/Org'],
+    ['office', 'Office/Org'],
+    ['org', 'Office/Org'],
+    ['poc name', 'POC Name'],
+    ['poc', 'POC Name'],
+    ['identifying detecting source', 'Identifying Detecting Source'],
+    ['detecting source', 'Identifying Detecting Source'],
+    ['source', 'Identifying Detecting Source'],
+    ['mitigations', 'Mitigations'],
+    ['severity value', 'Severity Value'],
+    ['severity', 'Severity Value'],
+    ['resources required', 'Resources Required'],
+    ['scheduled completion date', 'Scheduled Completion Date'],
+    ['completion date', 'Scheduled Completion Date'],
+    ['milestone with completion dates', 'Milestone with Completion Dates'],
+    ['milestones', 'Milestone with Completion Dates'],
+    ['milestone changes', 'Milestone Changes'],
+    ['affected components/urls', 'Affected Components/URLs'],
+    ['affected components', 'Affected Components/URLs'],
+    ['urls', 'Affected Components/URLs'],
+    ['status', 'Status'],
+    ['comments', 'Comments'],
+    // Internal
+    ['assets impacted', window.POAM_WORKBOOK_INTERNAL_FIELDS.assetsImpacted]
+  ]);
+
+  const isStartOfItem = (line) => {
+    const l = String(line || '');
+    return /^\s*(item\s*number|poam\s*id)\s*[:#-]/i.test(l);
+  };
+
+  const lines = String(text || '').replace(/\r\n/g, '\n').split('\n');
+  const blocks = [];
+  let current = [];
+  for (const line of lines) {
+    if (isStartOfItem(line) && current.length > 0) {
+      blocks.push(current);
+      current = [line];
+      continue;
+    }
+    // Split on hard blank line if we already have content and next lines start a new section
+    if (String(line).trim() === '' && current.length > 0) {
+      current.push('');
+      continue;
+    }
+    current.push(line);
+  }
+  if (current.length > 0) blocks.push(current);
+
+  const items = [];
+  for (const block of blocks) {
+    const item = {};
+    let currentKey = null;
+
+    for (const rawLine of block) {
+      const line = String(rawLine || '');
+      const m = line.match(/^\s*([^:]{2,80})\s*:\s*(.*)$/);
+      if (m) {
+        const label = normalizeKey(m[1]);
+        const mapped = aliases.get(label);
+        if (mapped) {
+          currentKey = mapped;
+          const val = m[2] || '';
+          item[currentKey] = (item[currentKey] ? String(item[currentKey]) + '\n' : '') + val;
+          continue;
+        }
+      }
+
+      // Continuation lines
+      if (currentKey) {
+        const trimmed = line.trimEnd();
+        if (trimmed !== '') {
+          item[currentKey] = (item[currentKey] ? String(item[currentKey]) + '\n' : '') + trimmed;
+        }
+      }
+    }
+
+    // If nothing mapped, skip
+    const hasAny = Object.keys(item).length > 0;
+    if (!hasAny) continue;
+
+    // Normalize Item number if it looks like WB-xx or POAM-xx
+    if (item['Item number']) {
+      const n = parseInt(String(item['Item number']).replace(/[^0-9]/g, ''), 10);
+      if (Number.isFinite(n) && n > 0) item['Item number'] = n;
+    }
+
+    // Normalize dates if present
+    const normalizeDate = (v) => {
+      if (!v) return '';
+      const d = new Date(v);
+      if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+      return String(v).trim();
+    };
+    if (item['Detection Date']) item['Detection Date'] = normalizeDate(item['Detection Date']);
+    if (item['Scheduled Completion Date']) item['Scheduled Completion Date'] = normalizeDate(item['Scheduled Completion Date']);
+
+    items.push(item);
+  }
+
+  return { items };
+}
+
 async function poamWorkbookNavigateToSystem(systemId) {
   try {
     await poamWorkbookEnsureDbReady();
@@ -252,7 +467,11 @@ async function poamWorkbookHandleImportInput(evt) {
   const systemId = window.poamWorkbookState.activeSystemId || 'default';
   try {
     const result = await poamWorkbookImportXlsx(file, systemId);
-    showUpdateFeedback(`Imported ${result.saved} workbook POAMs`, 'success');
+    const updated = result.updated || 0;
+    const msg = updated > 0
+      ? `Imported ${result.saved} new workbook POAMs, updated ${updated}`
+      : `Imported ${result.saved} workbook POAMs`;
+    showUpdateFeedback(msg, 'success');
     await renderWorkbookSidebarSystems();
     await renderWorkbookOverview();
     if (window.poamWorkbookState.activeTab === 'system') {

@@ -261,6 +261,47 @@ class POAMWorkbookDatabase {
     });
   }
 
+  async getItemBySystemAndItemNumber(systemId, itemNumber) {
+    if (!this.db) await this.init();
+    const tx = this.db.transaction(['poamWorkbookItems'], 'readonly');
+    const store = tx.objectStore('poamWorkbookItems');
+    const idx = store.index('itemNumber');
+    const n = typeof itemNumber === 'number' ? itemNumber : parseInt(String(itemNumber || '').trim(), 10);
+    const key = [systemId, Number.isFinite(n) ? n : 0];
+    return new Promise((resolve, reject) => {
+      const req = idx.get(key);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async upsertItemBySystemAndItemNumber(systemId, itemNumber, data) {
+    if (!systemId) throw new Error('Missing systemId');
+    const n = typeof itemNumber === 'number' ? itemNumber : parseInt(String(itemNumber || '').trim(), 10);
+    if (!Number.isFinite(n) || n <= 0) throw new Error('Invalid Item number');
+
+    const existing = await this.getItemBySystemAndItemNumber(systemId, n);
+    const now = new Date().toISOString();
+
+    const base = existing || {
+      id: `WB-${systemId}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      systemId,
+      createdAt: now
+    };
+
+    const merged = {
+      ...base,
+      ...data,
+      id: base.id,
+      systemId,
+      createdAt: base.createdAt || now,
+      updatedAt: now
+    };
+
+    await this.saveItem(merged);
+    return { id: merged.id, created: !existing };
+  }
+
   async getAllItems() {
     if (!this.db) await this.init();
     const tx = this.db.transaction(['poamWorkbookItems'], 'readonly');

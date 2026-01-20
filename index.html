@@ -1647,6 +1647,9 @@
                                 <i class="fas fa-file-import mr-2"></i>Import XLSX
                                 <input type="file" accept=".xlsx" class="hidden" onchange="poamWorkbookHandleImportInput(event)">
                             </label>
+                            <button onclick="poamWorkbookOpenPasteModal()" class="w-full px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-lg hover:bg-slate-50 text-sm font-semibold">
+                                <i class="fas fa-paste mr-2 text-indigo-600"></i>Paste POAMs
+                            </button>
                             <button onclick="poamWorkbookExportSystem()" class="w-full px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 text-sm font-semibold">
                                 <i class="fas fa-file-export mr-2"></i>Export Current System
                             </button>
@@ -3041,10 +3044,10 @@
     <script src="milestone-pipeline-orchestrator-v2.js?v=20260120-1"></script>
     <script src="vulnerability-tracking-milestones.js?v=20260120-1"></script>
     <script src="poam-workbook-constants.js?v=20260120-1"></script>
-    <script src="poam-workbook-db.js?v=20260120-2"></script>
-    <script src="poam-workbook-import.js?v=20260120-1"></script>
+    <script src="poam-workbook-db.js?v=20260120-3"></script>
+    <script src="poam-workbook-import.js?v=20260120-2"></script>
     <script src="poam-workbook-export.js?v=20260120-1"></script>
-    <script src="poam-workbook-ui.js?v=20260120-2"></script>
+    <script src="poam-workbook-ui.js?v=20260120-3"></script>
     <!-- security-controls-manager.js removed -->
     <script src="script.js?v=20260120-1"></script>
 
