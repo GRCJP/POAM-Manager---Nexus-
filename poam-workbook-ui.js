@@ -190,7 +190,14 @@ async function renderWorkbookSidebarSystems() {
   const activeId = window.poamWorkbookState.activeSystemId;
   container.innerHTML = `
     <div class="space-y-2">
-      <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Systems</div>
+      <div class="flex items-center justify-between">
+        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Systems</div>
+        <button
+          onclick="poamWorkbookOpenAddSystemModal()"
+          class="text-slate-400 hover:text-slate-200"
+          title="Add System"
+        ><i class="fas fa-plus text-xs"></i></button>
+      </div>
       <div class="space-y-2">
         ${systems.map(s => {
           const isActive = s.id === activeId;
@@ -219,12 +226,6 @@ async function renderWorkbookSidebarSystems() {
             </div>
           `;
         }).join('')}
-
-        <button
-          onclick="poamWorkbookOpenAddSystemModal()"
-          class="w-full flex items-center justify-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800/60"
-          title="Add System"
-        ><i class="fas fa-plus text-xs"></i></button>
       </div>
     </div>
   `;
