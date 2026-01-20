@@ -115,6 +115,21 @@ class POAMWorkbookDatabase {
       });
     }
 
+    const resourcesRequired = await this.getLookup('resourcesRequired');
+    if (!resourcesRequired) {
+      await this.putLookup('resourcesRequired', [
+        'None',
+        'Staff Time',
+        'Configuration Change',
+        'Patch/Upgrade',
+        'Vendor Support',
+        'New Tooling',
+        'Funding',
+        'Maintenance Window',
+        'Change Control Approval'
+      ]);
+    }
+
     const detectingSources = await this.getLookup('detectingSources');
     if (!detectingSources) {
       await this.putLookup('detectingSources', window.POAM_WORKBOOK_ENUMS?.detectingSources || []);

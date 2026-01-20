@@ -710,6 +710,7 @@ async function poamWorkbookOpenItemDetails(id) {
 
   const pocs = (await window.poamWorkbookDB.getLookup('pocs')) || [];
   const controls = (await window.poamWorkbookDB.getLookup('securityControls')) || { families: [], controls: [] };
+  const resourcesRequired = (await window.poamWorkbookDB.getLookup('resourcesRequired')) || [];
 
   const systems = await window.poamWorkbookDB.getSystems();
 
@@ -747,7 +748,7 @@ async function poamWorkbookOpenItemDetails(id) {
               ${renderFieldSelect('Severity Value', item['Severity Value'], window.POAM_WORKBOOK_ENUMS.severityValues)}
               ${renderFieldSelect('Status', item['Status'], window.POAM_WORKBOOK_ENUMS.statusValues)}
             </div>
-            ${renderFieldText('Resources Required', item['Resources Required'])}
+            ${resourcesRequired.length ? renderFieldSelect('Resources Required', item['Resources Required'], resourcesRequired) : renderFieldText('Resources Required', item['Resources Required'])}
             ${renderFieldTextarea('Milestone with Completion Dates', item['Milestone with Completion Dates'])}
             ${renderFieldTextarea('Milestone Changes', item['Milestone Changes'])}
             ${renderFieldTextarea('Affected Components/URLs', item['Affected Components/URLs'])}
@@ -773,12 +774,14 @@ async function poamWorkbookOpenItemDetails(id) {
               <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Control Picker (helper)</div>
               <div class="text-xs text-slate-600">Families</div>
               <div class="flex flex-wrap gap-1">
-                ${controls.families.map(f => `<button type="button" class="px-2 py-1 text-xs bg-slate-100 rounded" onclick="wbAppendControl('${escapeAttr(f)}')">${escapeHtml(f)}</button>`).join('')}
+                ${controls.families.map(f => `<button type="button" class="px-2 py-1 text-xs bg-slate-100 rounded" onclick="wbSelectControlFamily('${escapeAttr(f)}')">${escapeHtml(f)}</button>`).join('')}
               </div>
               <div class="text-xs text-slate-600 mt-2">Controls</div>
-              <div class="flex flex-wrap gap-1">
-                ${controls.controls.map(c => `<button type="button" class="px-2 py-1 text-xs bg-slate-100 rounded" onclick="wbAppendControl('${escapeAttr(c)}')">${escapeHtml(c)}</button>`).join('')}
+              <div class="flex items-center gap-2">
+                <select id="wb-control-select" class="flex-1 text-xs border border-slate-200 rounded px-2 py-1 bg-white"></select>
+                <button type="button" class="px-2 py-1 text-xs bg-indigo-600 text-white rounded" onclick="wbAppendSelectedControl()">Add</button>
               </div>
+              <button type="button" class="w-full mt-2 px-2 py-1 text-xs bg-white border border-slate-200 rounded hover:bg-slate-50" onclick="wbApplyMitigationTemplate()">Insert mitigation starter</button>
             </div>
           </div>
         </div>
@@ -796,9 +799,73 @@ async function poamWorkbookOpenItemDetails(id) {
     ta.value = current + sep + control;
   };
 
+  window.wbSelectControlFamily = function (family) {
+    const select = modal.querySelector('#wb-control-select');
+    if (!select) return;
+    const all = Array.isArray(controls.controls) ? controls.controls : [];
+    const filtered = all
+      .map(c => String(c || '').trim())
+      .filter(Boolean)
+      .filter(c => c.startsWith(String(family || '').trim() + '-'))
+      .sort((a, b) => a.localeCompare(b));
+    const options = filtered.length ? filtered : all;
+    select.innerHTML = options.map(c => `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join('');
+
+    // Auto-add family token to impacted controls if empty (optional starter)
+    const ta = modal.querySelector('#wb-controls');
+    if (ta && !String(ta.value || '').trim()) {
+      ta.value = String(family || '').trim();
+    }
+  };
+
+  window.wbAppendSelectedControl = function () {
+    const select = modal.querySelector('#wb-control-select');
+    if (!select) return;
+    const value = select.value;
+    if (value) window.wbAppendControl(value);
+  };
+
+  window.wbApplyMitigationTemplate = function () {
+    const controlsTa = modal.querySelector('#wb-controls');
+    const family = String(controlsTa?.value || '').split(/[;,\n\s]+/).find(tok => /^[A-Z]{2}$/.test(tok)) || '';
+    const templates = {
+      AC: 'Review and enforce least privilege. Disable/expire unused accounts. Implement access reviews and MFA where applicable.',
+      AU: 'Enable and centralize auditing. Ensure logs are time-synced, protected from tampering, and reviewed on a defined cadence.',
+      CM: 'Establish secure configuration baselines. Implement configuration monitoring and change control with documented approvals.',
+      IA: 'Implement strong identification and authentication. Enforce MFA, password policy, and session management controls.',
+      IR: 'Update incident response procedures. Validate detection/alerting, runbooks, and conduct tabletop exercises.',
+      SC: 'Harden network/system communications. Enforce encryption, segmentation, and secure boundary protections.',
+      SI: 'Apply patching and vulnerability remediation. Improve malware defenses, integrity monitoring, and continuous scanning.',
+      PE: 'Verify physical access controls. Ensure visitor logs, badge controls, and secure areas are enforced.',
+      AT: 'Provide security awareness and role-based training. Track completion and refresh on a defined schedule.'
+    };
+    const mit = modal.querySelector('[data-wb-field="Mitigations"]');
+    if (!mit) return;
+    const starter = templates[family] || 'Document remediation steps, validate implementation, and update procedures to prevent recurrence.';
+    if (!String(mit.value || '').trim()) {
+      mit.value = starter;
+    } else {
+      mit.value = String(mit.value).trim() + "\n\n" + starter;
+    }
+  };
+
+  // Initialize control dropdown
+  try {
+    const select = modal.querySelector('#wb-control-select');
+    if (select) {
+      const all = Array.isArray(controls.controls) ? controls.controls : [];
+      select.innerHTML = all.map(c => `<option value="${escapeAttr(String(c))}">${escapeHtml(String(c))}</option>`).join('');
+    }
+  } catch (e) {
+    // ignore
+  }
+
   const close = () => {
     modal.remove();
     delete window.wbAppendControl;
+    delete window.wbSelectControlFamily;
+    delete window.wbAppendSelectedControl;
+    delete window.wbApplyMitigationTemplate;
   };
 
   modal.querySelector('#wb-cancel')?.addEventListener('click', close);
@@ -845,7 +912,7 @@ async function poamWorkbookOpenItemDetails(id) {
       await window.poamWorkbookDB.saveItem(updated);
       window.poamWorkbookNotifyMutation();
 
-      await renderWorkbookSystemsSelects();
+      await renderWorkbookSidebarSystems();
       await renderWorkbookOverview();
       await renderWorkbookSystemTable(updated.systemId);
 
