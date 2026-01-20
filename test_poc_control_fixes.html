@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POAM Manager - Test POC & Control Family Fixes</title>
+    <script src="csv-format-processors.js"></script>
+    <script src="vulnerability-analysis-engine-v3.js"></script>
+    <script src="poam-database.js"></script>
+</head>
+<body>
+    <h1>Test POC Assignment & Control Family Determination</h1>
+    
+    <div>
+        <h2>Upload Qualys CSV Test File</h2>
+        <input type="file" id="csvFile" accept=".csv" />
+        <button onclick="testCSVProcessing()">Process CSV</button>
+    </div>
+    
+    <div id="results"></div>
+    
+    <script>
+        async function testCSVProcessing() {
+            const fileInput = document.getElementById('csvFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a CSV file');
+                return;
+            }
+            
+            try {
+                const csvContent = await file.text();
+                console.log('📋 CSV Content loaded');
+                
+                // Initialize CSV processor
+                const processor = new CSVFormatProcessor();
+                const findings = await processor.processCSV(csvContent, file.name, 'qualys');
+                
+                console.log(`✅ Processed ${findings.length} findings`);
+                
+                // Initialize vulnerability analysis engine
+                const analysisEngine = new VulnerabilityAnalysisEngineV3();
+                
+                // Test POC assignment and control family determination
+                const results = [];
+                
+                for (let i = 0; i < Math.min(findings.length, 5); i++) {
+                    const finding = findings[i];
+                    console.log(`\n🔍 Testing finding ${i + 1}: ${finding.title}`);
+                    
+                    // Create a mock group for testing
+                    const mockGroup = {
+                        findings: [finding],
+                        assets: new Set([finding.host]),
+                        cves: new Set(finding.cve || []),
+                        qids: new Set(finding.qid || [])
+                    };
+                    
+                    // Test POC assignment
+                    const pocAssignment = analysisEngine.assignPOC({}, mockGroup);
+                    console.log(`👤 POC Assignment:`, pocAssignment);
+                    
+                    // Test control family determination
+                    const isPatchable = analysisEngine.isPatchableVulnerability(finding, {}, mockGroup);
+                    console.log(`🔧 Patchable: ${isPatchable}`);
+                    
+                    // Create mock POAM to test template application
+                    const mockPOAM = {
+                        id: `TEST-${i + 1}`,
+                        title: finding.title,
+                        description: finding.description
+                    };
+                    
+                    const mockRemediation = {
+                        remediationType: isPatchable ? 'patch' : 'config_change'
+                    };
+                    
+                    const enhancedPOAM = analysisEngine.applyPOAMTemplate(
+                        mockPOAM, 
+                        'PATCHING_UPDATES', 
+                        finding, 
+                        mockRemediation, 
+                        mockGroup
+                    );
+                    
+                    results.push({
+                        finding: finding.title,
+                        os: finding.operatingSystem,
+                        patchable: finding.patchable,
+                        assignedPOC: pocAssignment.pocTeam,
+                        assignmentReason: pocAssignment.assignmentReason,
+                        controlFamily: enhancedPOAM.controlFamily,
+                        impactedControls: enhancedPOAM.impactedControls,
+                        isPatchableDetermined: isPatchable
+                    });
+                }
+                
+                // Display results
+                displayResults(results);
+                
+            } catch (error) {
+                console.error('❌ Error processing CSV:', error);
+                document.getElementById('results').innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+        
+        function displayResults(results) {
+            const resultsDiv = document.getElementById('results');
+            
+            let html = '<h2>Test Results</h2>';
+            html += '<table border="1" style="border-collapse: collapse; margin: 20px 0;">';
+            html += '<tr><th>Finding</th><th>OS</th><th>Patchable (CSV)</th><th>Assigned POC</th><th>POC Reason</th><th>Control Family</th><th>Impacted Controls</th></tr>';
+            
+            results.forEach(result => {
+                html += '<tr>';
+                html += `<td>${result.finding}</td>`;
+                html += `<td>${result.os}</td>`;
+                html += `<td>${result.patchable}</td>`;
+                html += `<td>${result.assignedPOC}</td>`;
+                html += `<td>${result.assignmentReason}</td>`;
+                html += `<td>${result.controlFamily}</td>`;
+                html += `<td>${result.impactedControls.join(', ')}</td>`;
+                html += '</tr>';
+            });
+            
+            html += '</table>';
+            
+            // Summary
+            const patchableSI = results.filter(r => r.patchable === true && r.controlFamily === 'SI').length;
+            const nonPatchableCM = results.filter(r => r.patchable === false && r.controlFamily === 'CM').length;
+            const windowsPOC = results.filter(r => r.os.toLowerCase().includes('windows') && r.assignedPOC.includes('Windows')).length;
+            const linuxPOC = results.filter(r => r.os.toLowerCase().includes('linux') && r.assignedPOC.includes('Linux')).length;
+            
+            html += '<h3>Summary</h3>';
+            html += '<ul>';
+            html += `<li>Patchable vulnerabilities assigned to SI: ${patchableSI}/${results.filter(r => r.patchable === true).length}</li>`;
+            html += `<li>Non-patchable vulnerabilities assigned to CM: ${nonPatchableCM}/${results.filter(r => r.patchable === false).length}</li>`;
+            html += `<li>Windows systems assigned to Windows team: ${windowsPOC}/${results.filter(r => r.os.toLowerCase().includes('windows')).length}</li>`;
+            html += `<li>Linux systems assigned to Linux team: ${linuxPOC}/${results.filter(r => r.os.toLowerCase().includes('linux')).length}</li>`;
+            html += '</ul>';
+            
+            resultsDiv.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

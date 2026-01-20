@@ -183,6 +183,7 @@ class QualysProcessor {
                 // Core vulnerability data
                 title: row['Title']?.trim() || 'Unknown Vulnerability',
                 host: row['Asset Name']?.trim() || row['Asset Id']?.trim() || 'unknown',
+                operatingSystem: cleanedOS, // Top-level field for easier access
                 asset: {
                     hostname: row['Asset Name']?.trim() || row['Asset Id']?.trim() || 'unknown',
                     assetId: row['Asset Id']?.trim() || 'unknown',
