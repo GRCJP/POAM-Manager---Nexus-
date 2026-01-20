@@ -96,6 +96,21 @@ class POAMWorkbookDatabase {
         description: 'Workbook system'
       });
     }
+
+    // Seed sample systems (only if they do not already exist)
+    const sampleSystems = [
+      { id: 'sys-alpha', name: 'Enclave Alpha', description: 'Security Control Monitoring system' },
+      { id: 'sys-bravo', name: 'Enclave Bravo', description: 'Security Control Monitoring system' },
+      { id: 'sys-charlie', name: 'Enclave Charlie', description: 'Security Control Monitoring system' },
+      { id: 'sys-delta', name: 'Enclave Delta', description: 'Security Control Monitoring system' }
+    ];
+
+    for (const s of sampleSystems) {
+      const existingSystem = await this.getSystemById(s.id);
+      if (!existingSystem) {
+        await this.saveSystem(s);
+      }
+    }
   }
 
   async putLookup(key, value) {

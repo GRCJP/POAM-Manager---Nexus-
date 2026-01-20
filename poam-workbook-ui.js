@@ -25,46 +25,20 @@ async function initPOAMWorkbookModule() {
 
   await renderWorkbookSystemsSelects();
   await renderWorkbookOverview();
-  await renderWorkbookSystemsPage();
-  poamWorkbookSwitchTab(window.poamWorkbookState.activeTab);
+  // Default view is overview
+  poamWorkbookShowOverview();
 }
 
-function poamWorkbookSwitchTab(tab, systemId) {
-  window.poamWorkbookState.activeTab = tab;
-  if (systemId) window.poamWorkbookState.activeSystemId = systemId;
-
-  document.querySelectorAll('.poam-workbook-tab').forEach(el => el.classList.add('hidden'));
-  const target = document.getElementById(`poam-workbook-tab-${tab}`);
-  if (target) target.classList.remove('hidden');
-
-  document.querySelectorAll('.poam-workbook-tabbtn').forEach(btn => {
-    btn.classList.remove('border-indigo-600', 'text-indigo-600', 'font-bold');
-    btn.classList.add('border-transparent', 'text-slate-500', 'font-medium');
-  });
-  const activeBtn = document.getElementById(`poam-workbook-btn-${tab}`);
-  if (activeBtn) {
-    activeBtn.classList.add('border-indigo-600', 'text-indigo-600', 'font-bold');
-    activeBtn.classList.remove('border-transparent', 'text-slate-500', 'font-medium');
-  }
+function poamWorkbookShowOverview() {
+  window.poamWorkbookState.activeTab = 'overview';
+  const overview = document.getElementById('poam-workbook-view-overview');
+  const system = document.getElementById('poam-workbook-view-system');
+  if (overview) overview.classList.remove('hidden');
+  if (system) system.classList.add('hidden');
 }
 
 async function renderWorkbookSystemsSelects() {
   const systems = await window.poamWorkbookDB.getSystems();
-
-  const overviewSelect = document.getElementById('poam-workbook-import-system');
-  const systemsSelect = document.getElementById('poam-workbook-system-select');
-
-  const options = systems.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
-
-  if (overviewSelect) {
-    overviewSelect.innerHTML = options;
-    overviewSelect.value = window.poamWorkbookState.activeSystemId;
-  }
-
-  if (systemsSelect) {
-    systemsSelect.innerHTML = options;
-    systemsSelect.value = window.poamWorkbookState.activeSystemId;
-  }
 
   // Sidebar systems list
   const list = document.getElementById('poam-workbook-systems-list');
@@ -85,7 +59,16 @@ async function poamWorkbookOpenSystem(systemId) {
   window.poamWorkbookState.activeSystemId = systemId;
   await renderWorkbookSystemsSelects();
   await renderWorkbookSystemTable(systemId);
-  poamWorkbookSwitchTab('systems', systemId);
+
+  const sys = await window.poamWorkbookDB.getSystemById(systemId);
+  const sysName = document.getElementById('poam-workbook-active-system-name');
+  if (sysName) sysName.textContent = sys?.name || systemId;
+
+  const overview = document.getElementById('poam-workbook-view-overview');
+  const system = document.getElementById('poam-workbook-view-system');
+  if (overview) overview.classList.add('hidden');
+  if (system) system.classList.remove('hidden');
+  window.poamWorkbookState.activeTab = 'system';
 }
 
 async function renderWorkbookOverview() {
@@ -112,11 +95,6 @@ async function renderWorkbookOverview() {
 
   const controlsDist = document.getElementById('poam-workbook-controls-dist');
   if (controlsDist) controlsDist.innerHTML = renderTopList(analytics.controlsDist);
-}
-
-async function renderWorkbookSystemsPage() {
-  const systemId = window.poamWorkbookState.activeSystemId;
-  await renderWorkbookSystemTable(systemId);
 }
 
 async function renderWorkbookSystemTable(systemId) {
@@ -204,7 +182,7 @@ async function poamWorkbookInlineUpdate(id, field, value) {
 }
 
 async function poamWorkbookCreateItem() {
-  const systemId = document.getElementById('poam-workbook-system-select')?.value || window.poamWorkbookState.activeSystemId;
+  const systemId = window.poamWorkbookState.activeSystemId;
   const nextNum = await window.poamWorkbookDB.getNextItemNumber(systemId);
 
   const now = new Date().toISOString();
@@ -235,13 +213,15 @@ async function poamWorkbookHandleImportInput(evt) {
   const file = input.files && input.files[0];
   if (!file) return;
 
-  const systemId = document.getElementById('poam-workbook-import-system')?.value || 'default';
+  const systemId = window.poamWorkbookState.activeSystemId || 'default';
   try {
     const result = await poamWorkbookImportXlsx(file, systemId);
     showUpdateFeedback(`Imported ${result.saved} workbook POAMs`, 'success');
     await renderWorkbookSystemsSelects();
     await renderWorkbookOverview();
-    await renderWorkbookSystemTable(window.poamWorkbookState.activeSystemId);
+    if (window.poamWorkbookState.activeTab === 'system') {
+      await renderWorkbookSystemTable(window.poamWorkbookState.activeSystemId);
+    }
   } catch (e) {
     console.error(e);
     showUpdateFeedback(`Import failed: ${e.message}`, 'error');
@@ -261,7 +241,7 @@ async function poamWorkbookExportAll() {
 }
 
 async function poamWorkbookExportSystem() {
-  const systemId = document.getElementById('poam-workbook-system-select')?.value || window.poamWorkbookState.activeSystemId;
+  const systemId = window.poamWorkbookState.activeSystemId;
   try {
     await poamWorkbookExportXlsx({ systemId });
     showUpdateFeedback('Export started', 'success');
@@ -269,6 +249,59 @@ async function poamWorkbookExportSystem() {
     console.error(e);
     showUpdateFeedback(`Export failed: ${e.message}`, 'error');
   }
+}
+
+function poamWorkbookOpenAddSystemModal() {
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+  modal.innerHTML = `
+    <div class="bg-white rounded-2xl p-6 max-w-lg w-full">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-bold text-slate-900">Add System</h2>
+        <button id="wb-addsys-close" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">System Name</label>
+          <input id="wb-addsys-name" type="text" class="w-full px-3 py-2 border border-slate-200 rounded-lg" placeholder="e.g., Enclave Echo">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">Description</label>
+          <input id="wb-addsys-desc" type="text" class="w-full px-3 py-2 border border-slate-200 rounded-lg" placeholder="Security Control Monitoring system">
+        </div>
+      </div>
+      <div class="flex justify-end gap-3 mt-6">
+        <button id="wb-addsys-cancel" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">Cancel</button>
+        <button id="wb-addsys-save" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const close = () => modal.remove();
+  modal.querySelector('#wb-addsys-close')?.addEventListener('click', close);
+  modal.querySelector('#wb-addsys-cancel')?.addEventListener('click', close);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) close();
+  });
+
+  modal.querySelector('#wb-addsys-save')?.addEventListener('click', async () => {
+    try {
+      const name = String(modal.querySelector('#wb-addsys-name')?.value || '').trim();
+      const description = String(modal.querySelector('#wb-addsys-desc')?.value || '').trim();
+      if (!name) throw new Error('System Name is required');
+
+      const id = `sys-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}-${Date.now()}`;
+      await window.poamWorkbookDB.saveSystem({ id, name, description });
+      window.poamWorkbookNotifyMutation();
+      await renderWorkbookSystemsSelects();
+      showUpdateFeedback('System added', 'success');
+      close();
+    } catch (e) {
+      console.error(e);
+      showUpdateFeedback(`Add system failed: ${e.message}`, 'error');
+    }
+  });
 }
 
 async function poamWorkbookOpenItemDetails(id) {
