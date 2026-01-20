@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Milestone Generation for SI/CM Controls</title>
+    <script src="vulnerability-analysis-engine-v3.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-case { border: 1px solid #ccc; margin: 10px 0; padding: 15px; border-radius: 5px; }
+        .milestone { background: #f5f5f5; margin: 5px 0; padding: 10px; border-radius: 3px; }
+        .si { border-left: 4px solid #2563eb; }
+        .cm { border-left: 4px solid #dc2626; }
+        .other { border-left: 4px solid #6b7280; }
+        .status { padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .pending { background: #f3f4f6; color: #6b7280; }
+        .target-date { font-size: 11px; color: #6b7280; margin-top: 3px; }
+        button { padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #2563eb; }
+        .summary { background: #e0f2fe; padding: 15px; border-radius: 5px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <h1>Test Milestone Generation for SI/CM Controls</h1>
+    
+    <div>
+        <button onclick="testSIMilestones()">Test SI Control Milestones</button>
+        <button onclick="testCMMilestones()">Test CM Control Milestones</button>
+        <button onclick="testOtherControls()">Test Other Control Milestones</button>
+        <button onclick="testEdgeCases()">Test Edge Cases</button>
+        <button onclick="runAllTests()">Run All Tests</button>
+    </div>
+    
+    <div id="results"></div>
+    
+    <script>
+        function testSIMilestones() {
+            console.log('Testing SI Control Milestones...');
+            
+            // Test case: 30-day timeline for SI control
+            const startDate = '2026-01-20';
+            const dueDate = '2026-02-19'; // 30 days later
+            
+            const milestones = generateMilestonesForControlFamily('SI', startDate, dueDate);
+            
+            displayResults('SI Control (30-day timeline)', milestones, 'si');
+        }
+        
+        function testCMMilestones() {
+            console.log('Testing CM Control Milestones...');
+            
+            // Test case: 90-day timeline for CM control
+            const startDate = '2026-01-20';
+            const dueDate = '2026-04-20'; // 90 days later
+            
+            const milestones = generateMilestonesForControlFamily('CM', startDate, dueDate);
+            
+            displayResults('CM Control (90-day timeline)', milestones, 'cm');
+        }
+        
+        function testOtherControls() {
+            console.log('Testing Other Control Milestones...');
+            
+            // Test case: 60-day timeline for other control
+            const startDate = '2026-01-20';
+            const dueDate = '2026-03-21'; // 60 days later
+            
+            const milestones = generateMilestonesForControlFamily('AC', startDate, dueDate);
+            
+            displayResults('Other Control - AC (60-day timeline)', milestones, 'other');
+        }
+        
+        function testEdgeCases() {
+            console.log('Testing Edge Cases...');
+            
+            const results = [];
+            
+            // Test 1: Missing dates
+            results.push({
+                title: 'Missing Start Date',
+                milestones: generateMilestonesForControlFamily('SI', null, '2026-02-20'),
+                type: 'other'
+            });
+            
+            // Test 2: Missing due date
+            results.push({
+                title: 'Missing Due Date',
+                milestones: generateMilestonesForControlFamily('CM', '2026-01-20', null),
+                type: 'other'
+            });
+            
+            // Test 3: Due date before start date
+            results.push({
+                title: 'Due Date Before Start Date',
+                milestones: generateMilestonesForControlFamily('SI', '2026-02-20', '2026-01-20'),
+                type: 'other'
+            });
+            
+            // Test 4: Same day
+            results.push({
+                title: 'Same Day Start and Due',
+                milestones: generateMilestonesForControlFamily('CM', '2026-01-20', '2026-01-20'),
+                type: 'other'
+            });
+            
+            // Test 5: Very short timeline (7 days)
+            results.push({
+                title: 'Very Short Timeline (7 days)',
+                milestones: generateMilestonesForControlFamily('SI', '2026-01-20', '2026-01-27'),
+                type: 'si'
+            });
+            
+            // Test 6: Very long timeline (365 days)
+            results.push({
+                title: 'Very Long Timeline (365 days)',
+                milestones: generateMilestonesForControlFamily('CM', '2026-01-20', '2027-01-20'),
+                type: 'cm'
+            });
+            
+            displayEdgeCaseResults(results);
+        }
+        
+        function runAllTests() {
+            testSIMilestones();
+            setTimeout(() => testCMMilestones(), 100);
+            setTimeout(() => testOtherControls(), 200);
+            setTimeout(() => testEdgeCases(), 300);
+        }
+        
+        function displayResults(title, milestones, type) {
+            const resultsDiv = document.getElementById('results');
+            
+            const html = `
+                <div class="test-case">
+                    <h3>${title}</h3>
+                    <div class="summary">
+                        <strong>Summary:</strong> ${milestones.length} milestones generated
+                        ${milestones.length > 0 ? `
+                            | First milestone: ${milestones[0].targetDate}
+                            | Last milestone: ${milestones[milestones.length - 1].targetDate}
+                        ` : ''}
+                    </div>
+                    ${milestones.map((milestone, index) => `
+                        <div class="milestone ${type}">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong>${milestone.name}</strong>
+                                    <div class="target-date">Target: ${milestone.targetDate} | Weight: ${milestone.weight}%</div>
+                                    <div style="font-size: 12px; color: #666; margin-top: 3px;">${milestone.description}</div>
+                                </div>
+                                <span class="status pending">${milestone.status}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            resultsDiv.innerHTML += html;
+        }
+        
+        function displayEdgeCaseResults(results) {
+            const resultsDiv = document.getElementById('results');
+            
+            let html = '<div class="test-case"><h3>Edge Cases</h3>';
+            
+            results.forEach(test => {
+                html += `
+                    <div class="milestone ${test.type}">
+                        <h4>${test.title}</h4>
+                        ${test.milestones.length > 0 ? `
+                            <div class="summary">${test.milestones.length} milestones generated</div>
+                            ${test.milestones.map(m => `
+                                <div style="margin: 5px 0; padding: 5px; background: #f9f9f9; border-radius: 3px;">
+                                    <strong>${m.name}</strong> - ${m.targetDate}
+                                </div>
+                            `).join('')}
+                        ` : '<div class="summary">No milestones generated (expected behavior)</div>'}
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            resultsDiv.innerHTML += html;
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        // Auto-run a basic test on page load
+        window.onload = function() {
+            console.log('Page loaded - running basic milestone generation test...');
+            
+            // Test basic functionality
+            const basicTest = generateMilestonesForControlFamily('SI', '2026-01-20', '2026-02-19');
+            
+            if (basicTest.length === 4) {
+                console.log('✅ Basic milestone generation test passed');
+            } else {
+                console.error('❌ Basic milestone generation test failed - expected 4 milestones, got', basicTest.length);
+            }
+        };
+    </script>
+</body>
+</html>

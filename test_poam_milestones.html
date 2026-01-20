@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Milestone Integration with POAM Creation</title>
+    <script src="csv-format-processors.js"></script>
+    <script src="vulnerability-analysis-engine-v3.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-case { border: 1px solid #ccc; margin: 10px 0; padding: 15px; border-radius: 5px; }
+        .milestone { background: #f5f5f5; margin: 5px 0; padding: 10px; border-radius: 3px; }
+        .si { border-left: 4px solid #2563eb; }
+        .cm { border-left: 4px solid #dc2626; }
+        .other { border-left: 4px solid #6b7280; }
+        .status { padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .pending { background: #f3f4f6; color: #6b7280; }
+        .target-date { font-size: 11px; color: #6b7280; margin-top: 3px; }
+        button { padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #2563eb; }
+        .summary { background: #e0f2fe; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .poam-details { background: #f9fafb; padding: 10px; margin: 10px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Test Milestone Integration with POAM Creation</h1>
+    
+    <div>
+        <input type="file" id="csvFile" accept=".csv" />
+        <button onclick="testPOAMCreation()">Test POAM Creation with Milestones</button>
+    </div>
+    
+    <div id="results"></div>
+    
+    <script>
+        async function testPOAMCreation() {
+            const fileInput = document.getElementById('csvFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a CSV file');
+                return;
+            }
+            
+            try {
+                const csvContent = await file.text();
+                console.log('📋 CSV Content loaded');
+                
+                // Initialize CSV processor
+                const processor = new CSVFormatProcessor();
+                const findings = await processor.processCSV(csvContent, file.name, 'qualys');
+                
+                console.log(`✅ Processed ${findings.length} findings`);
+                
+                // Initialize vulnerability analysis engine
+                const analysisEngine = new VulnerabilityAnalysisEngineV3();
+                
+                // Test POAM creation with milestone generation
+                const results = [];
+                
+                for (let i = 0; i < Math.min(findings.length, 3); i++) {
+                    const finding = findings[i];
+                    console.log(`\n🔍 Testing POAM creation for finding ${i + 1}: ${finding.title}`);
+                    
+                    // Create a mock group for testing
+                    const mockGroup = {
+                        findings: [finding],
+                        assets: new Set([finding.host]),
+                        cves: new Set(finding.cve || []),
+                        qids: new Set(finding.qid || [])
+                    };
+                    
+                    // Create mock POAM
+                    const mockPOAM = {
+                        id: `TEST-${i + 1}`,
+                        title: finding.title,
+                        description: finding.description,
+                        createdDate: new Date().toISOString().split('T')[0],
+                        dueDate: calculateDueDate(finding.risk || 'medium'),
+                        initialScheduledCompletionDate: calculateDueDate(finding.risk || 'medium')
+                    };
+                    
+                    const mockRemediation = {
+                        remediationType: finding.patchable ? 'patch' : 'config_change'
+                    };
+                    
+                    // Apply POAM template with milestone generation
+                    const enhancedPOAM = analysisEngine.applyPOAMTemplate(
+                        mockPOAM, 
+                        'PATCHING_UPDATES', 
+                        finding, 
+                        mockRemediation, 
+                        mockGroup
+                    );
+                    
+                    results.push({
+                        poamId: enhancedPOAM.id,
+                        title: enhancedPOAM.title,
+                        controlFamily: enhancedPOAM.controlFamily,
+                        patchable: finding.patchable,
+                        startDate: enhancedPOAM.createdDate,
+                        dueDate: enhancedPOAM.dueDate,
+                        milestones: enhancedPOAM.milestones,
+                        poc: enhancedPOAM.poc || 'Unassigned',
+                        risk: enhancedPOAM.risk || finding.risk
+                    });
+                }
+                
+                // Display results
+                displayPOAMResults(results);
+                
+            } catch (error) {
+                console.error('❌ Error processing CSV:', error);
+                document.getElementById('results').innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+        
+        function calculateDueDate(risk) {
+            const days = {
+                'critical': 15,
+                'high': 30,
+                'medium': 90,
+                'low': 180
+            };
+            
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + (days[risk] || 90));
+            return dueDate.toISOString().split('T')[0];
+        }
+        
+        function displayPOAMResults(results) {
+            const resultsDiv = document.getElementById('results');
+            
+            let html = '<h2>POAM Creation Results with Milestones</h2>';
+            
+            results.forEach(result => {
+                const milestoneClass = result.controlFamily === 'SI' ? 'si' : 
+                                     result.controlFamily === 'CM' ? 'cm' : 'other';
+                
+                html += `
+                    <div class="test-case">
+                        <div class="poam-details">
+                            <h3>POAM ${result.poamId}: ${result.title}</h3>
+                            <div><strong>Control Family:</strong> ${result.controlFamily}</div>
+                            <div><strong>Patchable:</strong> ${result.patchable}</div>
+                            <div><strong>POC:</strong> ${result.poc}</div>
+                            <div><strong>Risk:</strong> ${result.risk}</div>
+                            <div><strong>Start Date:</strong> ${result.startDate}</div>
+                            <div><strong>Due Date:</strong> ${result.dueDate}</div>
+                            <div><strong>Milestones:</strong> ${result.milestones.length} generated</div>
+                        </div>
+                        
+                        <h4>Generated Milestones:</h4>
+                        ${result.milestones.map((milestone, index) => `
+                            <div class="milestone ${milestoneClass}">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <strong>${milestone.name}</strong>
+                                        <div class="target-date">Target: ${milestone.targetDate} | Weight: ${milestone.weight}%</div>
+                                        <div style="font-size: 12px; color: #666; margin-top: 3px;">${milestone.description}</div>
+                                    </div>
+                                    <span class="status pending">${milestone.status}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            });
+            
+            // Summary
+            const siCount = results.filter(r => r.controlFamily === 'SI').length;
+            const cmCount = results.filter(r => r.controlFamily === 'CM').length;
+            const patchableSI = results.filter(r => r.patchable === true && r.controlFamily === 'SI').length;
+            const nonPatchableCM = results.filter(r => r.patchable === false && r.controlFamily === 'CM').length;
+            
+            html += `
+                <div class="summary">
+                    <h3>Summary</h3>
+                    <div><strong>Total POAMs:</strong> ${results.length}</div>
+                    <div><strong>SI Controls:</strong> ${siCount}</div>
+                    <div><strong>CM Controls:</strong> ${cmCount}</div>
+                    <div><strong>Patchable → SI:</strong> ${patchableSI}/${results.filter(r => r.patchable === true).length}</div>
+                    <div><strong>Non-patchable → CM:</strong> ${nonPatchableCM}/${results.filter(r => r.patchable === false).length}</div>
+                    <div><strong>All have 4 milestones:</strong> ${results.filter(r => r.milestones.length === 4).length}/${results.length}</div>
+                </div>
+            `;
+            
+            resultsDiv.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authoritative Milestone Pipeline Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="pipeline-logger.js"></script>
+    <script src="csv-format-processors.js"></script>
+    <script src="vulnerability-analysis-engine-v3.js"></script>
+    <script src="milestone-pipeline-orchestrator-v2.js"></script>
+    <script src="vulnerability-tracking-milestones.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f8fafc; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .test-section { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .milestone-item { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin: 8px 0; background: #f9fafb; }
+        .milestone-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .milestone-name { font-weight: 600; color: #374151; }
+        .milestone-status { font-size: 12px; padding: 2px 8px; border-radius: 12px; }
+        .status-pending { background: #f3f4f6; color: #6b7280; }
+        .status-running { background: #dbeafe; color: #1e40af; }
+        .status-completed { background: #dcfce7; color: #166534; }
+        .status-failed { background: #fecaca; color: #dc2626; }
+        .progress-bar { width: 100%; background: #e5e7eb; border-radius: 4px; height: 8px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #3b82f6; transition: width 0.3s ease; }
+        .milestone-message { font-size: 11px; color: #6b7280; margin-top: 4px; }
+        .upload-area { border: 2px dashed #d1d5db; border-radius: 8px; padding: 40px; text-align: center; margin: 20px 0; }
+        .upload-area.dragover { border-color: #3b82f6; background: #eff6ff; }
+        button { padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #2563eb; }
+        button:disabled { background: #9ca3af; cursor: not-allowed; }
+        .results { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 15px; margin: 20px 0; }
+        .log-output { background: #1f2937; color: #e5e7eb; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 12px; max-height: 400px; overflow-y: auto; }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
+        .summary-card { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; text-align: center; }
+        .summary-number { font-size: 24px; font-weight: bold; color: #1f2937; }
+        .summary-label { font-size: 12px; color: #6b7280; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Authoritative Milestone Pipeline Test</h1>
+        <p>Test the strict, blocking milestone-driven POAM generation pipeline</p>
+        
+        <div class="test-section">
+            <h2>📁 Upload Test CSV</h2>
+            <div class="upload-area" id="uploadArea">
+                <p>Drag and drop a CSV file here or click to select</p>
+                <input type="file" id="csvFile" accept=".csv" style="display: none;">
+                <button onclick="document.getElementById('csvFile').click()">Select CSV File</button>
+                <button onclick="loadTestFile()">Load Test Qualys File</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🎯 Pipeline Milestones</h2>
+            <div id="milestone-list">
+                <!-- Milestones will be populated here -->
+            </div>
+            <div style="margin-top: 20px;">
+                <button id="startPipeline" onclick="startMilestonePipeline()" disabled>Start Milestone Pipeline</button>
+                <button onclick="resetPipeline()">Reset Pipeline</button>
+                <button onclick="clearLogs()">Clear Logs</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📊 Pipeline Results</h2>
+            <div id="results-container">
+                <p style="color: #6b7280;">Run the pipeline to see results</p>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📝 Console Logs</h2>
+            <div class="log-output" id="logOutput">
+                <div>Waiting for pipeline execution...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPipeline = null;
+        let uploadedCSV = null;
+        let logMessages = [];
+
+        // Initialize milestone display
+        function initializeMilestones() {
+            const milestoneList = document.getElementById('milestone-list');
+            milestoneList.innerHTML = '';
+            
+            const milestones = [
+                { id: 1, name: 'Point Eligibility Gate', description: 'Determine POAM eligibility (30-day rule)' },
+                { id: 2, name: 'Like-Minded Vulnerability Grouping', description: 'Group by remediation similarity' },
+                { id: 3, name: 'Group Enrichment', description: 'Add assets, descriptions, OS info' },
+                { id: 4, name: 'POAM Pre-Population', description: 'Create POAM drafts with milestones' },
+                { id: 5, name: 'Commit & Persist', description: 'Atomic database commit' }
+            ];
+            
+            milestones.forEach(milestone => {
+                const milestoneHTML = `
+                    <div class="milestone-item" id="milestone-${milestone.id}">
+                        <div class="milestone-header">
+                            <div>
+                                <div class="milestone-name">Milestone ${milestone.id}: ${milestone.name}</div>
+                                <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">${milestone.description}</div>
+                            </div>
+                            <div class="milestone-status status-pending" id="milestone-status-${milestone.id}">Pending</div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="milestone-bar-${milestone.id}" style="width: 0%"></div>
+                        </div>
+                        <div class="milestone-message" id="milestone-message-${milestone.id}">Waiting to start</div>
+                    </div>
+                `;
+                milestoneList.insertAdjacentHTML('beforeend', milestoneHTML);
+            });
+        }
+
+        // File upload handling
+        const uploadArea = document.getElementById('uploadArea');
+        const csvFileInput = document.getElementById('csvFile');
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0]);
+            }
+        });
+
+        csvFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileUpload(e.target.files[0]);
+            }
+        });
+
+        async function handleFileUpload(file) {
+            if (!file.name.endsWith('.csv')) {
+                alert('Please upload a CSV file');
+                return;
+            }
+
+            try {
+                uploadedCSV = await file.text();
+                uploadArea.innerHTML = `
+                    <p>✅ File loaded: ${file.name}</p>
+                    <p>Size: ${(file.size / 1024).toFixed(2)} KB</p>
+                    <button onclick="document.getElementById('csvFile').click()">Select Different File</button>
+                    <button onclick="loadTestFile()">Load Test File</button>
+                `;
+                
+                document.getElementById('startPipeline').disabled = false;
+                addLog(`✅ CSV file loaded: ${file.name} (${file.size} bytes)`);
+                
+            } catch (error) {
+                alert('Error reading file: ' + error.message);
+                addLog(`❌ Error reading file: ${error.message}`);
+            }
+        }
+
+        async function loadTestFile() {
+            try {
+                const response = await fetch('test_qualys_format.csv');
+                if (!response.ok) {
+                    throw new Error('Test file not found');
+                }
+                uploadedCSV = await response.text();
+                
+                uploadArea.innerHTML = `
+                    <p>✅ Test Qualys file loaded</p>
+                    <p>Ready for pipeline testing</p>
+                    <button onclick="document.getElementById('csvFile').click()">Select Different File</button>
+                    <button onclick="loadTestFile()">Reload Test File</button>
+                `;
+                
+                document.getElementById('startPipeline').disabled = false;
+                addLog('✅ Test Qualys CSV file loaded successfully');
+                
+            } catch (error) {
+                alert('Error loading test file: ' + error.message);
+                addLog(`❌ Error loading test file: ${error.message}`);
+            }
+        }
+
+        // Pipeline execution
+        async function startMilestonePipeline() {
+            if (!uploadedCSV) {
+                alert('Please upload a CSV file first');
+                return;
+            }
+
+            document.getElementById('startPipeline').disabled = true;
+            resetMilestoneStatus();
+            clearResults();
+            addLog('🚀 Starting Authoritative Milestone Pipeline');
+
+            try {
+                // Initialize pipeline
+                currentPipeline = new AuthoritativeMilestonePipeline();
+                
+                // Process CSV using milestone pipeline
+                const result = await processLocalCSVWithMilestones(uploadedCSV, 'test-upload.csv');
+                
+                addLog('✅ Pipeline completed successfully');
+                displayResults(result);
+                
+            } catch (error) {
+                addLog(`❌ Pipeline failed: ${error.message}`);
+                console.error('Pipeline error:', error);
+                
+                // Mark failed milestone
+                if (currentPipeline && currentPipeline.currentRun) {
+                    const failedMilestone = currentPipeline.currentRun.currentMilestone;
+                    updateMilestoneStatus(failedMilestone, 'failed', error.message);
+                }
+            } finally {
+                document.getElementById('startPipeline').disabled = false;
+            }
+        }
+
+        // Progress callback
+        window.updateMilestoneProgress = function(currentMilestone, progress, milestoneName, message) {
+            updateMilestoneStatus(currentMilestone, progress >= 1 ? 'completed' : 'running', message);
+            updateMilestoneProgress(currentMilestone, progress);
+            addLog(`📊 Milestone ${currentMilestone}: ${Math.round(progress * 100)}% - ${message}`);
+        };
+
+        function updateMilestoneStatus(milestoneId, status, message = '') {
+            const statusDiv = document.getElementById(`milestone-status-${milestoneId}`);
+            const messageDiv = document.getElementById(`milestone-message-${milestoneId}`);
+            
+            if (statusDiv) {
+                statusDiv.className = `milestone-status status-${status}`;
+                statusDiv.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+            }
+            
+            if (messageDiv && message) {
+                messageDiv.textContent = message;
+            }
+        }
+
+        function updateMilestoneProgress(milestoneId, progress) {
+            const progressBar = document.getElementById(`milestone-bar-${milestoneId}`);
+            if (progressBar) {
+                progressBar.style.width = `${progress * 100}%`;
+            }
+        }
+
+        function resetMilestoneStatus() {
+            for (let i = 1; i <= 5; i++) {
+                updateMilestoneStatus(i, 'pending', 'Waiting to start');
+                updateMilestoneProgress(i, 0);
+            }
+        }
+
+        function resetPipeline() {
+            currentPipeline = null;
+            uploadedCSV = null;
+            resetMilestoneStatus();
+            clearResults();
+            clearLogs();
+            
+            uploadArea.innerHTML = `
+                <p>Drag and drop a CSV file here or click to select</p>
+                <input type="file" id="csvFile" accept=".csv" style="display: none;">
+                <button onclick="document.getElementById('csvFile').click()">Select CSV File</button>
+                <button onclick="loadTestFile()">Load Test Qualys File</button>
+            `;
+            
+            document.getElementById('startPipeline').disabled = true;
+            addLog('🔄 Pipeline reset');
+        }
+
+        function displayResults(result) {
+            const resultsContainer = document.getElementById('results-container');
+            
+            if (!result || !result.finalRunMetadata) {
+                resultsContainer.innerHTML = '<p style="color: #dc2626;">No valid results to display</p>';
+                return;
+            }
+
+            const { counts, scanId, completedAt } = result.finalRunMetadata;
+            
+            resultsContainer.innerHTML = `
+                <div class="results">
+                    <h3>🎉 Pipeline Completed Successfully!</h3>
+                    <div style="margin: 15px 0;">
+                        <strong>Scan ID:</strong> ${scanId}<br>
+                        <strong>Completed:</strong> ${new Date(completedAt).toLocaleString()}
+                    </div>
+                    
+                    <div class="summary-grid">
+                        <div class="summary-card">
+                            <div class="summary-number">${counts.totalFindings}</div>
+                            <div class="summary-label">Total Findings</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-number">${counts.eligibleFindings}</div>
+                            <div class="summary-label">Eligible Findings</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-number">${counts.excludedFindings}</div>
+                            <div class="summary-label">Excluded Findings</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-number">${counts.groupsFormed}</div>
+                            <div class="summary-label">Groups Formed</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-number">${counts.poamsCreated}</div>
+                            <div class="summary-label">POAMs Created</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-number">${counts.recordsCommitted}</div>
+                            <div class="summary-label">Records Committed</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function clearResults() {
+            document.getElementById('results-container').innerHTML = '<p style="color: #6b7280;">Run the pipeline to see results</p>';
+        }
+
+        function addLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}`;
+            logMessages.push(logMessage);
+            
+            const logOutput = document.getElementById('logOutput');
+            logOutput.innerHTML += `<div>${logMessage}</div>`;
+            logOutput.scrollTop = logOutput.scrollHeight;
+            
+            // Keep only last 100 messages
+            if (logMessages.length > 100) {
+                logMessages.shift();
+                const logs = logOutput.innerHTML.split('\n').slice(-100).join('\n');
+                logOutput.innerHTML = logs;
+            }
+        }
+
+        function clearLogs() {
+            logMessages = [];
+            document.getElementById('logOutput').innerHTML = '<div>Logs cleared...</div>';
+        }
+
+        // Override console.log to capture pipeline logs
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            if (args[0] && typeof args[0] === 'string') {
+                addLog(args[0]);
+            }
+        };
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeMilestones();
+            addLog('🚀 Milestone Pipeline Test Page loaded');
+            addLog('📁 Upload a CSV file or load the test file to begin');
+        });
+    </script>
+</body>
+</html>
