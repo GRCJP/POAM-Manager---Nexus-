@@ -33,17 +33,41 @@ async function poamWorkbookImportXlsx(file, systemId) {
     .trim()
     .toLowerCase()
     .replace(/\s+/g, ' ')
-    .replace(/[^a-z0-9 /]/g, '');
+    .replace(/[^a-z0-9 /]/g, '')
+    .replace(/\s*\/\s*/g, '/');
 
   const headerAliases = new Map([
     ['poam id', 'Item number'],
     ['poam number', 'Item number'],
     ['id', 'Item number'],
     ['item', 'Item number'],
+    ['item number', 'Item number'],
+    ['item #', 'Item number'],
+    ['item no', 'Item number'],
+    ['poam', 'Item number'],
     ['affected components urls', 'Affected Components/URLs'],
     ['affected components/urls', 'Affected Components/URLs'],
     ['affected components urls ', 'Affected Components/URLs'],
-    ['identifying detecting source', 'Identifying Detecting Source']
+    ['affected components', 'Affected Components/URLs'],
+    ['urls', 'Affected Components/URLs'],
+    ['identifying detecting source', 'Identifying Detecting Source'],
+    ['identifying/detecting source', 'Identifying Detecting Source'],
+    ['detecting source', 'Identifying Detecting Source'],
+    ['vulnerability', 'Vulnerability Name'],
+    ['vulnerability name', 'Vulnerability Name'],
+    ['vulnerability description', 'Vulnerability Description'],
+    ['description', 'Vulnerability Description'],
+    ['poc', 'POC Name'],
+    ['poc name', 'POC Name'],
+    ['office', 'Office/Org'],
+    ['org', 'Office/Org'],
+    ['office/org', 'Office/Org'],
+    ['severity', 'Severity Value'],
+    ['severity value', 'Severity Value'],
+    ['scheduled completion', 'Scheduled Completion Date'],
+    ['scheduled completion date', 'Scheduled Completion Date'],
+    ['completion date', 'Scheduled Completion Date'],
+    ['detection date', 'Detection Date']
   ]);
 
   const requiredHeaders = window.POAM_WORKBOOK_COLUMNS || [];
@@ -63,8 +87,22 @@ async function poamWorkbookImportXlsx(file, systemId) {
 
   // Do not require exact headers; proceed best-effort.
   if (headerIndexToCanonical.size === 0) {
-    throw new Error('No recognizable columns found in workbook header row');
+    const rawHeaders = headerRow
+      .map(h => String(h || '').replace(/\s+/g, ' ').trim())
+      .filter(Boolean)
+      .slice(0, 30);
+    throw new Error(`No recognizable columns found in workbook header row. First headers: ${rawHeaders.join(' | ')}`);
   }
+
+  // Diagnostics for partial mapping (used for error messages later)
+  const mappingDiagnostics = headerRow
+    .map((h, idx) => {
+      const raw = String(h || '').replace(/\s+/g, ' ').trim();
+      const norm = normalizeHeader(h);
+      const mapped = canonicalByNorm.get(norm) || null;
+      return { idx, raw, mapped };
+    })
+    .filter(x => x.raw);
 
   const enums = window.POAM_WORKBOOK_ENUMS || {};
   const invalidRows = [];

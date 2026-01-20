@@ -273,7 +273,11 @@ function poamWorkbookOpenPasteModal() {
         if (window.poamWorkbookState.activeTab === 'system') {
           await renderWorkbookSystemTable(window.poamWorkbookState.activeSystemId);
         }
-        showUpdateFeedback(result.updated > 0 ? `Imported ${result.saved} new, updated ${result.updated}` : `Imported ${result.saved}`, 'success');
+        const extra = parsed?.diagnostics?.unmappedHeaders?.length
+          ? ` (Ignored columns: ${parsed.diagnostics.unmappedHeaders.slice(0, 5).map(h => h.header).join(', ')}${parsed.diagnostics.unmappedHeaders.length > 5 ? ', …' : ''})`
+          : '';
+        showUpdateFeedback(result.updated > 0 ? `Imported ${result.saved} new, updated ${result.updated}${extra}` : `Imported ${result.saved}${extra}`, 'success');
+        close();
       }});
     } catch (e) {
       console.error(e);
@@ -309,6 +313,8 @@ function poamWorkbookHeaderAliases() {
     ['org', 'Office/Org'],
     ['poc name', 'POC Name'],
     ['identifying detecting source', 'Identifying Detecting Source'],
+    ['identifying/detecting source', 'Identifying Detecting Source'],
+    ['detecting source', 'Identifying Detecting Source'],
     ['mitigations', 'Mitigations'],
     ['severity value', 'Severity Value'],
     ['severity', 'Severity Value'],
@@ -317,6 +323,7 @@ function poamWorkbookHeaderAliases() {
     ['milestone with completion dates', 'Milestone with Completion Dates'],
     ['milestone changes', 'Milestone Changes'],
     ['affected components/urls', 'Affected Components/URLs'],
+    ['affected components/urls ', 'Affected Components/URLs'],
     ['affected components urls', 'Affected Components/URLs'],
     ['affected components', 'Affected Components/URLs'],
     ['urls', 'Affected Components/URLs'],
@@ -333,20 +340,43 @@ function poamWorkbookReconstructRows(text, expectedCols) {
     .split('\n');
 
   const rows = [];
+  const minColsForRowBoundary = Math.max(4, Math.min(8, expectedCols));
+
+  const countCols = (s) => String(s || '').split('\t').length;
+  const looksLikeNewRow = (line) => {
+    const c = countCols(line);
+    if (c < minColsForRowBoundary) return false;
+    const first = String(line || '').split('\t')[0] || '';
+    return String(first).trim() !== '';
+  };
+
   let buffer = '';
-  for (const line of lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
     if (!line.trim() && !buffer) continue;
-    buffer = buffer ? buffer + '\n' + line : line;
-    const cols = buffer.split('\t').length;
-    if (cols === expectedCols) {
+
+    if (!buffer) {
+      buffer = line;
+    } else {
+      buffer = buffer + '\n' + line;
+    }
+
+    const cols = countCols(buffer);
+    if (cols >= expectedCols) {
       rows.push(buffer.split('\t'));
       buffer = '';
-    } else if (cols > expectedCols) {
-      // too many columns; push for diagnostics and reset
+      continue;
+    }
+
+    // If we have "enough" columns already, and the NEXT line looks like a new row,
+    // treat this as a completed row even if trailing blank columns were omitted.
+    const nextLine = i + 1 < lines.length ? lines[i + 1] : '';
+    if (cols >= minColsForRowBoundary && looksLikeNewRow(nextLine)) {
       rows.push(buffer.split('\t'));
       buffer = '';
     }
   }
+
   if (buffer.trim()) rows.push(buffer.split('\t'));
   return rows;
 }
@@ -385,11 +415,22 @@ function poamWorkbookMapTabularRows(rows, expectedCols) {
   const startIndex = headerRow ? 1 : 0;
 
   let columnMap = null; // index -> canonical
+  const diagnostics = {
+    unmappedHeaders: [],
+    missingCanonical: []
+  };
   if (headerRow) {
     columnMap = headerRow.map(h => {
       const norm = poamWorkbookNormalizeHeader(h);
       return aliases.get(norm) || required.find(r => poamWorkbookNormalizeHeader(r) === norm) || null;
     });
+
+    diagnostics.unmappedHeaders = headerRow
+      .map((h, idx) => ({ idx, header: String(h || '').trim(), mappedTo: columnMap[idx] }))
+      .filter(x => x.header && !x.mappedTo);
+
+    const mappedCanon = new Set(columnMap.filter(Boolean));
+    diagnostics.missingCanonical = required.filter(c => !mappedCanon.has(c));
   } else {
     // No header: assume canonical column order
     columnMap = required.slice();
@@ -400,8 +441,20 @@ function poamWorkbookMapTabularRows(rows, expectedCols) {
 
   for (let i = startIndex; i < rows.length; i++) {
     const r = rows[i];
-    if (!Array.isArray(r) || r.length !== expectedCols) {
-      rejected.push({ index: i + 1, reason: `Expected ${expectedCols} columns, got ${Array.isArray(r) ? r.length : 0}` });
+
+    if (!Array.isArray(r)) {
+      rejected.push({ index: i + 1, reason: `Row parse failed` });
+      continue;
+    }
+
+    // Excel sometimes omits trailing blank columns in TSV clipboard.
+    // Pad to expected length so mapping still works.
+    if (r.length < expectedCols) {
+      while (r.length < expectedCols) r.push('');
+    }
+
+    if (r.length > expectedCols) {
+      rejected.push({ index: i + 1, reason: `Too many columns (expected ${expectedCols}, got ${r.length})` });
       continue;
     }
 
@@ -425,7 +478,8 @@ function poamWorkbookMapTabularRows(rows, expectedCols) {
     header: headerRow,
     rowsReconstructed: rows.length,
     accepted,
-    rejected
+    rejected,
+    diagnostics
   };
 }
 
@@ -435,6 +489,9 @@ function poamWorkbookOpenPastePreviewModal({ systemId, parsed, onCommit }) {
 
   const sampleRows = parsed.accepted.slice(0, 5).map(x => x.obj);
   const cols = window.POAM_WORKBOOK_COLUMNS || [];
+
+  const unmapped = parsed?.diagnostics?.unmappedHeaders || [];
+  const missingCanon = parsed?.diagnostics?.missingCanonical || [];
 
   preview.innerHTML = `
     <div class="bg-white rounded-2xl p-6 max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
@@ -451,6 +508,18 @@ function poamWorkbookOpenPastePreviewModal({ systemId, parsed, onCommit }) {
         <button id="wb-preview-close" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
       </div>
       <div class="flex-1 overflow-y-auto">
+        ${unmapped.length ? `
+          <div class="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-900">
+            <div class="font-bold mb-1">Unmapped header columns (ignored)</div>
+            <div class="text-xs">${unmapped.slice(0, 12).map(h => escapeHtml(h.header)).join(', ')}${unmapped.length > 12 ? ', …' : ''}</div>
+          </div>
+        ` : ''}
+        ${missingCanon.length ? `
+          <div class="mb-4 bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm text-slate-700">
+            <div class="font-bold mb-1">Missing workbook columns (will be blank)</div>
+            <div class="text-xs">${missingCanon.slice(0, 12).map(c => escapeHtml(c)).join(', ')}${missingCanon.length > 12 ? ', …' : ''}</div>
+          </div>
+        ` : ''}
         ${parsed.rejected.length ? `
           <div class="mb-4 bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
             <div class="font-bold mb-1">Rejected rows</div>
@@ -1032,9 +1101,42 @@ async function poamWorkbookHandleImportInput(evt) {
   } catch (e) {
     console.error(e);
     showUpdateFeedback(`Import failed: ${e.message}`, 'error');
+    // If the message is long (header diagnostics), show a modal so user can see full details.
+    const msg = String(e?.message || '');
+    if (msg.length > 160 || msg.includes('First headers:')) {
+      poamWorkbookOpenImportErrorModal(msg);
+    }
   } finally {
     input.value = '';
   }
+}
+
+function poamWorkbookOpenImportErrorModal(message) {
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+  modal.innerHTML = `
+    <div class="bg-white rounded-2xl p-6 max-w-2xl w-full">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Import Error Details</h2>
+          <p class="text-sm text-slate-500 mt-1">Copy/paste this into chat if you want me to add more header aliases.</p>
+        </div>
+        <button id="wb-importerr-close" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+      </div>
+      <pre class="w-full max-h-[55vh] overflow-auto text-xs bg-slate-50 border border-slate-200 rounded-lg p-3 whitespace-pre-wrap">${escapeHtml(String(message || ''))}</pre>
+      <div class="flex justify-end gap-3 mt-5">
+        <button id="wb-importerr-ok" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Close</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const close = () => modal.remove();
+  modal.querySelector('#wb-importerr-close')?.addEventListener('click', close);
+  modal.querySelector('#wb-importerr-ok')?.addEventListener('click', close);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) close();
+  });
 }
 
 async function poamWorkbookExportAll() {
