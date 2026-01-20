@@ -60,16 +60,161 @@ async function renderWorkbookSidebarSystems() {
       <i class="fas fa-plus text-xs w-4 text-indigo-300"></i>
       <span>Add System</span>
     </button>
+    <button onclick="poamWorkbookOpenPoamIdFormatModal()" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors text-slate-100">
+      <i class="fas fa-hashtag text-xs w-4 text-indigo-300"></i>
+      <span>POAM ID Format</span>
+    </button>
     ${systems.map(s => {
       const active = s.id === activeId;
       return `
-        <a href="#" onclick="poamWorkbookNavigateToSystem('${s.id}')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors ${active ? 'bg-slate-700 text-white' : ''}">
-          <i class="fas fa-server text-xs w-4 text-slate-300"></i>
-          <span>${escapeHtml(s.name)}</span>
-        </a>
+        <div class="flex items-center gap-1">
+          <a href="#" onclick="poamWorkbookNavigateToSystem('${s.id}')" class="sidebar-sublink flex-1 flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors ${active ? 'bg-slate-700 text-white' : ''}">
+            <i class="fas fa-server text-xs w-4 text-slate-300"></i>
+            <span class="truncate">${escapeHtml(s.name)}</span>
+          </a>
+          <button onclick="poamWorkbookOpenEditSystemModal('${s.id}')" class="px-2 py-2 rounded-lg hover:bg-slate-800 text-slate-300" title="Edit System">
+            <i class="fas fa-pen text-xs"></i>
+          </button>
+        </div>
       `;
     }).join('')}
   `;
+}
+
+async function poamWorkbookOpenEditSystemModal(systemId) {
+  try {
+    await poamWorkbookEnsureDbReady();
+    const system = await window.poamWorkbookDB.getSystemById(systemId);
+    if (!system) throw new Error('System not found');
+
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `
+      <div class="bg-white rounded-2xl p-6 max-w-lg w-full">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-slate-900">Edit System</h2>
+          <button id="wb-editsys-close" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">System Name</label>
+            <input id="wb-editsys-name" type="text" class="w-full px-3 py-2 border border-slate-200 rounded-lg" value="${escapeAttr(system.name || '')}">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">Description</label>
+            <input id="wb-editsys-desc" type="text" class="w-full px-3 py-2 border border-slate-200 rounded-lg" value="${escapeAttr(system.description || '')}">
+          </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+          <button id="wb-editsys-cancel" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">Cancel</button>
+          <button id="wb-editsys-save" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const close = () => modal.remove();
+    modal.querySelector('#wb-editsys-close')?.addEventListener('click', close);
+    modal.querySelector('#wb-editsys-cancel')?.addEventListener('click', close);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) close();
+    });
+
+    modal.querySelector('#wb-editsys-save')?.addEventListener('click', async () => {
+      try {
+        const name = String(modal.querySelector('#wb-editsys-name')?.value || '').trim();
+        const description = String(modal.querySelector('#wb-editsys-desc')?.value || '').trim();
+        if (!name) throw new Error('System Name is required');
+        await window.poamWorkbookDB.saveSystem({ ...system, name, description });
+        await renderWorkbookSidebarSystems();
+        const sysName = document.getElementById('poam-workbook-active-system-name');
+        if (sysName && window.poamWorkbookState.activeSystemId === systemId) {
+          sysName.textContent = name;
+        }
+        showUpdateFeedback('System updated', 'success');
+        close();
+      } catch (e) {
+        console.error(e);
+        showUpdateFeedback(`Update system failed: ${e.message}`, 'error');
+      }
+    });
+  } catch (e) {
+    console.error(e);
+    showUpdateFeedback(`Edit system failed: ${e.message}`, 'error');
+  }
+}
+
+async function poamWorkbookOpenPoamIdFormatModal() {
+  try {
+    await poamWorkbookEnsureDbReady();
+    const current = await window.poamWorkbookDB.getLookup('poamIdFormat');
+
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `
+      <div class="bg-white rounded-2xl p-6 max-w-xl w-full">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-slate-900">POAM ID Format (Workbook)</h2>
+          <button id="wb-poamid-close" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="space-y-3">
+          <div class="text-sm text-slate-600">This controls how new workbook POAM IDs are generated. The numeric sequence always increments (max + 1), even if items are closed.</div>
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">Format</label>
+            <input id="wb-poamid-format" type="text" class="w-full px-3 py-2 border border-slate-200 rounded-lg font-mono text-xs" value="${escapeAttr(current || 'POAM-{system}-{n:4}')}">
+            <div class="text-xs text-slate-500 mt-2">Tokens: <span class="font-mono">{system}</span>, <span class="font-mono">{year}</span>, <span class="font-mono">{n}</span>, <span class="font-mono">{n:4}</span> (zero-pad)</div>
+          </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+          <button id="wb-poamid-cancel" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">Cancel</button>
+          <button id="wb-poamid-save" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const close = () => modal.remove();
+    modal.querySelector('#wb-poamid-close')?.addEventListener('click', close);
+    modal.querySelector('#wb-poamid-cancel')?.addEventListener('click', close);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) close();
+    });
+
+    modal.querySelector('#wb-poamid-save')?.addEventListener('click', async () => {
+      try {
+        const format = String(modal.querySelector('#wb-poamid-format')?.value || '').trim();
+        if (!format) throw new Error('Format is required');
+        await window.poamWorkbookDB.putLookup('poamIdFormat', format);
+        showUpdateFeedback('POAM ID format saved', 'success');
+        close();
+      } catch (e) {
+        console.error(e);
+        showUpdateFeedback(`Save format failed: ${e.message}`, 'error');
+      }
+    });
+  } catch (e) {
+    console.error(e);
+    showUpdateFeedback(`POAM ID format failed: ${e.message}`, 'error');
+  }
+}
+
+async function poamWorkbookFormatItemNumber(systemId, n) {
+  const fmt = await window.poamWorkbookDB.getLookup('poamIdFormat');
+  const sys = await window.poamWorkbookDB.getSystemById(systemId);
+  const systemToken = systemId;
+  const yearToken = String(new Date().getFullYear());
+
+  const replaceN = (template) => {
+    return template
+      .replace(/\{n:(\d+)\}/g, (_, width) => String(n).padStart(parseInt(width, 10) || 0, '0'))
+      .replace(/\{n\}/g, String(n));
+  };
+
+  const out = replaceN(String(fmt || 'POAM-{system}-{n:4}'))
+    .replace(/\{system\}/g, systemToken)
+    .replace(/\{systemName\}/g, String(sys?.name || systemToken))
+    .replace(/\{year\}/g, yearToken);
+  return out;
 }
 
 async function poamWorkbookEnsureDbReady() {
@@ -446,7 +591,7 @@ async function poamWorkbookCreateItem() {
     [window.POAM_WORKBOOK_INTERNAL_FIELDS.assetsImpacted]: ''
   };
 
-  newItem['Item number'] = nextNum;
+  newItem['Item number'] = await poamWorkbookFormatItemNumber(systemId, nextNum);
   newItem['Status'] = 'Open';
   newItem['Severity Value'] = 'Medium';
   newItem['POC Name'] = 'Unassigned';

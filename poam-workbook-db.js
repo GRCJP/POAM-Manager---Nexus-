@@ -130,6 +130,11 @@ class POAMWorkbookDatabase {
       await this.putLookup('statusValues', window.POAM_WORKBOOK_ENUMS?.statusValues || []);
     }
 
+    const poamIdFormat = await this.getLookup('poamIdFormat');
+    if (!poamIdFormat) {
+      await this.putLookup('poamIdFormat', 'POAM-{system}-{n:4}');
+    }
+
     const defaultSystem = await this.getSystemById('default');
     if (!defaultSystem) {
       await this.saveSystem({
@@ -226,9 +231,17 @@ class POAMWorkbookDatabase {
   _withDerivedFields(item) {
     const out = { ...(item || {}) };
     const rawItemNumber = out['Item number'];
-    const parsedItemNumber = typeof rawItemNumber === 'number'
-      ? rawItemNumber
-      : parseInt(String(rawItemNumber || '').trim(), 10);
+
+    const parsedItemNumber = (() => {
+      if (typeof rawItemNumber === 'number') return rawItemNumber;
+      const s = String(rawItemNumber || '').trim();
+      if (!s) return NaN;
+      // Support formatted IDs like POAM-SYS-0001 by extracting the last digit group.
+      const m = s.match(/(\d+)(?!.*\d)/);
+      if (m) return parseInt(m[1], 10);
+      return parseInt(s, 10);
+    })();
+
     out.itemNumberNumeric = Number.isFinite(parsedItemNumber) ? parsedItemNumber : 0;
 
     out.severityValue = String(out['Severity Value'] || '').trim();
@@ -329,8 +342,10 @@ class POAMWorkbookDatabase {
     const nums = items
       .map(i => {
         const v = i['Item number'];
-        const n = typeof v === 'number' ? v : parseInt(String(v || '').trim(), 10);
-        return Number.isFinite(n) ? n : 0;
+        const n = typeof v === 'number' ? v : parseInt(String(v || '').replace(/[^0-9]/g, ''), 10);
+        const fallback = Number.isFinite(n) ? n : 0;
+        const derived = typeof i.itemNumberNumeric === 'number' ? i.itemNumberNumeric : 0;
+        return derived > 0 ? derived : fallback;
       })
       .filter(n => n > 0);
     const max = nums.length ? Math.max(...nums) : 0;
