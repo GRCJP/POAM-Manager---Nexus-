@@ -6,6 +6,96 @@ class POAMWorkbookDatabase {
     this._nistControlsBootstrapAttempted = false;
   }
 
+  async getWorkbookIdConfigForSystem(systemId) {
+    const sys = await this.getSystemById(systemId);
+    const cfg = sys && sys.workbookPoamIdConfig ? sys.workbookPoamIdConfig : null;
+
+    const fallbackOrg = await this.getLookup('workbookPoamOrg');
+    const fallbackApp = await this.getLookup('workbookPoamApp');
+    const fallbackYear = await this.getLookup('workbookPoamYear');
+    const fallbackPad = await this.getLookup('workbookPoamPad');
+
+    const out = {
+      org: String(cfg?.org ?? (fallbackOrg ?? '')).trim(),
+      app: String(cfg?.app ?? (fallbackApp ?? '')).trim(),
+      year: String(cfg?.year ?? (fallbackYear ?? String(new Date().getFullYear()))).trim(),
+      pad: Math.max(1, Math.min(8, parseInt(String(cfg?.pad ?? (fallbackPad ?? 3)), 10) || 3))
+    };
+
+    // One-time migration: if system has no config but global lookups exist, persist into system.
+    if (sys && !sys.workbookPoamIdConfig && (fallbackOrg != null || fallbackApp != null || fallbackYear != null || fallbackPad != null)) {
+      try {
+        await this.saveSystem({
+          ...sys,
+          workbookPoamIdConfig: out
+        });
+      } catch (e) {
+        // ignore migration errors
+      }
+    }
+
+    return out;
+  }
+
+  async setWorkbookIdConfigForSystem(systemId, config) {
+    const sys = await this.getSystemById(systemId);
+    if (!sys) throw new Error('System not found');
+
+    const nextCfg = {
+      org: String(config?.org ?? '').trim(),
+      app: String(config?.app ?? '').trim(),
+      year: String(config?.year ?? String(new Date().getFullYear())).trim(),
+      pad: Math.max(1, Math.min(8, parseInt(String(config?.pad ?? 3), 10) || 3))
+    };
+
+    await this.saveSystem({
+      ...sys,
+      workbookPoamIdConfig: nextCfg
+    });
+
+    return nextCfg;
+  }
+
+  async resetWorkbookItemNumberCounter(systemId) {
+    const sys = await this.getSystemById(systemId);
+    if (!sys) throw new Error('System not found');
+    await this.saveSystem({
+      ...sys,
+      workbookLastItemNumber: 0
+    });
+  }
+
+  async reserveNextWorkbookItemNumber(systemId) {
+    const sys = await this.getSystemById(systemId);
+    if (!sys) throw new Error('System not found');
+
+    const items = await this.getItemsBySystem(systemId);
+    const maxFromItems = items
+      .map(i => (typeof i.itemNumberNumeric === 'number' ? i.itemNumberNumeric : 0))
+      .filter(n => n > 0);
+    const maxItem = maxFromItems.length ? Math.max(...maxFromItems) : 0;
+
+    const last = typeof sys.workbookLastItemNumber === 'number' ? sys.workbookLastItemNumber : 0;
+    const next = Math.max(last, maxItem) + 1;
+
+    await this.saveSystem({
+      ...sys,
+      workbookLastItemNumber: next
+    });
+
+    return next;
+  }
+
+  async formatWorkbookItemNumber(systemId, n) {
+    const cfg = await this.getWorkbookIdConfigForSystem(systemId);
+    const org = String(cfg.org || '').trim();
+    const app = String(cfg.app || '').trim();
+    const year = String(cfg.year || String(new Date().getFullYear())).trim();
+    const pad = Math.max(1, Math.min(8, parseInt(String(cfg.pad || 3), 10) || 3));
+    const num = String(n).padStart(pad, '0');
+    return `${org}_${app}_${year}_${num}`.replace(/^_+|_+$/g, '').replace(/__+/g, '_');
+  }
+
   async init() {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(this.dbName, this.version);
@@ -192,7 +282,14 @@ class POAMWorkbookDatabase {
       await this.saveSystem({
         id: 'default',
         name: 'Default System',
-        description: 'Workbook system'
+        description: 'Workbook system',
+        workbookPoamIdConfig: {
+          org: '',
+          app: '',
+          year: String(new Date().getFullYear()),
+          pad: 3
+        },
+        workbookLastItemNumber: 0
       });
     }
 
@@ -207,7 +304,16 @@ class POAMWorkbookDatabase {
     for (const s of sampleSystems) {
       const existingSystem = await this.getSystemById(s.id);
       if (!existingSystem) {
-        await this.saveSystem(s);
+        await this.saveSystem({
+          ...s,
+          workbookPoamIdConfig: {
+            org: '',
+            app: '',
+            year: String(new Date().getFullYear()),
+            pad: 3
+          },
+          workbookLastItemNumber: 0
+        });
       }
     }
   }
@@ -428,6 +534,21 @@ class POAMWorkbookDatabase {
     };
 
     await this.saveItem(merged);
+
+    // Advance per-system counter so future auto-numbering continues from the max imported/updated value.
+    try {
+      const sys = await this.getSystemById(systemId);
+      const last = typeof sys?.workbookLastItemNumber === 'number' ? sys.workbookLastItemNumber : 0;
+      if (sys && n > last) {
+        await this.saveSystem({
+          ...sys,
+          workbookLastItemNumber: n
+        });
+      }
+    } catch (e) {
+      // ignore counter update errors
+    }
+
     return { id: merged.id, created: !existing };
   }
 
@@ -454,18 +575,15 @@ class POAMWorkbookDatabase {
   }
 
   async getNextItemNumber(systemId) {
+    const sys = await this.getSystemById(systemId);
+    const last = typeof sys?.workbookLastItemNumber === 'number' ? sys.workbookLastItemNumber : 0;
+
     const items = await this.getItemsBySystem(systemId);
     const nums = items
-      .map(i => {
-        const v = i['Item number'];
-        const n = typeof v === 'number' ? v : parseInt(String(v || '').replace(/[^0-9]/g, ''), 10);
-        const fallback = Number.isFinite(n) ? n : 0;
-        const derived = typeof i.itemNumberNumeric === 'number' ? i.itemNumberNumeric : 0;
-        return derived > 0 ? derived : fallback;
-      })
+      .map(i => (typeof i.itemNumberNumeric === 'number' ? i.itemNumberNumeric : 0))
       .filter(n => n > 0);
     const max = nums.length ? Math.max(...nums) : 0;
-    return max + 1;
+    return Math.max(last, max) + 1;
   }
 }
 

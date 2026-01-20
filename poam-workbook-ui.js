@@ -14,6 +14,129 @@ window.poamWorkbookNotifyMutation = function () {
   window.poamWorkbookState._analyticsCache.clear();
 };
 
+async function poamWorkbookOpenSystemIdConfigModal() {
+  try {
+    await poamWorkbookEnsureDbReady();
+
+    const systemId = window.poamWorkbookState.activeSystemId;
+    if (!systemId) throw new Error('No active system');
+
+    const sys = await window.poamWorkbookDB.getSystemById(systemId);
+    const cfg = typeof window.poamWorkbookDB.getWorkbookIdConfigForSystem === 'function'
+      ? await window.poamWorkbookDB.getWorkbookIdConfigForSystem(systemId)
+      : { org: '', app: '', year: String(new Date().getFullYear()), pad: 3 };
+
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `
+      <div class="bg-white rounded-2xl p-6 max-w-xl w-full">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">Workbook POAM ID (Per System)</h2>
+            <div class="text-xs text-slate-500 mt-1">System: <span class="font-mono">${escapeHtml(sys?.name || systemId)}</span></div>
+          </div>
+          <button id="wb-sysid-close" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">Org</label>
+            <input type="text" id="wb-sysid-org" class="w-full px-3 py-2 border border-slate-200 rounded-lg" value="${escapeAttr(cfg.org)}">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">App / System</label>
+            <input type="text" id="wb-sysid-app" class="w-full px-3 py-2 border border-slate-200 rounded-lg" value="${escapeAttr(cfg.app)}">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">Year</label>
+            <input type="text" id="wb-sysid-year" class="w-full px-3 py-2 border border-slate-200 rounded-lg" value="${escapeAttr(cfg.year)}">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">Number Padding</label>
+            <input type="number" id="wb-sysid-pad" min="1" max="8" class="w-full px-3 py-2 border border-slate-200 rounded-lg" value="${escapeAttr(cfg.pad)}">
+          </div>
+        </div>
+
+        <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 mt-4">
+          <div class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Preview</div>
+          <div id="wb-sysid-preview" class="font-mono text-sm text-slate-800">...</div>
+        </div>
+
+        <div class="flex justify-between items-center gap-3 mt-6">
+          <button id="wb-sysid-reset" class="px-4 py-2 border border-orange-300 rounded-lg text-sm font-semibold text-orange-700 bg-orange-50 hover:bg-orange-100">Reset Counter</button>
+          <div class="flex gap-3">
+            <button id="wb-sysid-cancel" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">Cancel</button>
+            <button id="wb-sysid-save" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const close = () => modal.remove();
+    modal.querySelector('#wb-sysid-close')?.addEventListener('click', close);
+    modal.querySelector('#wb-sysid-cancel')?.addEventListener('click', close);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) close();
+    });
+
+    const updatePreview = async () => {
+      try {
+        const org = String(modal.querySelector('#wb-sysid-org')?.value || '').trim();
+        const app = String(modal.querySelector('#wb-sysid-app')?.value || '').trim();
+        const year = String(modal.querySelector('#wb-sysid-year')?.value || String(new Date().getFullYear())).trim();
+        const pad = Math.max(1, Math.min(8, parseInt(String(modal.querySelector('#wb-sysid-pad')?.value || '3'), 10) || 3));
+        const num = String(1).padStart(pad, '0');
+        const preview = `${org}_${app}_${year}_${num}`.replace(/^_+|_+$/g, '').replace(/__+/g, '_');
+        const el = modal.querySelector('#wb-sysid-preview');
+        if (el) el.textContent = preview;
+      } catch (e) {
+        // ignore
+      }
+    };
+
+    modal.querySelector('#wb-sysid-org')?.addEventListener('input', updatePreview);
+    modal.querySelector('#wb-sysid-app')?.addEventListener('input', updatePreview);
+    modal.querySelector('#wb-sysid-year')?.addEventListener('input', updatePreview);
+    modal.querySelector('#wb-sysid-pad')?.addEventListener('input', updatePreview);
+    await updatePreview();
+
+    modal.querySelector('#wb-sysid-reset')?.addEventListener('click', async () => {
+      try {
+        if (typeof window.poamWorkbookDB.resetWorkbookItemNumberCounter === 'function') {
+          await window.poamWorkbookDB.resetWorkbookItemNumberCounter(systemId);
+        }
+        showUpdateFeedback('Workbook counter reset for this system', 'success');
+      } catch (e) {
+        console.error(e);
+        showUpdateFeedback(`Reset failed: ${e.message}`, 'error');
+      }
+    });
+
+    modal.querySelector('#wb-sysid-save')?.addEventListener('click', async () => {
+      try {
+        const org = String(modal.querySelector('#wb-sysid-org')?.value || '').trim();
+        const app = String(modal.querySelector('#wb-sysid-app')?.value || '').trim();
+        const year = String(modal.querySelector('#wb-sysid-year')?.value || String(new Date().getFullYear())).trim();
+        const pad = Math.max(1, Math.min(8, parseInt(String(modal.querySelector('#wb-sysid-pad')?.value || '3'), 10) || 3));
+
+        if (typeof window.poamWorkbookDB.setWorkbookIdConfigForSystem === 'function') {
+          await window.poamWorkbookDB.setWorkbookIdConfigForSystem(systemId, { org, app, year, pad });
+        }
+
+        showUpdateFeedback('Workbook POAM ID settings saved for this system', 'success');
+        close();
+      } catch (e) {
+        console.error(e);
+        showUpdateFeedback(`Save failed: ${e.message}`, 'error');
+      }
+    });
+  } catch (e) {
+    console.error(e);
+    showUpdateFeedback(`Open workbook ID settings failed: ${e.message}`, 'error');
+  }
+}
+
 function poamWorkbookParseItemNumberNumeric(value) {
   if (typeof value === 'number') return value;
   const s = String(value || '').trim();
@@ -71,11 +194,14 @@ async function renderWorkbookSidebarSystems() {
       <select id="wb-system-select" class="px-3 py-2 border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 bg-white" onchange="poamWorkbookNavigateToSystem(this.value)">
         ${systems.map(s => `<option value="${escapeAttr(s.id)}" ${s.id === activeId ? 'selected' : ''}>${escapeHtml(s.name)}</option>`).join('')}
       </select>
-      <button onclick="poamWorkbookOpenAddSystemModal()" class="px-3 py-2 bg-white border border-slate-200 text-slate-800 rounded-lg hover:bg-slate-50 text-sm font-semibold" title="Add System">
-        <i class="fas fa-plus mr-2 text-indigo-600"></i>Add
+      <button onclick="poamWorkbookOpenSystemIdConfigModal()" class="px-3 py-2 bg-white border border-slate-200 text-slate-800 rounded-lg hover:bg-slate-50 text-sm font-semibold" title="Workbook ID Settings (per system)">
+        <i class="fas fa-cog"></i>
       </button>
-      <button onclick="poamWorkbookOpenEditSystemModal('${activeId}')" class="px-3 py-2 bg-white border border-slate-200 text-slate-800 rounded-lg hover:bg-slate-50 text-sm font-semibold" title="Edit Active System">
-        <i class="fas fa-pen mr-2 text-indigo-600"></i>Edit
+      <button onclick="poamWorkbookOpenAddSystemModal()" class="px-3 py-2 bg-white border border-slate-200 text-slate-800 rounded-lg hover:bg-slate-50 text-sm font-semibold" title="Add System">
+        <i class="fas fa-plus"></i>
+      </button>
+      <button onclick="poamWorkbookOpenEditSystemModal('${escapeAttr(activeId || 'default')}')" class="px-3 py-2 bg-white border border-slate-200 text-slate-800 rounded-lg hover:bg-slate-50 text-sm font-semibold" title="Edit System">
+        <i class="fas fa-pen"></i>
       </button>
     </div>
   `;
@@ -144,147 +270,13 @@ async function poamWorkbookOpenEditSystemModal(systemId) {
   }
 }
 
-async function poamWorkbookOpenPoamIdFormatModal() {
-  try {
-    await poamWorkbookEnsureDbReady();
-    const current = await window.poamWorkbookDB.getLookup('poamIdFormat');
-
-    const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
-    modal.innerHTML = `
-      <div class="bg-white rounded-2xl p-6 max-w-xl w-full">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-bold text-slate-900">POAM ID Format (Workbook)</h2>
-          <button id="wb-poamid-close" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="space-y-3">
-          <div class="text-sm text-slate-600">This controls how new workbook POAM IDs are generated. The numeric sequence always increments (max + 1), even if items are closed.</div>
-          <div>
-            <label class="block text-sm font-semibold text-slate-700 mb-2">Format</label>
-            <input id="wb-poamid-format" type="text" class="w-full px-3 py-2 border border-slate-200 rounded-lg font-mono text-xs" value="${escapeAttr(current || 'POAM-{system}-{n:4}')}">
-            <div class="text-xs text-slate-500 mt-2">Tokens: <span class="font-mono">{system}</span>, <span class="font-mono">{year}</span>, <span class="font-mono">{n}</span>, <span class="font-mono">{n:4}</span> (zero-pad)</div>
-          </div>
-        </div>
-        <div class="flex justify-end gap-3 mt-6">
-          <button id="wb-poamid-cancel" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">Cancel</button>
-          <button id="wb-poamid-save" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-
-    const close = () => modal.remove();
-    modal.querySelector('#wb-poamid-close')?.addEventListener('click', close);
-    modal.querySelector('#wb-poamid-cancel')?.addEventListener('click', close);
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) close();
-    });
-
-    modal.querySelector('#wb-poamid-save')?.addEventListener('click', async () => {
-      try {
-        const format = String(modal.querySelector('#wb-poamid-format')?.value || '').trim();
-        if (!format) throw new Error('Format is required');
-        await window.poamWorkbookDB.putLookup('poamIdFormat', format);
-        showUpdateFeedback('POAM ID format saved', 'success');
-        close();
-      } catch (e) {
-        console.error(e);
-        showUpdateFeedback(`Save format failed: ${e.message}`, 'error');
-      }
-    });
-  } catch (e) {
-    console.error(e);
-    showUpdateFeedback(`POAM ID format failed: ${e.message}`, 'error');
-  }
-}
 
 async function poamWorkbookFormatItemNumber(systemId, n) {
-  const fmt = await window.poamWorkbookDB.getLookup('poamIdFormat');
-  const orgToken = await window.poamWorkbookDB.getLookup('workbookPoamOrg') || '';
-  const appToken = await window.poamWorkbookDB.getLookup('workbookPoamApp') || '';
-  const configuredYear = await window.poamWorkbookDB.getLookup('workbookPoamYear');
-  const sys = await window.poamWorkbookDB.getSystemById(systemId);
-  const systemToken = systemId;
-  const yearToken = String(configuredYear || new Date().getFullYear());
-
-  const replaceN = (template) => {
-    return template
-      .replace(/\{n:(\d+)\}/g, (_, width) => String(n).padStart(parseInt(width, 10) || 0, '0'))
-      .replace(/\{n\}/g, String(n));
-  };
-
-  const out = replaceN(String(fmt || 'POAM-{system}-{n:4}'))
-    .replace(/\{org\}/g, String(orgToken || ''))
-    .replace(/\{app\}/g, String(appToken || ''))
-    .replace(/\{system\}/g, systemToken)
-    .replace(/\{systemName\}/g, String(sys?.name || systemToken))
-    .replace(/\{year\}/g, yearToken);
-  return out;
+  if (window.poamWorkbookDB && typeof window.poamWorkbookDB.formatWorkbookItemNumber === 'function') {
+    return window.poamWorkbookDB.formatWorkbookItemNumber(systemId, n);
+  }
+  return String(n);
 }
-
-async function poamWorkbookLoadIdConfigIntoSettings() {
-  try {
-    await poamWorkbookEnsureDbReady();
-    const org = await window.poamWorkbookDB.getLookup('workbookPoamOrg');
-    const app = await window.poamWorkbookDB.getLookup('workbookPoamApp');
-    const year = await window.poamWorkbookDB.getLookup('workbookPoamYear');
-    const pad = await window.poamWorkbookDB.getLookup('workbookPoamPad');
-
-    const orgEl = document.getElementById('settings-wb-poam-org');
-    const appEl = document.getElementById('settings-wb-poam-app');
-    const yearEl = document.getElementById('settings-wb-poam-year');
-    const padEl = document.getElementById('settings-wb-poam-pad');
-
-    if (orgEl && org != null && orgEl.value === '') orgEl.value = String(org);
-    if (appEl && app != null && appEl.value === '') appEl.value = String(app);
-    if (yearEl && year != null && yearEl.value === '') yearEl.value = String(year);
-    if (padEl && pad != null && padEl.value === '') padEl.value = String(pad);
-
-    if (typeof updateWorkbookIdPreview === 'function') updateWorkbookIdPreview();
-  } catch (e) {
-    console.error(e);
-  }
-}
-
-window.updateWorkbookIdPreview = async function () {
-  try {
-    const org = String(document.getElementById('settings-wb-poam-org')?.value || '').trim();
-    const app = String(document.getElementById('settings-wb-poam-app')?.value || '').trim();
-    const year = String(document.getElementById('settings-wb-poam-year')?.value || String(new Date().getFullYear())).trim();
-    const pad = Math.max(1, Math.min(8, parseInt(String(document.getElementById('settings-wb-poam-pad')?.value || '3'), 10) || 3));
-
-    const preview = `${org}_${app}_${year}_${String(1).padStart(pad, '0')}`.replace(/^_+|_+$/g, '');
-    const el = document.getElementById('settings-wb-id-preview');
-    if (el) el.textContent = preview;
-  } catch (e) {
-    console.error(e);
-  }
-};
-
-window.saveWorkbookPoamIdConfigFromSettings = async function () {
-  try {
-    await poamWorkbookEnsureDbReady();
-    const org = String(document.getElementById('settings-wb-poam-org')?.value || '').trim();
-    const app = String(document.getElementById('settings-wb-poam-app')?.value || '').trim();
-    const year = String(document.getElementById('settings-wb-poam-year')?.value || String(new Date().getFullYear())).trim();
-    const pad = Math.max(1, Math.min(8, parseInt(String(document.getElementById('settings-wb-poam-pad')?.value || '3'), 10) || 3));
-
-    await window.poamWorkbookDB.putLookup('workbookPoamOrg', org);
-    await window.poamWorkbookDB.putLookup('workbookPoamApp', app);
-    await window.poamWorkbookDB.putLookup('workbookPoamYear', year);
-    await window.poamWorkbookDB.putLookup('workbookPoamPad', pad);
-
-    // Keep the underlying template in the workbook DB, but make it derived from simple inputs.
-    const template = '{org}_{app}_{year}_{n:' + String(pad) + '}';
-    await window.poamWorkbookDB.putLookup('poamIdFormat', template);
-
-    showUpdateFeedback('Workbook POAM ID settings saved', 'success');
-    if (typeof updateWorkbookIdPreview === 'function') updateWorkbookIdPreview();
-  } catch (e) {
-    console.error(e);
-    showUpdateFeedback(`Save workbook POAM ID settings failed: ${e.message}`, 'error');
-  }
-};
 
 async function poamWorkbookEnsureDbReady() {
   if (!window.poamWorkbookDB) return;
@@ -674,8 +666,10 @@ async function poamWorkbookCommitParsedRows(systemId, parsed) {
       continue;
     }
 
-    // Auto-number if missing
-    const nextNum = await window.poamWorkbookDB.getNextItemNumber(systemId);
+    // Auto-number if missing (reserve so concurrent commits don't collide)
+    const nextNum = typeof window.poamWorkbookDB.reserveNextWorkbookItemNumber === 'function'
+      ? await window.poamWorkbookDB.reserveNextWorkbookItemNumber(systemId)
+      : await window.poamWorkbookDB.getNextItemNumber(systemId);
     data['Item number'] = await poamWorkbookFormatItemNumber(systemId, nextNum);
     await window.poamWorkbookDB.saveItem({
       id: `WB-${systemId}-${Date.now()}-${saved}-${updated}`,
@@ -1123,7 +1117,9 @@ async function poamWorkbookInlineUpdate(id, field, value) {
 
 async function poamWorkbookCreateItem() {
   const systemId = window.poamWorkbookState.activeSystemId;
-  const nextNum = await window.poamWorkbookDB.getNextItemNumber(systemId);
+  const nextNum = typeof window.poamWorkbookDB.reserveNextWorkbookItemNumber === 'function'
+    ? await window.poamWorkbookDB.reserveNextWorkbookItemNumber(systemId)
+    : await window.poamWorkbookDB.getNextItemNumber(systemId);
 
   const now = new Date().toISOString();
   const newItem = {

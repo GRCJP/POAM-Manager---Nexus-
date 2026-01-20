@@ -231,18 +231,10 @@ async function poamWorkbookImportXlsx(file, systemId) {
   }
 
   const formatItemNumber = async (n) => {
-    try {
-      const fmt = await window.poamWorkbookDB.getLookup('poamIdFormat');
-      const year = String(new Date().getFullYear());
-      const replaceN = (template) => template
-        .replace(/\{n:(\d+)\}/g, (_, width) => String(n).padStart(parseInt(width, 10) || 0, '0'))
-        .replace(/\{n\}/g, String(n));
-      return replaceN(String(fmt || 'POAM-{system}-{n:4}'))
-        .replace(/\{system\}/g, systemId)
-        .replace(/\{year\}/g, year);
-    } catch (e) {
-      return n;
+    if (window.poamWorkbookDB && typeof window.poamWorkbookDB.formatWorkbookItemNumber === 'function') {
+      return window.poamWorkbookDB.formatWorkbookItemNumber(systemId, n);
     }
+    return String(n);
   };
 
   // Persist (upsert by systemId + Item number where possible)
@@ -276,8 +268,10 @@ async function poamWorkbookImportXlsx(file, systemId) {
       continue;
     }
 
-    // Fallback: create a new item number
-    const nextNum = await window.poamWorkbookDB.getNextItemNumber(systemId);
+    // Fallback: create a new item number (reserve so repeated imports don't collide)
+    const nextNum = typeof window.poamWorkbookDB.reserveNextWorkbookItemNumber === 'function'
+      ? await window.poamWorkbookDB.reserveNextWorkbookItemNumber(systemId)
+      : await window.poamWorkbookDB.getNextItemNumber(systemId);
     const item = {
       id: `WB-${systemId}-${Date.now()}-${saved}-${updated}`,
       systemId,
