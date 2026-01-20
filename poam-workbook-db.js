@@ -1,7 +1,7 @@
 class POAMWorkbookDatabase {
   constructor() {
     this.dbName = 'POAMWorkbookDB';
-    this.version = 1;
+    this.version = 2;
     this.db = null;
   }
 
@@ -24,15 +24,57 @@ class POAMWorkbookDatabase {
 
       request.onupgradeneeded = (event) => {
         const db = event.target.result;
+        const tx = event.target.transaction;
 
         if (!db.objectStoreNames.contains('poamWorkbookItems')) {
           const items = db.createObjectStore('poamWorkbookItems', { keyPath: 'id' });
           items.createIndex('systemId', 'systemId', { unique: false });
-          items.createIndex('itemNumber', ['systemId', 'Item number'], { unique: false });
-          items.createIndex('severity', 'Severity Value', { unique: false });
-          items.createIndex('status', 'Status', { unique: false });
-          items.createIndex('vulnName', 'Vulnerability Name', { unique: false });
-          items.createIndex('scheduledCompletion', 'Scheduled Completion Date', { unique: false });
+
+          // IMPORTANT: IndexedDB keyPaths cannot contain spaces.
+          // We keep workbook columns as-is, but index via safe derived fields.
+          items.createIndex('itemNumber', ['systemId', 'itemNumberNumeric'], { unique: false });
+          items.createIndex('severity', 'severityValue', { unique: false });
+          items.createIndex('status', 'statusValue', { unique: false });
+          items.createIndex('vulnName', 'vulnerabilityName', { unique: false });
+          items.createIndex('scheduledCompletion', 'scheduledCompletionDate', { unique: false });
+        }
+
+        // If the store already existed from a prior version, ensure the safe indexes exist.
+        if (db.objectStoreNames.contains('poamWorkbookItems')) {
+          const items = tx.objectStore('poamWorkbookItems');
+          if (!items.indexNames.contains('systemId')) {
+            items.createIndex('systemId', 'systemId', { unique: false });
+          }
+          if (!items.indexNames.contains('itemNumber')) {
+            items.createIndex('itemNumber', ['systemId', 'itemNumberNumeric'], { unique: false });
+          }
+          if (!items.indexNames.contains('severity')) {
+            items.createIndex('severity', 'severityValue', { unique: false });
+          }
+          if (!items.indexNames.contains('status')) {
+            items.createIndex('status', 'statusValue', { unique: false });
+          }
+          if (!items.indexNames.contains('vulnName')) {
+            items.createIndex('vulnName', 'vulnerabilityName', { unique: false });
+          }
+          if (!items.indexNames.contains('scheduledCompletion')) {
+            items.createIndex('scheduledCompletion', 'scheduledCompletionDate', { unique: false });
+          }
+
+          // Migrate existing records to include derived fields used by indexes.
+          try {
+            const cursorReq = items.openCursor();
+            cursorReq.onsuccess = (e) => {
+              const cursor = e.target.result;
+              if (!cursor) return;
+              const value = cursor.value || {};
+              const migrated = this._withDerivedFields(value);
+              cursor.update(migrated);
+              cursor.continue();
+            };
+          } catch (e) {
+            // ignore migration errors during upgrade
+          }
         }
 
         if (!db.objectStoreNames.contains('poamWorkbookSystems')) {
@@ -172,11 +214,28 @@ class POAMWorkbookDatabase {
     if (!this.db) await this.init();
     const tx = this.db.transaction(['poamWorkbookItems'], 'readwrite');
     const store = tx.objectStore('poamWorkbookItems');
+
+    const toSave = this._withDerivedFields(item);
     return new Promise((resolve, reject) => {
-      const req = store.put(item);
+      const req = store.put(toSave);
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
     });
+  }
+
+  _withDerivedFields(item) {
+    const out = { ...(item || {}) };
+    const rawItemNumber = out['Item number'];
+    const parsedItemNumber = typeof rawItemNumber === 'number'
+      ? rawItemNumber
+      : parseInt(String(rawItemNumber || '').trim(), 10);
+    out.itemNumberNumeric = Number.isFinite(parsedItemNumber) ? parsedItemNumber : 0;
+
+    out.severityValue = String(out['Severity Value'] || '').trim();
+    out.statusValue = String(out['Status'] || '').trim();
+    out.vulnerabilityName = String(out['Vulnerability Name'] || '').trim();
+    out.scheduledCompletionDate = String(out['Scheduled Completion Date'] || '').trim();
+    return out;
   }
 
   async getItem(id) {
