@@ -68,8 +68,15 @@ class PipelineProgressUI {
                 <div class="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 p-6">
                     <!-- Header -->
                     <div class="mb-6">
-                        <h2 class="text-2xl font-bold text-gray-900 mb-2">Processing Scan Data</h2>
-                        <p class="text-gray-600">Running 5-phase pipeline to generate POAMs</p>
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <h2 class="text-2xl font-bold text-gray-900 mb-2">Processing Scan Data</h2>
+                                <p class="text-gray-600">Running 5-phase pipeline to generate POAMs</p>
+                            </div>
+                            <button type="button" onclick="window.exitPipelineProgressUI && window.exitPipelineProgressUI()" class="px-3 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded hover:bg-gray-200">
+                                Exit
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Overall Progress -->
@@ -281,6 +288,9 @@ class PipelineProgressUI {
                 <div class="text-red-600 font-medium">
                     ❌ Pipeline failed: ${error.message}<br>
                     <span class="text-sm text-gray-600">Phase: ${error.phase}</span>
+                    <div class="mt-3">
+                        <button type="button" onclick="window.exitPipelineProgressUI && window.exitPipelineProgressUI()" class="px-3 py-2 text-sm font-semibold text-white bg-red-600 rounded hover:bg-red-700">Exit</button>
+                    </div>
                 </div>
             `;
         }
