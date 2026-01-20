@@ -1640,6 +1640,10 @@
                         <div class="text-[11px] text-slate-500 mt-1">Import/export applies only to workbook records in <span class="font-mono">POAMWorkbookDB</span>.</div>
                     </div>
                     <div class="flex items-center gap-2 flex-wrap">
+                        <button onclick="poamWorkbookShowOverview()" class="px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-lg hover:bg-slate-50 text-sm font-semibold">
+                            <i class="fas fa-chart-pie mr-2 text-indigo-600"></i>Overview
+                        </button>
+                        <div id="scm-poam-workbook-systems" class="flex items-center gap-2"></div>
                         <label class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 cursor-pointer text-sm font-semibold">
                             <i class="fas fa-file-import mr-2"></i>Import XLSX
                             <input type="file" accept=".xlsx" class="hidden" onchange="poamWorkbookHandleImportInput(event)">
@@ -1656,14 +1660,7 @@
 
             <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                 <div class="grid grid-cols-12">
-                    <div class="col-span-12 lg:col-span-2 border-b lg:border-b-0 lg:border-r border-slate-200 bg-slate-50 p-4 space-y-4">
-                        <button onclick="poamWorkbookShowOverview()" class="w-full text-left px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50">
-                            <div class="text-sm font-semibold text-slate-800"><i class="fas fa-chart-pie mr-2 text-indigo-500"></i>Overview</div>
-                            <div class="text-xs text-slate-500">All workbook POAMs</div>
-                        </button>
-                    </div>
-
-                    <div class="col-span-12 lg:col-span-10 p-6" id="poam-workbook-main">
+                    <div class="col-span-12 p-6" id="poam-workbook-main">
                         <div id="poam-workbook-view-overview" class="poam-workbook-view space-y-6">
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                 <div class="bg-white rounded-xl p-5 border border-slate-200">
@@ -3112,7 +3109,7 @@
     <script src="poam-workbook-db.js?v=20260120-7"></script>
     <script src="poam-workbook-import.js?v=20260120-7"></script>
     <script src="poam-workbook-export.js?v=20260120-1"></script>
-    <script src="poam-workbook-ui.js?v=20260120-9"></script>
+    <script src="poam-workbook-ui.js?v=20260120-10"></script>
     <!-- security-controls-manager.js removed -->
     <script src="script.js?v=20260120-2"></script>
 

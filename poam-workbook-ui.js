@@ -37,7 +37,7 @@ async function initPOAMWorkbookModule() {
   await renderWorkbookSidebarSystems();
   await renderWorkbookOverview();
 
-  // If a sidebar click requested a specific system, open it now.
+  // If a system selector explicitly requested a system, open it now.
   const pending = window.poamWorkbookState.pendingOpenSystemId;
   if (pending) {
     window.poamWorkbookState.pendingOpenSystemId = null;
@@ -45,7 +45,7 @@ async function initPOAMWorkbookModule() {
     return;
   }
 
-  // Default view is overview
+  // Default entry view is overview (do not auto-open a system just because it was last active).
   poamWorkbookShowOverview();
 }
 
@@ -66,24 +66,18 @@ async function renderWorkbookSidebarSystems() {
 
   const activeId = window.poamWorkbookState.activeSystemId;
   container.innerHTML = `
-    <button onclick="poamWorkbookOpenAddSystemModal()" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors text-slate-100">
-      <i class="fas fa-plus text-xs w-4 text-indigo-300"></i>
-      <span>Add System</span>
-    </button>
-    ${systems.map(s => {
-      const active = s.id === activeId;
-      return `
-        <div class="flex items-center gap-1">
-          <a href="#" onclick="poamWorkbookNavigateToSystem('${s.id}')" class="sidebar-sublink flex-1 flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors ${active ? 'bg-slate-700 text-white' : ''}">
-            <i class="fas fa-server text-xs w-4 text-slate-300"></i>
-            <span class="truncate">${escapeHtml(s.name)}</span>
-          </a>
-          <button onclick="poamWorkbookOpenEditSystemModal('${s.id}')" class="px-2 py-2 rounded-lg hover:bg-slate-800 text-slate-300" title="Edit System">
-            <i class="fas fa-pen text-xs"></i>
-          </button>
-        </div>
-      `;
-    }).join('')}
+    <div class="flex items-center gap-2 flex-wrap">
+      <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">System</div>
+      <select id="wb-system-select" class="px-3 py-2 border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 bg-white" onchange="poamWorkbookNavigateToSystem(this.value)">
+        ${systems.map(s => `<option value="${escapeAttr(s.id)}" ${s.id === activeId ? 'selected' : ''}>${escapeHtml(s.name)}</option>`).join('')}
+      </select>
+      <button onclick="poamWorkbookOpenAddSystemModal()" class="px-3 py-2 bg-white border border-slate-200 text-slate-800 rounded-lg hover:bg-slate-50 text-sm font-semibold" title="Add System">
+        <i class="fas fa-plus mr-2 text-indigo-600"></i>Add
+      </button>
+      <button onclick="poamWorkbookOpenEditSystemModal('${activeId}')" class="px-3 py-2 bg-white border border-slate-200 text-slate-800 rounded-lg hover:bg-slate-50 text-sm font-semibold" title="Edit Active System">
+        <i class="fas fa-pen mr-2 text-indigo-600"></i>Edit
+      </button>
+    </div>
   `;
 }
 
