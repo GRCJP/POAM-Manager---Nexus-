@@ -436,7 +436,7 @@ function renderMilestonesList(poam) {
             <div class="space-y-3">
                 <div class="text-xs text-slate-500 italic">No milestones added</div>
                 <button onclick="addMilestoneToPOAM('${poam.id}')" class="text-xs bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700">
-                    <i class="fas fa-plus"></i> Add Milestone
+                    <i class="fas fa-plus"></i> Generate Milestones
                 </button>
             </div>
         `;
@@ -507,7 +507,7 @@ function renderMilestonesList(poam) {
             
             <div class="flex justify-between items-center pt-2 border-t border-slate-200">
                 <button onclick="addMilestoneToPOAM('${poam.id}')" class="text-xs bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700">
-                    <i class="fas fa-plus"></i> Add Milestone
+                    <i class="fas fa-plus"></i> ${poam.milestones && poam.milestones.length > 0 ? 'Add Milestone' : 'Generate Milestones'}
                 </button>
                 <button onclick="recalculateMilestoneDates('${poam.id}')" class="text-xs bg-slate-600 text-white px-3 py-1 rounded hover:bg-slate-700">
                     <i class="fas fa-calculator"></i> Recalculate Dates
@@ -641,17 +641,43 @@ async function addMilestoneToPOAM(poamId) {
         // Ensure milestones array exists
         if (!poam.milestones) poam.milestones = [];
         
-        // Create new milestone
-        const newMilestone = {
-            name: `Milestone ${poam.milestones.length + 1}`,
-            description: '',
-            targetDate: poam.dueDate || new Date().toISOString().split('T')[0],
-            status: 'pending',
-            weight: 0
-        };
+        let newMilestone;
         
-        // Add to milestones array
-        poam.milestones.push(newMilestone);
+        // If this is the first milestone (no existing milestones), generate the full set
+        if (poam.milestones.length === 0) {
+            console.log('🎯 Generating complete milestone set for POAM');
+            
+            // Generate milestones based on control family and dates
+            const startDate = poam.createdDate || poam.initialScheduledCompletionDate || new Date().toISOString().split('T')[0];
+            const dueDate = poam.dueDate || poam.updatedScheduledCompletionDate;
+            
+            if (startDate && dueDate) {
+                const generatedMilestones = generateMilestonesForControlFamily(
+                    poam.controlFamily || 'CM', 
+                    startDate, 
+                    dueDate
+                );
+                
+                if (generatedMilestones && generatedMilestones.length > 0) {
+                    // Add all generated milestones
+                    poam.milestones = generatedMilestones;
+                    console.log(`✅ Generated ${generatedMilestones.length} milestones for ${poam.controlFamily} control family`);
+                } else {
+                    // Fallback to single milestone if generation fails
+                    newMilestone = createFallbackMilestone(poam, 1);
+                    poam.milestones.push(newMilestone);
+                }
+            } else {
+                // Fallback to single milestone if dates missing
+                newMilestone = createFallbackMilestone(poam, 1);
+                poam.milestones.push(newMilestone);
+            }
+        } else {
+            // Add a single additional milestone to existing set
+            console.log('➕ Adding single milestone to existing set');
+            newMilestone = createAdditionalMilestone(poam);
+            poam.milestones.push(newMilestone);
+        }
         
         // Save to database
         await poamDB.savePOAM(poam);
@@ -667,13 +693,42 @@ async function addMilestoneToPOAM(poamId) {
             }
         }
         
-        showUpdateFeedback('Milestone added successfully', 'success');
-        console.log(`✅ Added milestone to POAM ${poamId}`);
+        const action = poam.milestones.length > 1 ? 'Milestones added' : 'Milestone added';
+        showUpdateFeedback(`${action} successfully`, 'success');
+        console.log(`✅ Added milestones to POAM ${poamId}. Total: ${poam.milestones.length}`);
         
     } catch (error) {
         console.error('Error adding milestone:', error);
         showUpdateFeedback('Error adding milestone', 'error');
     }
+}
+
+function createFallbackMilestone(poam, index) {
+    return {
+        name: `Milestone ${index}`,
+        description: 'Complete vulnerability remediation',
+        targetDate: poam.dueDate || new Date().toISOString().split('T')[0],
+        status: 'pending',
+        weight: 100
+    };
+}
+
+function createAdditionalMilestone(poam) {
+    const nextIndex = poam.milestones.length + 1;
+    const lastMilestone = poam.milestones[poam.milestones.length - 1];
+    
+    // Use the last milestone's date as a starting point, or use due date
+    const baseDate = lastMilestone?.targetDate || poam.dueDate || new Date().toISOString().split('T')[0];
+    const targetDate = new Date(baseDate);
+    targetDate.setDate(targetDate.getDate() + 7); // Add 7 days to last milestone
+    
+    return {
+        name: `Milestone ${nextIndex}`,
+        description: 'Additional remediation task',
+        targetDate: targetDate.toISOString().split('T')[0],
+        status: 'pending',
+        weight: 0
+    };
 }
 
 async function removeMilestoneFromPOAM(poamId, milestoneIndex) {
