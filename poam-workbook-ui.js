@@ -3,6 +3,7 @@
 window.poamWorkbookState = {
   activeTab: 'overview',
   activeSystemId: 'default',
+  pendingOpenSystemId: null,
   _version: 0,
   _analyticsCache: new Map()
 };
@@ -23,8 +24,17 @@ async function initPOAMWorkbookModule() {
     await window.poamWorkbookDB.seedDefaultsIfNeeded();
   }
 
-  await renderWorkbookSystemsSelects();
+  await renderWorkbookSidebarSystems();
   await renderWorkbookOverview();
+
+  // If a sidebar click requested a specific system, open it now.
+  const pending = window.poamWorkbookState.pendingOpenSystemId;
+  if (pending) {
+    window.poamWorkbookState.pendingOpenSystemId = null;
+    await poamWorkbookOpenSystem(pending);
+    return;
+  }
+
   // Default view is overview
   poamWorkbookShowOverview();
 }
@@ -37,27 +47,53 @@ function poamWorkbookShowOverview() {
   if (system) system.classList.add('hidden');
 }
 
-async function renderWorkbookSystemsSelects() {
+async function renderWorkbookSidebarSystems() {
+  if (!window.poamWorkbookDB || !window.poamWorkbookDB.db) return;
   const systems = await window.poamWorkbookDB.getSystems();
 
-  // Sidebar systems list
-  const list = document.getElementById('poam-workbook-systems-list');
-  if (list) {
-    list.innerHTML = systems.map(s => {
-      const active = s.id === window.poamWorkbookState.activeSystemId;
+  const container = document.getElementById('scm-poam-workbook-systems');
+  if (!container) return;
+
+  const activeId = window.poamWorkbookState.activeSystemId;
+  container.innerHTML = `
+    <button onclick="poamWorkbookOpenAddSystemModal()" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors text-slate-100">
+      <i class="fas fa-plus text-xs w-4 text-indigo-300"></i>
+      <span>Add System</span>
+    </button>
+    ${systems.map(s => {
+      const active = s.id === activeId;
       return `
-        <button onclick="poamWorkbookOpenSystem('${s.id}')" class="w-full text-left px-3 py-2 rounded-lg border ${active ? 'border-indigo-400 bg-indigo-50' : 'border-slate-200 bg-white hover:bg-slate-50'}">
-          <div class="text-sm font-semibold text-slate-800">${escapeHtml(s.name)}</div>
-          <div class="text-xs text-slate-500">${escapeHtml(s.description || '')}</div>
-        </button>
+        <a href="#" onclick="poamWorkbookNavigateToSystem('${s.id}')" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors ${active ? 'bg-slate-700 text-white' : ''}">
+          <i class="fas fa-server text-xs w-4 text-slate-300"></i>
+          <span>${escapeHtml(s.name)}</span>
+        </a>
       `;
-    }).join('');
+    }).join('')}
+  `;
+}
+
+async function poamWorkbookEnsureDbReady() {
+  if (!window.poamWorkbookDB) return;
+  if (!window.poamWorkbookDB.db) {
+    await window.poamWorkbookDB.init();
+    await window.poamWorkbookDB.seedDefaultsIfNeeded();
+  }
+}
+
+async function poamWorkbookNavigateToSystem(systemId) {
+  try {
+    await poamWorkbookEnsureDbReady();
+    window.poamWorkbookState.activeSystemId = systemId;
+    window.poamWorkbookState.pendingOpenSystemId = systemId;
+    showModule('security-control-monitoring');
+  } catch (e) {
+    console.error(e);
   }
 }
 
 async function poamWorkbookOpenSystem(systemId) {
   window.poamWorkbookState.activeSystemId = systemId;
-  await renderWorkbookSystemsSelects();
+  await renderWorkbookSidebarSystems();
   await renderWorkbookSystemTable(systemId);
 
   const sys = await window.poamWorkbookDB.getSystemById(systemId);
@@ -217,7 +253,7 @@ async function poamWorkbookHandleImportInput(evt) {
   try {
     const result = await poamWorkbookImportXlsx(file, systemId);
     showUpdateFeedback(`Imported ${result.saved} workbook POAMs`, 'success');
-    await renderWorkbookSystemsSelects();
+    await renderWorkbookSidebarSystems();
     await renderWorkbookOverview();
     if (window.poamWorkbookState.activeTab === 'system') {
       await renderWorkbookSystemTable(window.poamWorkbookState.activeSystemId);
@@ -294,7 +330,7 @@ function poamWorkbookOpenAddSystemModal() {
       const id = `sys-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}-${Date.now()}`;
       await window.poamWorkbookDB.saveSystem({ id, name, description });
       window.poamWorkbookNotifyMutation();
-      await renderWorkbookSystemsSelects();
+      await renderWorkbookSidebarSystems();
       showUpdateFeedback('System added', 'success');
       close();
     } catch (e) {
