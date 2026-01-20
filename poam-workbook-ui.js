@@ -14,11 +14,11 @@ window.poamWorkbookNotifyMutation = function () {
   window.poamWorkbookState._analyticsCache.clear();
 };
 
-async function poamWorkbookOpenSystemIdConfigModal() {
+async function poamWorkbookOpenSystemIdConfigModal(forSystemId) {
   try {
     await poamWorkbookEnsureDbReady();
 
-    const systemId = window.poamWorkbookState.activeSystemId;
+    const systemId = forSystemId || window.poamWorkbookState.activeSystemId;
     if (!systemId) throw new Error('No active system');
 
     const sys = await window.poamWorkbookDB.getSystemById(systemId);
@@ -188,33 +188,41 @@ async function renderWorkbookSidebarSystems() {
   if (!container) return;
 
   const activeId = window.poamWorkbookState.activeSystemId;
-  const safeActive = escapeAttr(activeId || 'default');
   container.innerHTML = `
-    <div class="flex items-center gap-2 flex-wrap">
-      <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">System</div>
+    <div class="flex items-center gap-3 flex-wrap">
+      <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Systems</div>
       <div class="flex items-center gap-2 flex-wrap max-w-full">
         ${systems.map(s => {
           const isActive = s.id === activeId;
+          const cls = isActive
+            ? 'text-indigo-700 bg-indigo-50 border-indigo-200'
+            : 'text-slate-700 bg-white border-slate-200 hover:bg-slate-50';
           return `
-            <button
-              class="px-3 py-2 rounded-lg text-sm font-semibold border ${isActive ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-50'}"
-              onclick="poamWorkbookNavigateToSystem('${escapeAttr(s.id)}')"
-              title="Open ${escapeAttr(s.name)}"
-            >${escapeHtml(s.name)}</button>
+            <div class="flex items-center gap-1 border rounded-lg px-2 py-1 ${cls}">
+              <button
+                class="text-sm font-semibold leading-none"
+                onclick="poamWorkbookNavigateToSystem('${escapeAttr(s.id)}')"
+                title="Open ${escapeAttr(s.name)}"
+              >${escapeHtml(s.name)}</button>
+              <button
+                class="ml-1 text-slate-500 hover:text-slate-800"
+                onclick="event.stopPropagation(); poamWorkbookOpenSystemIdConfigModal('${escapeAttr(s.id)}')"
+                title="Workbook ID Settings"
+              ><i class="fas fa-cog text-xs"></i></button>
+              <button
+                class="text-slate-500 hover:text-slate-800"
+                onclick="event.stopPropagation(); poamWorkbookOpenEditSystemModal('${escapeAttr(s.id)}')"
+                title="Edit System"
+              ><i class="fas fa-pen text-xs"></i></button>
+            </div>
           `;
         }).join('')}
-      </div>
 
-      <div class="flex items-center gap-2">
-        <button onclick="poamWorkbookOpenSystemIdConfigModal()" class="px-3 py-2 bg-white border border-slate-200 text-slate-800 rounded-lg hover:bg-slate-50" title="Workbook ID Settings (per system)">
-          <i class="fas fa-cog"></i>
-        </button>
-        <button onclick="poamWorkbookOpenAddSystemModal()" class="px-3 py-2 bg-white border border-slate-200 text-slate-800 rounded-lg hover:bg-slate-50" title="Add System">
-          <i class="fas fa-plus"></i>
-        </button>
-        <button onclick="poamWorkbookOpenEditSystemModal('${safeActive}')" class="px-3 py-2 bg-white border border-slate-200 text-slate-800 rounded-lg hover:bg-slate-50" title="Edit System">
-          <i class="fas fa-pen"></i>
-        </button>
+        <button
+          onclick="poamWorkbookOpenAddSystemModal()"
+          class="px-2 py-1 border border-slate-200 rounded-lg bg-white text-slate-700 hover:bg-slate-50"
+          title="Add System"
+        ><i class="fas fa-plus text-xs"></i></button>
       </div>
     </div>
   `;
