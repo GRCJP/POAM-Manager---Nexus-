@@ -3,6 +3,7 @@ class POAMWorkbookDatabase {
     this.dbName = 'POAMWorkbookDB';
     this.version = 2;
     this.db = null;
+    this._nistControlsBootstrapAttempted = false;
   }
 
   async init() {
@@ -110,9 +111,25 @@ class POAMWorkbookDatabase {
     const controls = await this.getLookup('securityControls');
     if (!controls) {
       await this.putLookup('securityControls', {
-        families: ['AC', 'AU', 'CM', 'IA', 'IR', 'SC', 'SI', 'PE', 'AT'],
+        families: ['AC', 'AT', 'AU', 'CA', 'CM', 'CP', 'IA', 'IR', 'MA', 'MP', 'PE', 'PL', 'PM', 'PS', 'PT', 'RA', 'SA', 'SC', 'SI', 'SR'],
         controls: ['SI-2', 'CM-6', 'AC-2', 'IA-2', 'AU-2', 'SC-7', 'IR-4']
       });
+    }
+
+    // Bootstrap full NIST 800-53 Rev 5 control IDs (cached into lookups).
+    // We fetch from NIST's OSCAL content repo the first time (or if the list is small).
+    try {
+      const currentControls = await this.getLookup('securityControls');
+      const currentCount = Array.isArray(currentControls?.controls) ? currentControls.controls.length : 0;
+      if (!this._nistControlsBootstrapAttempted && currentCount < 200) {
+        this._nistControlsBootstrapAttempted = true;
+        const full = await this._fetchNist80053Rev5Controls();
+        if (full && Array.isArray(full.controls) && full.controls.length > currentCount) {
+          await this.putLookup('securityControls', full);
+        }
+      }
+    } catch (e) {
+      // ignore bootstrap failures (offline or blocked)
     }
 
     const resourcesRequired = await this.getLookup('resourcesRequired');
@@ -173,6 +190,70 @@ class POAMWorkbookDatabase {
         await this.saveSystem(s);
       }
     }
+  }
+
+  async _fetchNist80053Rev5Controls() {
+    if (typeof fetch !== 'function') return null;
+
+    // Authoritative source: NIST OSCAL content (SP800-53).
+    // Link published on CSRC page points to github.com/usnistgov/oscal-content.
+    // Use a pinned tag to reduce churn.
+    const url = 'https://raw.githubusercontent.com/usnistgov/oscal-content/v1.4.0/src/nist.gov/SP800-53/catalog/json/NIST_SP-800-53_rev5_catalog.json';
+
+    const resp = await fetch(url, { cache: 'force-cache' });
+    if (!resp.ok) return null;
+    const json = await resp.json();
+    const catalog = json?.catalog;
+    if (!catalog) return null;
+
+    const families = ['AC', 'AT', 'AU', 'CA', 'CM', 'CP', 'IA', 'IR', 'MA', 'MP', 'PE', 'PL', 'PM', 'PS', 'PT', 'RA', 'SA', 'SC', 'SI', 'SR'];
+    const outControls = new Set();
+
+    const idToLabel = (id) => {
+      const s = String(id || '').trim();
+      if (!s) return '';
+      // Examples:
+      // - ac-2 -> AC-2
+      // - ac-2.1 -> AC-2(1)
+      const upper = s.toUpperCase();
+      const m = upper.match(/^([A-Z]{2})-(\d+)(?:\.(\d+))?$/);
+      if (m) {
+        const fam = m[1];
+        const base = m[2];
+        const enh = m[3];
+        return enh ? `${fam}-${base}(${parseInt(enh, 10)})` : `${fam}-${base}`;
+      }
+      return upper.replace(/_/g, '-');
+    };
+
+    const extractLabel = (control) => {
+      const props = Array.isArray(control?.props) ? control.props : [];
+      const labelProp = props.find(p => String(p?.name || '').toLowerCase() === 'label');
+      const raw = labelProp?.value || control?.id;
+      return idToLabel(raw);
+    };
+
+    const walkControls = (arr) => {
+      if (!Array.isArray(arr)) return;
+      for (const c of arr) {
+        const label = extractLabel(c);
+        if (label) outControls.add(label);
+        if (Array.isArray(c?.controls)) walkControls(c.controls);
+      }
+    };
+
+    // OSCAL 800-53 catalog uses groups with nested controls.
+    const groups = Array.isArray(catalog?.groups) ? catalog.groups : [];
+    for (const g of groups) {
+      walkControls(g?.controls);
+    }
+
+    const controlsList = Array.from(outControls)
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+
+    if (!controlsList.length) return null;
+    return { families, controls: controlsList };
   }
 
   async putLookup(key, value) {
