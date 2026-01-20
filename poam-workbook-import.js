@@ -24,9 +24,11 @@ async function poamWorkbookImportXlsx(file, systemId) {
 
   // Some exports include banner/title rows above the actual column header row
   // (e.g., classification markings like "CUI//FOUO"). We'll scan for the best header.
-  const headerSearchRows = matrix.slice(0, Math.min(20, matrix.length));
+  const headerSearchRows = matrix.slice(0, Math.min(60, matrix.length));
 
   const normalizeHeader = (h) => String(h || '')
+    .replace(/\u2013|\u2014/g, '-')
+    .replace(/\u2018|\u2019|\u201C|\u201D/g, '')
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n')
     .replace(/\n/g, ' ')
@@ -34,8 +36,9 @@ async function poamWorkbookImportXlsx(file, systemId) {
     .trim()
     .toLowerCase()
     .replace(/\s+/g, ' ')
+    .replace(/\s*\/\s*/g, '/')
     .replace(/[^a-z0-9 /]/g, '')
-    .replace(/\s*\/\s*/g, '/');
+    .trim();
 
   const headerAliases = new Map([
     ['poam id', 'Item number'],
@@ -77,14 +80,49 @@ async function poamWorkbookImportXlsx(file, systemId) {
     canonicalByNorm.set(normalizeHeader(k), v);
   }
 
+  // Fuzzy matching: allows headers like "Vulnerability\nName", "Detecting Source",
+  // "Affected Components / URLs", etc.
+  const fuzzyMatchCanonical = (cell) => {
+    const norm = normalizeHeader(cell);
+    if (!norm) return null;
+    if (canonicalByNorm.has(norm)) return canonicalByNorm.get(norm);
+
+    // contains matching against known keys
+    for (const [k, v] of canonicalByNorm.entries()) {
+      if (!k) continue;
+      if (norm.includes(k) || k.includes(norm)) return v;
+    }
+
+    // token-based heuristics for common tricky cases
+    const has = (tok) => norm.includes(tok);
+    if ((has('detect') || has('identifying')) && has('source')) return 'Identifying Detecting Source';
+    if (has('affected') && (has('url') || has('urls') || has('component'))) return 'Affected Components/URLs';
+    if (has('item') && (has('number') || has('no') || has('#') || has('id') || has('poam'))) return 'Item number';
+    if (has('vulnerability') && has('description')) return 'Vulnerability Description';
+    if (has('vulnerability') && (has('name') || norm === 'vulnerability')) return 'Vulnerability Name';
+    if (has('scheduled') && has('completion')) return 'Scheduled Completion Date';
+    if (has('detection') && has('date')) return 'Detection Date';
+    if ((has('office') || has('org')) && !has('category')) return 'Office/Org';
+    if (has('poc')) return 'POC Name';
+    if (has('severity')) return 'Severity Value';
+    if (has('status')) return 'Status';
+    if (has('milestone') && has('completion')) return 'Milestone with Completion Dates';
+    if (has('milestone') && has('change')) return 'Milestone Changes';
+    if (has('mitigation')) return 'Mitigations';
+    if (has('resource') && has('required')) return 'Resources Required';
+    if (has('comment')) return 'Comments';
+
+    return null;
+  };
+
   const scoreHeaderRow = (row) => {
     const cells = Array.isArray(row) ? row : [];
-    let hits = 0;
+    const matched = new Set();
     for (let i = 0; i < cells.length; i++) {
-      const norm = normalizeHeader(cells[i]);
-      if (canonicalByNorm.has(norm)) hits++;
+      const canonical = fuzzyMatchCanonical(cells[i]);
+      if (canonical) matched.add(canonical);
     }
-    return hits;
+    return matched.size;
   };
 
   let bestHeaderRowIndex = -1;
@@ -98,7 +136,7 @@ async function poamWorkbookImportXlsx(file, systemId) {
   }
 
   // Require at least a few recognizable columns to avoid selecting banner rows.
-  if (bestHeaderRowIndex === -1 || bestHeaderScore < 2) {
+  if (bestHeaderRowIndex === -1 || bestHeaderScore < 3) {
     const firstRow = Array.isArray(matrix[0]) ? matrix[0] : [];
     const rawHeaders = firstRow
       .map(h => String(h || '').replace(/\s+/g, ' ').trim())
@@ -112,8 +150,7 @@ async function poamWorkbookImportXlsx(file, systemId) {
 
   const headerIndexToCanonical = new Map();
   for (let i = 0; i < headerRow.length; i++) {
-    const norm = normalizeHeader(headerRow[i]);
-    const canonical = canonicalByNorm.get(norm);
+    const canonical = fuzzyMatchCanonical(headerRow[i]);
     if (canonical) headerIndexToCanonical.set(i, canonical);
   }
 
