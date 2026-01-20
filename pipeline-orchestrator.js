@@ -626,6 +626,10 @@ class PipelineOrchestrator {
         
         // Atomically persist POAMs to main store
         this.logger.info(`Persisting ${poamDrafts.length} POAMs to database...`);
+
+        // Ensure milestones exist (auto-prefill) before persistence.
+        // Do NOT overwrite existing milestones.
+        this.backfillMissingMilestonesOnDrafts(poamDrafts);
         
         const saved = await window.poamDB.addPOAMsBatch(poamDrafts);
         this.logger.info(`Saved ${saved.saved || saved} POAMs`);
@@ -668,6 +672,53 @@ class PipelineOrchestrator {
             runId: this.currentRun.runId,
             counts: this.currentRun.counts
         };
+    }
+
+    backfillMissingMilestonesOnDrafts(poamDrafts) {
+        if (!Array.isArray(poamDrafts) || poamDrafts.length === 0) return;
+
+        if (typeof generateMilestonesForControlFamily !== 'function') {
+            this.logger.warn('Milestone generation function not available; skipping milestone backfill');
+            return;
+        }
+
+        let backfilled = 0;
+        let skipped = 0;
+
+        for (const poam of poamDrafts) {
+            if (!poam) continue;
+
+            const hasMilestones = Array.isArray(poam.milestones) && poam.milestones.length > 0;
+            if (hasMilestones) {
+                skipped++;
+                continue;
+            }
+
+            const controlFamily = poam.controlFamily;
+            if (controlFamily !== 'SI' && controlFamily !== 'CM') {
+                skipped++;
+                continue;
+            }
+
+            const startDate = poam.createdDate || poam.initialScheduledCompletionDate;
+            const dueDate = poam.dueDate || poam.updatedScheduledCompletionDate || poam.initialScheduledCompletionDate;
+            if (!startDate || !dueDate) {
+                skipped++;
+                continue;
+            }
+
+            const generated = generateMilestonesForControlFamily(controlFamily, startDate, dueDate);
+            if (Array.isArray(generated) && generated.length > 0) {
+                poam.milestones = generated;
+                backfilled++;
+            } else {
+                skipped++;
+            }
+        }
+
+        if (backfilled > 0) {
+            this.logger.info(`Auto-prefilled milestones for ${backfilled} POAM(s) (skipped ${skipped})`);
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════

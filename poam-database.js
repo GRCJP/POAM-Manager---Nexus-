@@ -199,7 +199,10 @@ class POAMDatabase {
             // Data preservation (Critical Fix: Phase 6.20)
             affectedAssets: poam.affectedAssets ? this.transformAssetsWithMetadata(poam.affectedAssets) : [],
             totalAffectedAssets: poam.totalAffectedAssets || poam.affectedAssets?.length || 0,
-            rawFindings: poam.rawFindings || []
+            rawFindings: poam.rawFindings || [],
+
+            // Milestones (embedded on POAM for POAM Detail view)
+            milestones: Array.isArray(poam.milestones) ? poam.milestones : []
         };
     }
 
