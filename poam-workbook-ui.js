@@ -14,6 +14,15 @@ window.poamWorkbookNotifyMutation = function () {
   window.poamWorkbookState._analyticsCache.clear();
 };
 
+function poamWorkbookParseItemNumberNumeric(value) {
+  if (typeof value === 'number') return value;
+  const s = String(value || '').trim();
+  if (!s) return NaN;
+  const m = s.match(/(\d+)(?!.*\d)/);
+  if (m) return parseInt(m[1], 10);
+  return parseInt(s, 10);
+}
+
 async function initPOAMWorkbookModule() {
   if (!window.poamWorkbookDB) {
     console.error('Workbook DB missing');
@@ -60,10 +69,6 @@ async function renderWorkbookSidebarSystems() {
     <button onclick="poamWorkbookOpenAddSystemModal()" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors text-slate-100">
       <i class="fas fa-plus text-xs w-4 text-indigo-300"></i>
       <span>Add System</span>
-    </button>
-    <button onclick="poamWorkbookOpenPoamIdFormatModal()" class="sidebar-sublink flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-800 transition-colors text-slate-100">
-      <i class="fas fa-hashtag text-xs w-4 text-indigo-300"></i>
-      <span>POAM ID Format</span>
     </button>
     ${systems.map(s => {
       const active = s.id === activeId;
@@ -201,9 +206,12 @@ async function poamWorkbookOpenPoamIdFormatModal() {
 
 async function poamWorkbookFormatItemNumber(systemId, n) {
   const fmt = await window.poamWorkbookDB.getLookup('poamIdFormat');
+  const orgToken = await window.poamWorkbookDB.getLookup('workbookPoamOrg') || '';
+  const appToken = await window.poamWorkbookDB.getLookup('workbookPoamApp') || '';
+  const configuredYear = await window.poamWorkbookDB.getLookup('workbookPoamYear');
   const sys = await window.poamWorkbookDB.getSystemById(systemId);
   const systemToken = systemId;
-  const yearToken = String(new Date().getFullYear());
+  const yearToken = String(configuredYear || new Date().getFullYear());
 
   const replaceN = (template) => {
     return template
@@ -212,11 +220,77 @@ async function poamWorkbookFormatItemNumber(systemId, n) {
   };
 
   const out = replaceN(String(fmt || 'POAM-{system}-{n:4}'))
+    .replace(/\{org\}/g, String(orgToken || ''))
+    .replace(/\{app\}/g, String(appToken || ''))
     .replace(/\{system\}/g, systemToken)
     .replace(/\{systemName\}/g, String(sys?.name || systemToken))
     .replace(/\{year\}/g, yearToken);
   return out;
 }
+
+async function poamWorkbookLoadIdConfigIntoSettings() {
+  try {
+    await poamWorkbookEnsureDbReady();
+    const org = await window.poamWorkbookDB.getLookup('workbookPoamOrg');
+    const app = await window.poamWorkbookDB.getLookup('workbookPoamApp');
+    const year = await window.poamWorkbookDB.getLookup('workbookPoamYear');
+    const pad = await window.poamWorkbookDB.getLookup('workbookPoamPad');
+
+    const orgEl = document.getElementById('settings-wb-poam-org');
+    const appEl = document.getElementById('settings-wb-poam-app');
+    const yearEl = document.getElementById('settings-wb-poam-year');
+    const padEl = document.getElementById('settings-wb-poam-pad');
+
+    if (orgEl && org != null && orgEl.value === '') orgEl.value = String(org);
+    if (appEl && app != null && appEl.value === '') appEl.value = String(app);
+    if (yearEl && year != null && yearEl.value === '') yearEl.value = String(year);
+    if (padEl && pad != null && padEl.value === '') padEl.value = String(pad);
+
+    if (typeof updateWorkbookIdPreview === 'function') updateWorkbookIdPreview();
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+window.updateWorkbookIdPreview = async function () {
+  try {
+    const org = String(document.getElementById('settings-wb-poam-org')?.value || '').trim();
+    const app = String(document.getElementById('settings-wb-poam-app')?.value || '').trim();
+    const year = String(document.getElementById('settings-wb-poam-year')?.value || String(new Date().getFullYear())).trim();
+    const pad = Math.max(1, Math.min(8, parseInt(String(document.getElementById('settings-wb-poam-pad')?.value || '3'), 10) || 3));
+
+    const preview = `${org}_${app}_${year}_${String(1).padStart(pad, '0')}`.replace(/^_+|_+$/g, '');
+    const el = document.getElementById('settings-wb-id-preview');
+    if (el) el.textContent = preview;
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+window.saveWorkbookPoamIdConfigFromSettings = async function () {
+  try {
+    await poamWorkbookEnsureDbReady();
+    const org = String(document.getElementById('settings-wb-poam-org')?.value || '').trim();
+    const app = String(document.getElementById('settings-wb-poam-app')?.value || '').trim();
+    const year = String(document.getElementById('settings-wb-poam-year')?.value || String(new Date().getFullYear())).trim();
+    const pad = Math.max(1, Math.min(8, parseInt(String(document.getElementById('settings-wb-poam-pad')?.value || '3'), 10) || 3));
+
+    await window.poamWorkbookDB.putLookup('workbookPoamOrg', org);
+    await window.poamWorkbookDB.putLookup('workbookPoamApp', app);
+    await window.poamWorkbookDB.putLookup('workbookPoamYear', year);
+    await window.poamWorkbookDB.putLookup('workbookPoamPad', pad);
+
+    // Keep the underlying template in the workbook DB, but make it derived from simple inputs.
+    const template = '{org}_{app}_{year}_{n:' + String(pad) + '}';
+    await window.poamWorkbookDB.putLookup('poamIdFormat', template);
+
+    showUpdateFeedback('Workbook POAM ID settings saved', 'success');
+    if (typeof updateWorkbookIdPreview === 'function') updateWorkbookIdPreview();
+  } catch (e) {
+    console.error(e);
+    showUpdateFeedback(`Save workbook POAM ID settings failed: ${e.message}`, 'error');
+  }
+};
 
 async function poamWorkbookEnsureDbReady() {
   if (!window.poamWorkbookDB) return;
@@ -599,7 +673,7 @@ async function poamWorkbookCommitParsedRows(systemId, parsed) {
     }
 
     // Determine numeric item number if present
-    const n = parseInt(String(data['Item number'] || '').replace(/[^0-9]/g, ''), 10);
+    const n = poamWorkbookParseItemNumberNumeric(data['Item number']);
     if (Number.isFinite(n) && n > 0 && typeof window.poamWorkbookDB.upsertItemBySystemAndItemNumber === 'function') {
       const res = await window.poamWorkbookDB.upsertItemBySystemAndItemNumber(systemId, n, data);
       if (res.created) saved++; else updated++;

@@ -167,6 +167,26 @@ class POAMWorkbookDatabase {
       await this.putLookup('poamIdFormat', 'POAM-{system}-{n:4}');
     }
 
+    const wbOrg = await this.getLookup('workbookPoamOrg');
+    if (wbOrg == null) {
+      await this.putLookup('workbookPoamOrg', '');
+    }
+
+    const wbApp = await this.getLookup('workbookPoamApp');
+    if (wbApp == null) {
+      await this.putLookup('workbookPoamApp', '');
+    }
+
+    const wbYear = await this.getLookup('workbookPoamYear');
+    if (wbYear == null) {
+      await this.putLookup('workbookPoamYear', String(new Date().getFullYear()));
+    }
+
+    const wbPad = await this.getLookup('workbookPoamPad');
+    if (wbPad == null) {
+      await this.putLookup('workbookPoamPad', 3);
+    }
+
     const defaultSystem = await this.getSystemById('default');
     if (!defaultSystem) {
       await this.saveSystem({

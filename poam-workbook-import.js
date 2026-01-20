@@ -248,10 +248,20 @@ async function poamWorkbookImportXlsx(file, systemId) {
   // Persist (upsert by systemId + Item number where possible)
   let saved = 0;
   let updated = 0;
+
+  const parseItemNumberNumeric = (v) => {
+    if (typeof v === 'number') return v;
+    const s = String(v || '').trim();
+    if (!s) return NaN;
+    const m = s.match(/(\d+)(?!.*\d)/);
+    if (m) return parseInt(m[1], 10);
+    return parseInt(s, 10);
+  };
+
   for (const entry of parsedRows) {
     const r = entry.row;
     const itemNumberRaw = r['Item number'];
-    const n = parseInt(String(itemNumberRaw || '').replace(/[^0-9]/g, ''), 10);
+    const n = parseItemNumberNumeric(itemNumberRaw);
 
     const data = {
       ...pickWorkbookColumns(r),

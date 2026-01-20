@@ -68,6 +68,9 @@ function showModule(moduleName) {
         // Load settings including risk framework
         loadRiskFramework();
         loadPOAMIdConfig();
+        if (typeof poamWorkbookLoadIdConfigIntoSettings === 'function') {
+            poamWorkbookLoadIdConfigIntoSettings();
+        }
     }
     
     // Highlight active sidebar link
