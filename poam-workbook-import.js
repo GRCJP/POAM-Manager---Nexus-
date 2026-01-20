@@ -22,8 +22,9 @@ async function poamWorkbookImportXlsx(file, systemId) {
     throw new Error('No rows found in workbook');
   }
 
-  const headerRow = matrix[0].map(v => String(v || ''));
-  const dataRows = matrix.slice(1);
+  // Some exports include banner/title rows above the actual column header row
+  // (e.g., classification markings like "CUI//FOUO"). We'll scan for the best header.
+  const headerSearchRows = matrix.slice(0, Math.min(20, matrix.length));
 
   const normalizeHeader = (h) => String(h || '')
     .replace(/\r\n/g, '\n')
@@ -75,14 +76,45 @@ async function poamWorkbookImportXlsx(file, systemId) {
   for (const [k, v] of headerAliases.entries()) {
     canonicalByNorm.set(normalizeHeader(k), v);
   }
-  const headerIndexToCanonical = new Map();
 
+  const scoreHeaderRow = (row) => {
+    const cells = Array.isArray(row) ? row : [];
+    let hits = 0;
+    for (let i = 0; i < cells.length; i++) {
+      const norm = normalizeHeader(cells[i]);
+      if (canonicalByNorm.has(norm)) hits++;
+    }
+    return hits;
+  };
+
+  let bestHeaderRowIndex = -1;
+  let bestHeaderScore = 0;
+  for (let i = 0; i < headerSearchRows.length; i++) {
+    const score = scoreHeaderRow(headerSearchRows[i]);
+    if (score > bestHeaderScore) {
+      bestHeaderScore = score;
+      bestHeaderRowIndex = i;
+    }
+  }
+
+  // Require at least a few recognizable columns to avoid selecting banner rows.
+  if (bestHeaderRowIndex === -1 || bestHeaderScore < 2) {
+    const firstRow = Array.isArray(matrix[0]) ? matrix[0] : [];
+    const rawHeaders = firstRow
+      .map(h => String(h || '').replace(/\s+/g, ' ').trim())
+      .filter(Boolean)
+      .slice(0, 30);
+    throw new Error(`No recognizable columns found in workbook header row. First headers: ${rawHeaders.join(' | ')}`);
+  }
+
+  const headerRow = (matrix[bestHeaderRowIndex] || []).map(v => String(v || ''));
+  const dataRows = matrix.slice(bestHeaderRowIndex + 1);
+
+  const headerIndexToCanonical = new Map();
   for (let i = 0; i < headerRow.length; i++) {
     const norm = normalizeHeader(headerRow[i]);
     const canonical = canonicalByNorm.get(norm);
-    if (canonical) {
-      headerIndexToCanonical.set(i, canonical);
-    }
+    if (canonical) headerIndexToCanonical.set(i, canonical);
   }
 
   // Do not require exact headers; proceed best-effort.
@@ -91,7 +123,7 @@ async function poamWorkbookImportXlsx(file, systemId) {
       .map(h => String(h || '').replace(/\s+/g, ' ').trim())
       .filter(Boolean)
       .slice(0, 30);
-    throw new Error(`No recognizable columns found in workbook header row. First headers: ${rawHeaders.join(' | ')}`);
+    throw new Error(`No recognizable columns found in workbook header row (detected at row ${bestHeaderRowIndex + 1}). Headers: ${rawHeaders.join(' | ')}`);
   }
 
   // Diagnostics for partial mapping (used for error messages later)
