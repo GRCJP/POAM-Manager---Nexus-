@@ -22,9 +22,23 @@ class PipelineDatabase {
             return;
         }
 
-        // Otherwise initialize our own connection
+        // Try to initialize poamDB first so we share the same version
+        if (window.poamDB && typeof window.poamDB.init === 'function') {
+            try {
+                await window.poamDB.init();
+                if (window.poamDB.db) {
+                    this.db = window.poamDB.db;
+                    this.logger.info('Initialized and reusing POAMDatabase connection');
+                    return;
+                }
+            } catch (e) {
+                this.logger.warn('Failed to init poamDB, falling back to direct open:', e.message);
+            }
+        }
+
+        // Fallback: open directly (version must match POAMDatabase.version)
         return new Promise((resolve, reject) => {
-            const request = indexedDB.open(this.dbName, 8);
+            const request = indexedDB.open(this.dbName, 10);
             
             request.onerror = () => reject(request.error);
             request.onsuccess = () => {
@@ -631,7 +645,19 @@ class PipelineOrchestrator {
         // Do NOT overwrite existing milestones.
         this.backfillMissingMilestonesOnDrafts(poamDrafts);
         
-        const saved = await window.poamDB.addPOAMsBatch(poamDrafts);
+        // Use merge logic if existing POAMs are present (re-import)
+        let saved;
+        const existingPOAMs = await window.poamDB.getAllPOAMs();
+        if (existingPOAMs.length > 0 && typeof window.mergePOAMsFromScan === 'function') {
+            this.logger.info(`Re-import detected: ${existingPOAMs.length} existing POAMs. Merging...`);
+            const mergeResult = await window.mergePOAMsFromScan(poamDrafts);
+            saved = await window.poamDB.addPOAMsBatch(mergeResult.mergedPOAMs);
+            this.logger.info(`Merge complete: ${mergeResult.stats.created} new, ${mergeResult.stats.updated} updated, ${mergeResult.stats.autoResolved} auto-resolved`);
+            this.currentRun.counts.poamsMerged = mergeResult.stats.updated;
+            this.currentRun.counts.poamsAutoResolved = mergeResult.stats.autoResolved;
+        } else {
+            saved = await window.poamDB.addPOAMsBatch(poamDrafts);
+        }
         this.logger.info(`Saved ${saved.saved || saved} POAMs`);
         
         this.currentRun.phaseProgress = 0.5;

@@ -42,7 +42,9 @@ function showModule(moduleName) {
     }
     
     // Load module-specific data
-    if (moduleName === 'poam') {
+    if (moduleName === 'dashboard') {
+        if (typeof loadDashboardMetrics === 'function') loadDashboardMetrics();
+    } else if (moduleName === 'poam') {
         // Load POAM ID configuration when POAM Repository is shown
         loadPOAMIdConfig();
         updateApplicationPOAMCounts();
@@ -93,6 +95,107 @@ function loadEvidenceFiles() {
 
 function loadReportingData() {
     console.log('Loading reporting data...');
+    if (typeof loadReportingModule === 'function') loadReportingModule();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CRITICAL ASSETS REGISTRY (Settings Tab)
+// ═══════════════════════════════════════════════════════════════
+
+async function loadCriticalAssetsRegistry() {
+    console.log('🛡️ Loading critical assets registry...');
+    try {
+        if (!poamDB || !poamDB.db) await poamDB.init();
+        const assets = await poamDB.getCriticalAssets();
+        renderCriticalAssetsTable(assets);
+    } catch (err) {
+        console.error('❌ Failed to load critical assets:', err);
+    }
+}
+
+function renderCriticalAssetsTable(assets) {
+    const tbody = document.getElementById('ca-registry-table-body');
+    if (!tbody) return;
+
+    if (!assets || assets.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-400">No critical assets registered</td></tr>';
+        return;
+    }
+
+    const tagColors = {
+        'publicly-exposed': 'bg-red-50 text-red-600 border-red-200',
+        'critical-infrastructure': 'bg-purple-50 text-purple-600 border-purple-200',
+        'pii-phi': 'bg-blue-50 text-blue-600 border-blue-200',
+        'high-value-target': 'bg-amber-50 text-amber-600 border-amber-200'
+    };
+
+    tbody.innerHTML = assets.map(a => {
+        const tags = (a.tags || []).map(t =>
+            `<span class="text-[10px] font-medium px-1.5 py-0.5 rounded border ${tagColors[t] || 'bg-slate-50 text-slate-500 border-slate-200'}">${t}</span>`
+        ).join(' ');
+        const date = a.addedDate ? new Date(a.addedDate).toLocaleDateString() : '—';
+        return `
+            <tr class="border-b border-slate-100 hover:bg-slate-50">
+                <td class="py-2 px-3 font-medium text-slate-700">${escapeHtmlSafe(a.name || a.hostname || '—')}</td>
+                <td class="py-2 px-3 font-mono text-xs text-slate-500">${escapeHtmlSafe(a.ip || '—')}</td>
+                <td class="py-2 px-3">${tags || '<span class="text-slate-400 text-xs">No tags</span>'}</td>
+                <td class="py-2 px-3 text-xs text-slate-500 max-w-xs truncate">${escapeHtmlSafe(a.notes || '—')}</td>
+                <td class="py-2 px-3 text-xs text-slate-400">${date}</td>
+                <td class="py-2 px-3 text-center">
+                    <button onclick="deleteCriticalAssetUI('${a.id}')" class="text-xs text-red-400 hover:text-red-600 font-medium"><i class="fas fa-trash mr-1"></i>Remove</button>
+                </td>
+            </tr>`;
+    }).join('');
+}
+
+async function addCriticalAssetFromForm() {
+    const name = document.getElementById('ca-name')?.value?.trim();
+    const ip = document.getElementById('ca-ip')?.value?.trim();
+    const notes = document.getElementById('ca-notes')?.value?.trim();
+
+    if (!name && !ip) {
+        alert('Please enter at least a name/hostname or IP address.');
+        return;
+    }
+
+    const tags = [];
+    document.querySelectorAll('.ca-tag-checkbox:checked').forEach(cb => tags.push(cb.value));
+
+    try {
+        if (!poamDB || !poamDB.db) await poamDB.init();
+        await poamDB.addCriticalAsset({ name, hostname: name, ip, tags, notes });
+
+        // Clear form
+        if (document.getElementById('ca-name')) document.getElementById('ca-name').value = '';
+        if (document.getElementById('ca-ip')) document.getElementById('ca-ip').value = '';
+        if (document.getElementById('ca-notes')) document.getElementById('ca-notes').value = '';
+        document.querySelectorAll('.ca-tag-checkbox').forEach(cb => cb.checked = false);
+
+        await loadCriticalAssetsRegistry();
+        console.log(`✅ Critical asset added: ${name || ip}`);
+    } catch (err) {
+        console.error('❌ Failed to add critical asset:', err);
+        alert(`Failed to add critical asset: ${err.message}`);
+    }
+}
+
+async function deleteCriticalAssetUI(id) {
+    if (!confirm('Remove this critical asset from the registry?')) return;
+    try {
+        if (!poamDB || !poamDB.db) await poamDB.init();
+        await poamDB.deleteCriticalAsset(id);
+        await loadCriticalAssetsRegistry();
+        console.log(`🗑️ Critical asset removed: ${id}`);
+    } catch (err) {
+        console.error('❌ Failed to delete critical asset:', err);
+    }
+}
+
+function escapeHtmlSafe(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
 }
 
 // View Management Functions
@@ -1943,7 +2046,7 @@ async function initializeModule(moduleName) {
 
         if (moduleName === 'dashboard') {
             console.log('🔄 Loading dashboard metrics...');
-            console.log('✅ Dashboard metrics loaded');
+            if (typeof loadDashboardMetrics === 'function') loadDashboardMetrics();
         } else if (moduleName === 'poam') {
             loadPOAMIdConfig();
             updateApplicationPOAMCounts();

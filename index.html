@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <title>POAM Nexus | Management Dashboard</title>
 </head>
 <body class="bg-slate-50 font-sans antialiased text-slate-900">
@@ -266,75 +267,233 @@
         
         <!-- Dashboard Module -->
         <div id="dashboard-module" class="module">
-            <div class="mb-10">
-                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Executive Security Dashboard</h1>
-                <p class="text-slate-500 mt-1">Security posture overview and trends for <span class="font-semibold text-slate-700 underline decoration-indigo-300">Enclave Alpha</span></p>
+            <div class="mb-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Executive Security Dashboard</h1>
+                        <p class="text-slate-500 mt-1">Security posture overview and trends for <span class="font-semibold text-slate-700 underline decoration-indigo-300">Enclave Alpha</span></p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span id="dash-last-updated" class="text-xs text-slate-400"></span>
+                        <button onclick="loadDashboardMetrics()" class="text-xs px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors font-medium">
+                            <i class="fas fa-sync-alt mr-1"></i>Refresh
+                        </button>
+                    </div>
+                </div>
             </div>
 
-            <!-- Executive Metrics -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
-                    <div class="flex justify-between items-start mb-4">
-                        <span class="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
-                            <i class="fas fa-clipboard-list"></i>
-                        </span>
-                        <span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded">TOTAL</span>
+            <!-- Row 1: Primary KPI Tiles -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer" onclick="dashboardDrillDown('open')">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><i class="fas fa-clipboard-list"></i></span>
+                        <span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded">OPEN</span>
                     </div>
-                    <h3 class="text-3xl font-bold tracking-tight">284</h3>
-                    <p class="text-sm text-slate-500 font-medium">Active POAMs</p>
-                    <p class="text-xs text-emerald-600 mt-2">+12% from last month</p>
+                    <h3 class="text-3xl font-bold tracking-tight" id="dash-total-open">—</h3>
+                    <p class="text-sm text-slate-500 font-medium">Total Open POAMs</p>
+                    <p class="text-xs text-slate-400 mt-1" id="dash-total-open-sub">Click to view</p>
                 </div>
-
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
-                    <div class="flex justify-between items-start mb-4">
-                        <span class="p-2 bg-rose-50 text-rose-600 rounded-lg">
-                            <i class="fas fa-clock"></i>
-                        </span>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-rose-300 transition-all cursor-pointer" onclick="dashboardDrillDown('overdue')">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="p-2 bg-rose-50 text-rose-600 rounded-lg"><i class="fas fa-exclamation-circle"></i></span>
                         <span class="text-[10px] font-bold text-rose-400 bg-rose-50 px-2 py-1 rounded">OVERDUE</span>
                     </div>
-                    <h3 class="text-3xl font-bold tracking-tight text-rose-600">14</h3>
+                    <h3 class="text-3xl font-bold tracking-tight text-rose-600" id="dash-overdue">—</h3>
                     <p class="text-sm text-slate-500 font-medium">Past Due Date</p>
-                    <p class="text-xs text-rose-600 mt-2">Requires attention</p>
+                    <p class="text-xs text-rose-400 mt-1" id="dash-overdue-sub">Requires attention</p>
                 </div>
-
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
-                    <div class="flex justify-between items-start mb-4">
-                        <span class="p-2 bg-amber-50 text-amber-600 rounded-lg">
-                            <i class="fas fa-chart-line"></i>
-                        </span>
-                        <span class="text-[10px] font-bold text-amber-400 bg-amber-50 px-2 py-1 rounded">RISK</span>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-amber-300 transition-all cursor-pointer" onclick="dashboardDrillDown('due-30')">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="p-2 bg-amber-50 text-amber-600 rounded-lg"><i class="fas fa-clock"></i></span>
+                        <span class="text-[10px] font-bold text-amber-400 bg-amber-50 px-2 py-1 rounded">DUE SOON</span>
                     </div>
-                    <h3 class="text-3xl font-bold tracking-tight">Med High</h3>
-                    <p class="text-sm text-slate-500 font-medium">Aggregate Risk</p>
-                    <p class="text-xs text-amber-600 mt-2">↓ Improved from last quarter</p>
+                    <h3 class="text-3xl font-bold tracking-tight text-amber-600" id="dash-coming-due">—</h3>
+                    <p class="text-sm text-slate-500 font-medium">Coming Due (30d)</p>
+                    <p class="text-xs text-amber-400 mt-1" id="dash-coming-due-sub">Workload forecast</p>
                 </div>
-
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
-                    <div class="flex justify-between items-start mb-4">
-                        <span class="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
-                            <i class="fas fa-check-circle"></i>
-                        </span>
-                        <span class="text-[10px] font-bold text-emerald-400 bg-emerald-50 px-2 py-1 rounded">TREND</span>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-emerald-300 transition-all cursor-pointer" onclick="dashboardDrillDown('closed')">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><i class="fas fa-check-circle"></i></span>
+                        <span class="text-[10px] font-bold text-emerald-400 bg-emerald-50 px-2 py-1 rounded">CLOSED</span>
                     </div>
-                    <h3 class="text-3xl font-bold tracking-tight text-emerald-600">72%</h3>
-                    <p class="text-sm text-slate-500 font-medium">Remediation Rate</p>
-                    <p class="text-xs text-emerald-600 mt-2">On track for Q4 goals</p>
+                    <h3 class="text-3xl font-bold tracking-tight text-emerald-600" id="dash-closed-month">—</h3>
+                    <p class="text-sm text-slate-500 font-medium">Closed This Month</p>
+                    <p class="text-xs text-emerald-400 mt-1" id="dash-closed-month-sub">Velocity indicator</p>
                 </div>
             </div>
 
-            <!-- Management Module Navigation -->
+            <!-- Row 2: Secondary KPI Tiles -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-red-300 transition-all cursor-pointer" onclick="dashboardDrillDown('critical-high')">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="p-2 bg-red-50 text-red-600 rounded-lg"><i class="fas fa-fire"></i></span>
+                        <span class="text-[10px] font-bold text-red-400 bg-red-50 px-2 py-1 rounded">SEVERITY</span>
+                    </div>
+                    <h3 class="text-3xl font-bold tracking-tight text-red-600" id="dash-crit-high">—</h3>
+                    <p class="text-sm text-slate-500 font-medium">Critical + High</p>
+                    <p class="text-xs text-slate-400 mt-1" id="dash-crit-high-sub">Severity exposure</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-blue-300 transition-all cursor-pointer" onclick="dashboardDrillDown('closed')">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="p-2 bg-blue-50 text-blue-600 rounded-lg"><i class="fas fa-stopwatch"></i></span>
+                        <span class="text-[10px] font-bold text-blue-400 bg-blue-50 px-2 py-1 rounded">MTTR</span>
+                    </div>
+                    <h3 class="text-3xl font-bold tracking-tight text-blue-600" id="dash-mttr">—</h3>
+                    <p class="text-sm text-slate-500 font-medium">Mean Time to Remediate</p>
+                    <p class="text-xs text-slate-400 mt-1" id="dash-mttr-sub">Avg days to close</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-green-300 transition-all cursor-pointer" onclick="dashboardDrillDown('patchable')">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="p-2 bg-green-50 text-green-600 rounded-lg"><i class="fas fa-wrench"></i></span>
+                        <span class="text-[10px] font-bold text-green-400 bg-green-50 px-2 py-1 rounded">EASY WINS</span>
+                    </div>
+                    <h3 class="text-3xl font-bold tracking-tight text-green-600" id="dash-patchable">—</h3>
+                    <p class="text-sm text-slate-500 font-medium">Patchable / Easy Wins</p>
+                    <p class="text-xs text-slate-400 mt-1" id="dash-patchable-sub">vs coordination required</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-orange-300 transition-all cursor-pointer" onclick="dashboardDrillDown('delayed')">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="p-2 bg-orange-50 text-orange-600 rounded-lg"><i class="fas fa-calendar-times"></i></span>
+                        <span class="text-[10px] font-bold text-orange-400 bg-orange-50 px-2 py-1 rounded">SLIPPED</span>
+                    </div>
+                    <h3 class="text-3xl font-bold tracking-tight text-orange-600" id="dash-delayed">—</h3>
+                    <p class="text-sm text-slate-500 font-medium">Delayed / Extended</p>
+                    <p class="text-xs text-slate-400 mt-1" id="dash-delayed-sub">Schedule slippage</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-teal-300 transition-all cursor-pointer" onclick="dashboardDrillDown('open')">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="p-2 bg-teal-50 text-teal-600 rounded-lg"><i class="fas fa-shield-alt"></i></span>
+                        <span class="text-[10px] font-bold text-teal-400 bg-teal-50 px-2 py-1 rounded">SLA</span>
+                    </div>
+                    <h3 class="text-3xl font-bold tracking-tight text-teal-600" id="dash-sla-compliance">—</h3>
+                    <p class="text-sm text-slate-500 font-medium">SLA Compliance</p>
+                    <p class="text-xs text-slate-400 mt-1" id="dash-sla-compliance-sub">% within SLA window</p>
+                </div>
+            </div>
+
+            <!-- Row 2.5: Critical Asset Exposure -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-rose-300 transition-all cursor-pointer" onclick="dashboardDrillDown('critical-assets')">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="p-2 bg-rose-50 text-rose-600 rounded-lg"><i class="fas fa-shield-virus"></i></span>
+                        <span class="text-[10px] font-bold text-rose-400 bg-rose-50 px-2 py-1 rounded">CRITICAL ASSETS</span>
+                    </div>
+                    <h3 class="text-3xl font-bold tracking-tight text-rose-600" id="dash-critical-asset-poams">—</h3>
+                    <p class="text-sm text-slate-500 font-medium">Open POAMs on Critical Assets</p>
+                    <p class="text-xs text-slate-400 mt-1" id="dash-critical-asset-sub">Publicly exposed & critical infrastructure</p>
+                </div>
+                <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <span class="w-2 h-4 bg-rose-500 rounded-full"></span>
+                            Critical Asset Exposure
+                        </h3>
+                        <button onclick="showModule('settings'); setTimeout(() => showSettingsTab('critical-assets'), 200)" class="text-[10px] px-2 py-1 bg-slate-100 text-slate-500 rounded hover:bg-slate-200 font-medium">
+                            <i class="fas fa-cog mr-1"></i>Manage Assets
+                        </button>
+                    </div>
+                    <div id="dash-critical-asset-table" class="overflow-x-auto">
+                        <p class="text-sm text-slate-400 py-3">No critical assets registered. <a href="#" onclick="showModule('settings'); setTimeout(() => showSettingsTab('critical-assets'), 200)" class="text-indigo-600 hover:underline">Add critical assets in Settings</a></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 3: Trend Chart -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <span class="w-2 h-6 bg-indigo-600 rounded-full"></span>
+                        POAM Trend Over Time
+                    </h2>
+                    <div class="flex gap-2">
+                        <button onclick="setTrendRange(30)" class="trend-range-btn text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-medium" data-range="30">30d</button>
+                        <button onclick="setTrendRange(60)" class="trend-range-btn text-xs px-3 py-1 rounded-lg bg-slate-100 text-slate-500 font-medium" data-range="60">60d</button>
+                        <button onclick="setTrendRange(90)" class="trend-range-btn text-xs px-3 py-1 rounded-lg bg-slate-100 text-slate-500 font-medium" data-range="90">90d</button>
+                    </div>
+                </div>
+                <div class="h-64">
+                    <canvas id="dash-trend-chart"></canvas>
+                </div>
+                <p id="dash-trend-empty" class="text-center text-sm text-slate-400 py-8 hidden">Import scan data to see trend analysis</p>
+            </div>
+
+            <!-- Row 4: Risk Distribution + Status Donut -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <span class="w-2 h-5 bg-red-500 rounded-full"></span>
+                        Risk Distribution
+                    </h3>
+                    <div id="dash-risk-bars" class="space-y-3">
+                        <p class="text-sm text-slate-400">Loading...</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <span class="w-2 h-5 bg-blue-500 rounded-full"></span>
+                        Status Breakdown
+                    </h3>
+                    <div class="h-56 flex items-center justify-center">
+                        <canvas id="dash-status-donut"></canvas>
+                    </div>
+                    <p id="dash-status-empty" class="text-center text-sm text-slate-400 hidden">No data available</p>
+                </div>
+            </div>
+
+            <!-- Row 5: Control Family Heatmap -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
+                <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <span class="w-2 h-5 bg-purple-500 rounded-full"></span>
+                    POAMs by NIST Control Family
+                </h2>
+                <div id="dash-control-family-heatmap" class="space-y-2">
+                    <p class="text-sm text-slate-400">Loading...</p>
+                </div>
+            </div>
+
+            <!-- Row 6: POC Team Table -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
+                <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <span class="w-2 h-5 bg-teal-500 rounded-full"></span>
+                    POC Team Accountability
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm" id="dash-team-table">
+                        <thead>
+                            <tr class="border-b border-slate-200">
+                                <th class="text-left py-2 px-3 font-semibold text-slate-600">Team</th>
+                                <th class="text-center py-2 px-3 font-semibold text-slate-600">Open</th>
+                                <th class="text-center py-2 px-3 font-semibold text-slate-600">Overdue</th>
+                                <th class="text-center py-2 px-3 font-semibold text-slate-600">Avg Age</th>
+                                <th class="text-center py-2 px-3 font-semibold text-slate-600">MTTR</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dash-team-table-body">
+                            <tr><td colspan="5" class="py-4 text-center text-slate-400">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Row 7: Global Search -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-search text-slate-400"></i>
+                    <input type="text" id="dash-global-search" placeholder="Search POAMs by ID, vulnerability, control family, or POC..." class="flex-1 px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" oninput="dashboardGlobalSearch(this.value)">
+                </div>
+                <div id="dash-search-results" class="mt-3 hidden"></div>
+            </div>
+
+            <!-- Row 8: Management Module Cards -->
             <h2 class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
                 <span class="w-2 h-6 bg-indigo-600 rounded-full"></span>
                 Management Modules
             </h2>
-            
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Vulnerability Tracking -->
                 <div class="group relative bg-white border border-slate-200 p-6 rounded-2xl hover:border-indigo-500 transition-all cursor-pointer shadow-sm hover:shadow-xl" onclick="showModule('vulnerability-tracking')">
-                    <div class="flex items-center gap-3 mb-4">
-                        <span class="p-3 bg-blue-50 text-blue-600 rounded-lg">
-                            <i class="fas fa-bug text-lg"></i>
-                        </span>
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="p-3 bg-blue-50 text-blue-600 rounded-lg"><i class="fas fa-bug text-lg"></i></span>
+                        <span id="dash-badge-vuln" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full hidden">0 POAMs</span>
                     </div>
                     <h3 class="text-lg font-bold mb-2 group-hover:text-indigo-600">Vulnerability Tracking</h3>
                     <p class="text-slate-500 text-sm leading-relaxed mb-4">Scan processing, vulnerability analysis, and automated POAM generation workflow.</p>
@@ -343,13 +502,10 @@
                         <span class="text-xs text-slate-400">Scan integration</span>
                     </div>
                 </div>
-
-                <!-- Evidence Vault -->
                 <div class="group relative bg-white border border-slate-200 p-6 rounded-2xl hover:border-indigo-500 transition-all cursor-pointer shadow-sm hover:shadow-xl" onclick="showModule('evidence')">
-                    <div class="flex items-center gap-3 mb-4">
-                        <span class="p-3 bg-green-50 text-green-600 rounded-lg">
-                            <i class="fas fa-archive text-lg"></i>
-                        </span>
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="p-3 bg-green-50 text-green-600 rounded-lg"><i class="fas fa-archive text-lg"></i></span>
+                        <span id="dash-badge-evidence" class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full hidden">0 artifacts</span>
                     </div>
                     <h3 class="text-lg font-bold mb-2 group-hover:text-indigo-600">Evidence Vault</h3>
                     <p class="text-slate-500 text-sm leading-relaxed mb-4">Upload and link screenshots, configuration files, and policy documents to POAMs.</p>
@@ -358,13 +514,10 @@
                         <span class="text-xs text-slate-400">Documentation</span>
                     </div>
                 </div>
-
-                <!-- Executive Reporting -->
                 <div class="group relative bg-white border border-slate-200 p-6 rounded-2xl hover:border-indigo-500 transition-all cursor-pointer shadow-sm hover:shadow-xl" onclick="showModule('reporting')">
-                    <div class="flex items-center gap-3 mb-4">
-                        <span class="p-3 bg-purple-50 text-purple-600 rounded-lg">
-                            <i class="fas fa-chart-bar text-lg"></i>
-                        </span>
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="p-3 bg-purple-50 text-purple-600 rounded-lg"><i class="fas fa-chart-bar text-lg"></i></span>
+                        <span id="dash-badge-reports" class="text-xs font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded-full hidden">0 reports</span>
                     </div>
                     <h3 class="text-lg font-bold mb-2 group-hover:text-indigo-600">Executive Reporting</h3>
                     <p class="text-slate-500 text-sm leading-relaxed mb-4">Generate compliance reports, trend analysis, and executive summaries.</p>
@@ -939,7 +1092,7 @@
                     <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Vulnerability Tracking</h1>
                     <p class="text-slate-500 mt-1">Upload scans and manage generated POAMs</p>
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2 flex-wrap">
                     <button onclick="scrollToUploadSection()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2">
                         <i class="fas fa-upload"></i>
                         <span>Upload Scan</span>
@@ -947,6 +1100,20 @@
                     <button onclick="exportPOAMReport()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
                         <i class="fas fa-download"></i>
                         <span>Export POAMs</span>
+                    </button>
+                    <div class="w-px h-8 bg-slate-200 mx-1"></div>
+                    <button onclick="exportPOAMBackup()" class="px-3 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors flex items-center gap-2 text-sm" title="Download full POAM database backup (JSON)">
+                        <i class="fas fa-database"></i>
+                        <span>Backup</span>
+                    </button>
+                    <button onclick="document.getElementById('poam-restore-file').click()" class="px-3 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors flex items-center gap-2 text-sm" title="Restore POAMs from a backup file">
+                        <i class="fas fa-undo"></i>
+                        <span>Restore</span>
+                    </button>
+                    <input type="file" id="poam-restore-file" accept=".json" class="hidden" onchange="if(this.files[0]) importPOAMBackup(this.files[0]).then(() => this.value='')">
+                    <button onclick="clearAllPOAMsWithBackup()" class="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors flex items-center gap-2 text-sm" title="Clear all POAMs (downloads backup first)">
+                        <i class="fas fa-trash-alt"></i>
+                        <span>Clear</span>
                     </button>
                 </div>
             </div>
@@ -1792,6 +1959,9 @@
                     <button onclick="showSettingsTab('api-config')" id="btn-settings-api" class="settings-tab-btn py-4 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300">
                         <i class="fas fa-sync-alt mr-2"></i>API Config
                     </button>
+                    <button onclick="showSettingsTab('critical-assets')" id="btn-settings-critical-assets" class="settings-tab-btn py-4 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300">
+                        <i class="fas fa-shield-virus mr-2"></i>Critical Assets
+                    </button>
                 </nav>
             </div>
 
@@ -2099,95 +2269,149 @@
                 </div>
             </div>
 
-        <!-- Administration Module -->
-        <div id="admin-module" class="module hidden">
+            <!-- Critical Assets Tab -->
+            <div id="settings-critical-assets" class="settings-tab hidden">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
+                        <i class="fas fa-shield-virus text-rose-600 mr-3"></i>
+                        Critical Asset Registry
+                    </h3>
+                    <p class="text-slate-600 mb-6">Tag assets as critical to prioritize open POAMs. Works with all finding sources: scans, assessments, pen tests, and CM findings.</p>
+
+                    <!-- Add Critical Asset Form -->
+                    <div class="bg-slate-50 rounded-xl p-4 mb-6 border border-slate-200">
+                        <h4 class="text-sm font-bold text-slate-700 mb-3">Add Critical Asset</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Asset Name / Hostname</label>
+                                <input type="text" id="ca-name" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:outline-none" placeholder="e.g. web-server-prod-01">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">IP Address (optional)</label>
+                                <input type="text" id="ca-ip" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:outline-none" placeholder="e.g. 10.0.1.50">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Notes</label>
+                                <input type="text" id="ca-notes" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:outline-none" placeholder="e.g. Internet-facing payment server">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-xs font-semibold text-slate-600 mb-2">Tags</label>
+                            <div class="flex flex-wrap gap-2">
+                                <label class="inline-flex items-center gap-1.5 text-xs bg-white border border-slate-200 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-rose-50 hover:border-rose-200 transition-colors">
+                                    <input type="checkbox" class="ca-tag-checkbox rounded text-rose-600 focus:ring-rose-500" value="publicly-exposed"> Publicly Exposed
+                                </label>
+                                <label class="inline-flex items-center gap-1.5 text-xs bg-white border border-slate-200 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-rose-50 hover:border-rose-200 transition-colors">
+                                    <input type="checkbox" class="ca-tag-checkbox rounded text-rose-600 focus:ring-rose-500" value="critical-infrastructure"> Critical Infrastructure
+                                </label>
+                                <label class="inline-flex items-center gap-1.5 text-xs bg-white border border-slate-200 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-rose-50 hover:border-rose-200 transition-colors">
+                                    <input type="checkbox" class="ca-tag-checkbox rounded text-rose-600 focus:ring-rose-500" value="pii-phi"> PII / PHI
+                                </label>
+                                <label class="inline-flex items-center gap-1.5 text-xs bg-white border border-slate-200 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-rose-50 hover:border-rose-200 transition-colors">
+                                    <input type="checkbox" class="ca-tag-checkbox rounded text-rose-600 focus:ring-rose-500" value="high-value-target"> High-Value Target
+                                </label>
+                            </div>
+                        </div>
+                        <button onclick="addCriticalAssetFromForm()" class="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm font-medium hover:bg-rose-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>Add Critical Asset
+                        </button>
+                    </div>
+
+                    <!-- Critical Assets Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-slate-200">
+                                    <th class="text-left py-2 px-3 font-semibold text-slate-600">Name / Hostname</th>
+                                    <th class="text-left py-2 px-3 font-semibold text-slate-600">IP</th>
+                                    <th class="text-left py-2 px-3 font-semibold text-slate-600">Tags</th>
+                                    <th class="text-left py-2 px-3 font-semibold text-slate-600">Notes</th>
+                                    <th class="text-left py-2 px-3 font-semibold text-slate-600">Added</th>
+                                    <th class="text-center py-2 px-3 font-semibold text-slate-600">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ca-registry-table-body">
+                                <tr><td colspan="6" class="py-6 text-center text-slate-400">No critical assets registered</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        <!-- Executive Reporting Module (Live) -->
+        <div id="reporting-module" class="module hidden">
             <div class="mb-8">
                 <button onclick="showModule('dashboard')" class="text-indigo-600 hover:text-indigo-800 mb-4">
                     <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
                 </button>
                 <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Executive Reporting</h1>
-                <p class="text-slate-500 mt-1">Generate compliance reports for C-Suite and regulatory review</p>
+                <p class="text-slate-500 mt-1">Generate compliance reports from live POAM data — Excel/CSV primary, OSCAL secondary</p>
             </div>
 
-            <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-                <div class="flex items-center gap-3">
-                    <i class="fas fa-lock text-amber-600 text-xl"></i>
+            <!-- Report Generator -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+                <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <span class="w-2 h-5 bg-indigo-600 rounded-full"></span>
+                    Generate Report
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                     <div>
-                        <p class="font-semibold text-amber-800">Restricted Access</p>
-                        <p class="text-sm text-amber-700">This module requires elevated permissions. Please contact your system administrator.</p>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Report Type</label>
+                        <select id="report-type-select" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <option value="status-summary">POAM Status Summary</option>
+                            <option value="quarterly-compliance">Quarterly Compliance</option>
+                            <option value="executive-summary">Executive Summary</option>
+                            <option value="risk-assessment">Risk Assessment</option>
+                            <option value="team-performance">POC Team Performance</option>
+                            <option value="control-family">Control Family Analysis</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Date From</label>
+                        <input type="date" id="report-date-from" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Date To</label>
+                        <input type="date" id="report-date-to" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="generateReport(document.getElementById('report-type-select').value)" class="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-file-alt mr-2"></i>Generate
+                        </button>
                     </div>
                 </div>
+                <p id="report-gen-status" class="text-sm text-indigo-600 mt-2 hidden"></p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 opacity-75">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-bold text-slate-800">Quarterly Compliance Report</h3>
-                        <i class="fas fa-lock text-slate-400"></i>
-                    </div>
-                    <p class="text-slate-500 mb-4">Comprehensive quarterly overview of all POAM items and remediation progress.</p>
-                    <button disabled class="w-full bg-slate-200 text-slate-500 px-4 py-2 rounded-lg cursor-not-allowed">
-                        <i class="fas fa-download mr-2"></i>Generate Report
-                    </button>
-                </div>
+            <!-- Report Viewer -->
+            <div id="report-viewer" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6 hidden"></div>
 
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 opacity-75">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-bold text-slate-800">Executive Summary</h3>
-                        <i class="fas fa-lock text-slate-400"></i>
-                    </div>
-                    <p class="text-slate-500 mb-4">High-level summary for C-Suite presentation with key metrics and trends.</p>
-                    <button disabled class="w-full bg-slate-200 text-slate-500 px-4 py-2 rounded-lg cursor-not-allowed">
-                        <i class="fas fa-download mr-2"></i>Generate Summary
-                    </button>
-                </div>
-
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 opacity-75">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-bold text-slate-800">Regulatory Submission</h3>
-                        <i class="fas fa-lock text-slate-400"></i>
-                    </div>
-                    <p class="text-slate-500 mb-4">Formatted report for external regulatory agencies and auditors.</p>
-                    <button disabled class="w-full bg-slate-200 text-slate-500 px-4 py-2 rounded-lg cursor-not-allowed">
-                        <i class="fas fa-download mr-2"></i>Generate Submission
-                    </button>
-                </div>
-
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 opacity-75">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-bold text-slate-800">Risk Assessment Report</h3>
-                        <i class="fas fa-lock text-slate-400"></i>
-                    </div>
-                    <p class="text-slate-500 mb-4">Detailed risk analysis with mitigation strategies and recommendations.</p>
-                    <button disabled class="w-full bg-slate-200 text-slate-500 px-4 py-2 rounded-lg cursor-not-allowed">
-                        <i class="fas fa-download mr-2"></i>Generate Assessment
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Reports Module -->
-        <div id="reports-module" class="module hidden">
-            <div class="mb-8">
-                <button onclick="showModule('dashboard')" class="text-indigo-600 hover:text-indigo-800 mb-4">
-                    <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
-                </button>
-                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Reports & Analytics</h1>
-                <p class="text-slate-500 mt-1">View detailed analytics and historical reports</p>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 class="text-lg font-bold text-slate-800 mb-4">Remediation Trend</h3>
-                    <div class="h-64 bg-slate-50 rounded-lg flex items-center justify-center">
-                        <p class="text-slate-500">Chart visualization would go here</p>
+            <!-- Report History -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <span class="w-2 h-5 bg-purple-500 rounded-full"></span>
+                        Report History
+                    </h2>
+                    <div class="flex items-center gap-2">
+                        <input type="text" placeholder="Search reports..." class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none" oninput="searchReports(this.value)">
                     </div>
                 </div>
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 class="text-lg font-bold text-slate-800 mb-4">Risk Distribution</h3>
-                    <div class="h-64 bg-slate-50 rounded-lg flex items-center justify-center">
-                        <p class="text-slate-500">Risk level chart would go here</p>
-                    </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-slate-200">
+                                <th class="text-left py-2 px-3 font-semibold text-slate-600">ID</th>
+                                <th class="text-left py-2 px-3 font-semibold text-slate-600">Type</th>
+                                <th class="text-left py-2 px-3 font-semibold text-slate-600">Generated</th>
+                                <th class="text-left py-2 px-3 font-semibold text-slate-600">Scope</th>
+                                <th class="text-left py-2 px-3 font-semibold text-slate-600">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="report-history-body">
+                            <tr><td colspan="5" class="py-6 text-center text-slate-400">No reports generated yet</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -3049,21 +3273,41 @@
     </main>
 </div>
 
+    <script>
+        // Global error handler to catch the 'spring' error
+        window.addEventListener('error', function(event) {
+            console.error('❌ GLOBAL ERROR CAUGHT:', {
+                message: event.message,
+                filename: event.filename,
+                lineno: event.lineno,
+                colno: event.colno,
+                error: event.error,
+                stack: event.error?.stack
+            });
+        });
+        
+        window.addEventListener('unhandledrejection', function(event) {
+            console.error('❌ UNHANDLED PROMISE REJECTION:', {
+                reason: event.reason,
+                stack: event.reason?.stack
+            });
+        });
+    </script>
+    
     <!-- Application Scripts -->
-    <script src="poam-database.js?v=20260120-2"></script>
+    <script src="poam-database.js?v=20260224-1"></script>
     <script src="pipeline-logger.js?v=20260116-1"></script>
-    <script src="pipeline-orchestrator.js?v=20260120-2"></script>
-    <script src="pipeline-progress-ui.js?v=20260120-2"></script>
-    <script src="vulnerability-analysis-engine.js"></script>
-    <script src="vulnerability-analysis-engine-v2.js?v=20260114-1"></script>
-    <script src="vulnerability-analysis-engine-v3.js?v=20260120-2"></script>
-    <script src="csv-format-processors.js?v=20260120-1"></script>
+    <script src="pipeline-orchestrator.js?v=20260224-1"></script>
+    <script src="pipeline-progress-ui.js?v=20260224-1"></script>
+    <script src="vulnerability-analysis-engine.js?v=20260224-1"></script>
+    <script src="csv-format-processors.js?v=20260210-1"></script>
     <script src="evidence-functions.js"></script>
     <script src="sidebar-navigation.js"></script>
     <script src="column-filters.js"></script>
     <script src="bulk-operations.js"></script>
-    <script src="poam-detail-redesign.js?v=20260120-2"></script>
-    <script src="vulnerability-tracking.js?v=20260120-2"></script>
+    <script src="poam-detail-redesign.js?v=20260224-2"></script>
+    <script src="poam-lifecycle.js?v=20260224-1"></script>
+    <script src="vulnerability-tracking.js?v=20260210-2"></script>
     <script src="milestone-pipeline-orchestrator-v2.js?v=20260120-1"></script>
     <script src="vulnerability-tracking-milestones.js?v=20260120-1"></script>
     <script src="poam-workbook-constants.js?v=20260120-1"></script>
@@ -3072,6 +3316,9 @@
     <script src="poam-workbook-export.js?v=20260120-1"></script>
     <script src="poam-workbook-ui.js?v=20260120-15"></script>
     <!-- security-controls-manager.js removed -->
+    <script src="dashboard-metrics.js?v=20260224-1"></script>
+    <script src="executive-reports.js?v=20260209-1"></script>
+    <script src="oscal-export.js?v=20260209-1"></script>
     <script src="script.js?v=20260120-3"></script>
 
 </body>

@@ -285,7 +285,8 @@ class QualysProcessor {
             const num = parseInt(severity);
             if (num <= 2) return 'low';
             if (num === 3) return 'medium';
-            if (num >= 4) return 'high';
+            if (num === 4) return 'high';
+            if (num === 5) return 'critical';
         }
         
         // Qualys text severity
@@ -298,10 +299,11 @@ class QualysProcessor {
             case 'medium':
                 return 'medium';
             case '4':
-            case '5':
             case 'high':
-            case 'critical':
                 return 'high';
+            case '5':
+            case 'critical':
+                return 'critical';
             default:
                 return 'unknown';
         }
@@ -312,6 +314,7 @@ class QualysProcessor {
             case 'low': return 'low';
             case 'medium': return 'medium';
             case 'high': return 'high';
+            case 'critical': return 'critical';
             default: return 'unknown';
         }
     }

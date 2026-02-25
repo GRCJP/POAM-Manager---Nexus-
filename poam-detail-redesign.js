@@ -70,6 +70,9 @@ async function updatePOAMField(poamId, field, value) {
         if (typeof updateVulnerabilityModuleMetrics === 'function') {
             await updateVulnerabilityModuleMetrics();
         }
+        if (typeof loadDashboardMetrics === 'function') {
+            loadDashboardMetrics();
+        }
     } catch (error) {
         console.error('❌ Failed to update POAM:', error);
         showUpdateFeedback('Failed to save', 'error');
@@ -112,7 +115,7 @@ function toggleDescriptionEdit(poamId) {
         editableTextarea.classList.add('hidden');
         editBtn.textContent = 'Edit';
     } else {
-        readonlyDiv.add('hidden');
+        readonlyDiv.classList.add('hidden');
         editableTextarea.classList.remove('hidden');
         editableTextarea.focus();
         editBtn.textContent = 'Cancel';
@@ -204,6 +207,9 @@ function renderFocusedPOAMDetailPage(poam) {
                     </button>
                     <button onclick="switchMainTab('assets')" id="main-tab-assets" class="px-1 py-4 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-all flex items-center gap-2">
                         <i class="fas fa-server"></i> Affected Assets (${displayPOAM.totalAffectedAssets || 0})
+                    </button>
+                    <button onclick="switchMainTab('history')" id="main-tab-history" class="px-1 py-4 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-all flex items-center gap-2">
+                        <i class="fas fa-history"></i> History (${(poam.statusHistory || []).length})
                     </button>
                 </nav>
             </div>
@@ -373,6 +379,18 @@ function renderFocusedPOAMDetailPage(poam) {
                     </div>
                 </div>
 
+                <div id="section-history" class="main-tab-section hidden h-full">
+                    <div class="h-full border border-slate-200 rounded-lg overflow-hidden flex flex-col">
+                        <div class="bg-slate-50 border-b border-slate-200 px-4 py-2 flex justify-between items-center">
+                            <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">Status & Change History</span>
+                            <span class="text-[10px] text-slate-400">${(poam.statusHistory || []).length} entries</span>
+                        </div>
+                        <div class="flex-1 overflow-y-auto p-4">
+                            ${typeof renderStatusHistory === 'function' ? renderStatusHistory(poam.statusHistory) : '<div class="text-sm text-slate-400 italic">History tracking not available</div>'}
+                        </div>
+                    </div>
+                </div>
+
             </div>
             
             <div class="bg-slate-50 px-6 py-3 flex justify-end gap-3 border-t border-slate-200">
@@ -407,7 +425,7 @@ function togglePOAMEditMode() {
 
 function switchMainTab(tabName) {
     document.querySelectorAll('.main-tab-section').forEach(s => s.classList.add('hidden'));
-    ['details', 'assets'].forEach(t => {
+    ['details', 'milestones', 'assets', 'history'].forEach(t => {
         const btn = document.getElementById(`main-tab-${t}`);
         if (btn) {
             btn.classList.remove('text-indigo-600', 'border-b-2', 'border-indigo-600', 'font-bold');
@@ -424,7 +442,20 @@ function switchMainTab(tabName) {
 }
 
 function renderAssetsList(assets) {
-    if (!assets || assets.length === 0) return '<div class="p-8 text-center text-slate-500 italic">No assets identified for this POAM</div>';
+    console.log('🔍 renderAssetsList called with:', assets);
+    if (assets && assets.length > 0) {
+        console.log('📊 First asset structure:', JSON.stringify(assets[0], null, 2));
+    }
+    
+    // Normalize assets to handle both old and new field naming conventions
+    const normalizedAssets = (assets || []).map(asset => ({
+        asset_name: asset.asset_name || asset.assetName || asset.name || asset.hostname || 'N/A',
+        ipv4: asset.ipv4 || asset.ip || 'N/A',
+        os: asset.os || asset.operatingSystem || 'Unknown',
+        results: asset.results || asset.findingResults || 'N/A'
+    }));
+    
+    if (!normalizedAssets || normalizedAssets.length === 0) return '<div class="p-8 text-center text-slate-500 italic">No assets identified for this POAM</div>';
     
     return `
         <table class="w-full text-left border-collapse">
@@ -437,7 +468,7 @@ function renderAssetsList(assets) {
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-                ${assets.map(asset => `
+                ${normalizedAssets.map(asset => `
                     <tr class="hover:bg-indigo-50/30 transition-colors">
                         <td class="px-4 py-2 text-xs font-medium text-slate-700">${asset.asset_name || asset.name || 'N/A'}</td>
                         <td class="px-4 py-2 text-xs font-mono text-slate-600">${asset.ipv4 || asset.ip || 'N/A'}</td>

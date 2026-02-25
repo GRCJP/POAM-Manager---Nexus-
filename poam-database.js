@@ -7,7 +7,7 @@ console.log('📦 poam-database.js loading...');
 class POAMDatabase {
     constructor() {
         this.dbName = 'POAMDatabase';
-        this.version = 8;
+        this.version = 10;
         this.db = null;
     }
 
@@ -114,6 +114,22 @@ class POAMDatabase {
                     artifactStore.createIndex('runId', 'runId', { unique: false });
                     artifactStore.createIndex('phaseIndex', 'phaseIndex', { unique: false });
                 }
+
+                // Create reports object store for executive report snapshots
+                if (!db.objectStoreNames.contains('reports')) {
+                    console.log('📦 Creating reports object store');
+                    const reportStore = db.createObjectStore('reports', { keyPath: 'id' });
+                    reportStore.createIndex('type', 'type', { unique: false });
+                    reportStore.createIndex('generatedAt', 'generatedAt', { unique: false });
+                }
+
+                // Create criticalAssets object store for asset prioritization
+                if (!db.objectStoreNames.contains('criticalAssets')) {
+                    console.log('📦 Creating criticalAssets object store');
+                    const caStore = db.createObjectStore('criticalAssets', { keyPath: 'id' });
+                    caStore.createIndex('name', 'name', { unique: false });
+                    caStore.createIndex('ip', 'ip', { unique: false });
+                }
                 
                 console.log('✅ Database upgrade complete');
             };
@@ -218,7 +234,8 @@ class POAMDatabase {
             status: asset.status || 'affected',
             firstDetected: asset.firstDetected || asset.scanDate || new Date().toISOString().split('T')[0],
             lastDetected: asset.lastDetected || asset.scanDate || new Date().toISOString().split('T')[0],
-            result: asset.result || asset.vulnerability || 'Scan metadata not available for this asset',
+            result: asset.results || asset.result || asset.vulnerability || 'Scan metadata not available for this asset',
+            results: asset.results || asset.result || asset.vulnerability || 'Scan metadata not available for this asset',
             solution: asset.solution || asset.remediation || 'Scan metadata not available for this asset',
             raw: asset.raw || asset.rawData || 'No raw scan data available',
             ip: asset.ip || asset.ipv4 || asset.asset_ipv4 || '',
@@ -407,6 +424,60 @@ class POAMDatabase {
             const request = store.delete(id);
             request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // CRITICAL ASSETS MANAGEMENT
+    // ═══════════════════════════════════════════════════════════════
+
+    async getCriticalAssets() {
+        if (!this.db) await this.init();
+        if (!this.hasStore('criticalAssets')) return [];
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(['criticalAssets'], 'readonly');
+            const store = tx.objectStore('criticalAssets');
+            const req = store.getAll();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async addCriticalAsset(asset) {
+        if (!this.db) await this.init();
+        if (!this.hasStore('criticalAssets')) throw new Error('criticalAssets store not available');
+        const record = {
+            id: asset.id || `ca-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+            name: asset.name || '',
+            hostname: asset.hostname || asset.name || '',
+            ip: asset.ip || '',
+            tags: Array.isArray(asset.tags) ? asset.tags : [],
+            notes: asset.notes || '',
+            addedDate: asset.addedDate || new Date().toISOString(),
+            addedBy: asset.addedBy || 'manual'
+        };
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(['criticalAssets'], 'readwrite');
+            const store = tx.objectStore('criticalAssets');
+            const req = store.put(record);
+            req.onsuccess = () => resolve(record);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async updateCriticalAsset(asset) {
+        return this.addCriticalAsset(asset);
+    }
+
+    async deleteCriticalAsset(id) {
+        if (!this.db) await this.init();
+        if (!this.hasStore('criticalAssets')) return;
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(['criticalAssets'], 'readwrite');
+            const store = tx.objectStore('criticalAssets');
+            const req = store.delete(id);
+            req.onsuccess = () => resolve();
+            req.onerror = () => reject(req.error);
         });
     }
 

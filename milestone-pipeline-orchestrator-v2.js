@@ -97,9 +97,23 @@ class MilestonePipelineDatabase {
             return;
         }
 
-        // Initialize new connection if needed
+        // Try to initialize poamDB first so we share the same version
+        if (window.poamDB && typeof window.poamDB.init === 'function') {
+            try {
+                await window.poamDB.init();
+                if (window.poamDB.db) {
+                    this.db = window.poamDB.db;
+                    this.logger.info('Initialized and reusing POAMDatabase connection');
+                    return;
+                }
+            } catch (e) {
+                this.logger.warn('Failed to init poamDB, falling back to direct open:', e.message);
+            }
+        }
+
+        // Fallback: open directly (version must match POAMDatabase.version)
         return new Promise((resolve, reject) => {
-            const request = indexedDB.open(this.dbName, 9); // Increment version for new schema
+            const request = indexedDB.open(this.dbName, 10);
             
             request.onerror = () => reject(request.error);
             request.onsuccess = () => {
@@ -665,6 +679,7 @@ class AuthoritativeMilestonePipeline {
             
             try {
                 // Create POAM draft using existing logic
+                console.log(`🔍 [Milestone4] Processing group ${i + 1}/${enrichedGroups.length}: ${enrichedGroup.groupId}`);
                 const poamDraft = await this.createPOAMDraft(enrichedGroup, analysisEngine);
                 
                 if (poamDraft) {
@@ -674,6 +689,9 @@ class AuthoritativeMilestonePipeline {
                 }
                 
             } catch (error) {
+                console.error(`❌ [Milestone4] Error processing group ${enrichedGroup.groupId}:`, error);
+                console.error('❌ Full error:', error.message);
+                console.error('❌ Stack trace:', error.stack);
                 this.logger.warn(`   Failed to create POAM draft for group ${enrichedGroup.groupId}: ${error.message}`);
                 skippedCount++;
             }
@@ -699,45 +717,63 @@ class AuthoritativeMilestonePipeline {
     }
 
     async createPOAMDraft(enrichedGroup, analysisEngine) {
-        const group = enrichedGroup.originalGroup;
-        
-        // Create base POAM
-        const poamDraft = {
-            id: `POAM-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            title: group.title || 'Unknown Vulnerability',
-            description: enrichedGroup.cleanDescription,
-            createdDate: new Date().toISOString().split('T')[0],
-            status: 'Open',
-            findingSource: 'Vulnerability Scan',
-            scanId: this.currentRun.scanId,
-            runId: this.currentRun.runId
-        };
-        
-        // Map severity to SLA
-        const severity = group.severity || 'medium';
-        const slaDays = this.mapSeverityToSLA(severity);
-        const dueDate = new Date();
-        dueDate.setDate(dueDate.getDate() + slaDays);
-        
-        poamDraft.dueDate = dueDate.toISOString().split('T')[0];
-        poamDraft.initialScheduledCompletionDate = poamDraft.dueDate;
-        poamDraft.risk = this.mapSeverityToRisk(severity);
-        poamDraft.riskLevel = poamDraft.risk;
-        
-        // Apply template with milestone generation
-        const mockRemediation = {
-            remediationType: group.patchable ? 'patch' : 'config_change'
-        };
-        
-        const enhancedPOAM = analysisEngine.applyPOAMTemplate(
-            poamDraft,
-            'PATCHING_UPDATES',
-            group.findings[0], // Use first finding as representative
-            mockRemediation,
-            group
-        );
-        
-        return enhancedPOAM;
+        try {
+            const group = enrichedGroup.originalGroup;
+            
+            console.log('🔍 createPOAMDraft started:', {
+                groupId: enrichedGroup.groupId,
+                hasGroup: !!group,
+                hasFindings: !!(group && group.findings),
+                findingsCount: group?.findings?.length
+            });
+            
+            // Create base POAM
+            const poamDraft = {
+                id: `POAM-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                title: group.title || 'Unknown Vulnerability',
+                description: enrichedGroup.cleanDescription,
+                createdDate: new Date().toISOString().split('T')[0],
+                status: 'Open',
+                findingSource: 'Vulnerability Scan',
+                scanId: this.currentRun.scanId,
+                runId: this.currentRun.runId
+            };
+            
+            console.log('✅ Base POAM created:', poamDraft.id);
+            
+            // Map severity to SLA
+            const severity = group.severity || 'medium';
+            const slaDays = this.mapSeverityToSLA(severity);
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + slaDays);
+            
+            poamDraft.dueDate = dueDate.toISOString().split('T')[0];
+            poamDraft.initialScheduledCompletionDate = poamDraft.dueDate;
+            poamDraft.risk = this.mapSeverityToRisk(severity);
+            poamDraft.riskLevel = poamDraft.risk;
+            
+            // Apply template with milestone generation
+            console.log('🔍 Preparing mockRemediation...');
+            const mockRemediation = {
+                remediationType: group.patchable ? 'patch' : 'config_change'
+            };
+            
+            console.log('🔍 Calling applyPOAMTemplate...');
+            const enhancedPOAM = analysisEngine.applyPOAMTemplate(
+                poamDraft,
+                'PATCHING_UPDATES',
+                group.findings[0],
+                mockRemediation,
+                group
+            );
+            
+            console.log('✅ POAM draft created successfully');
+            return enhancedPOAM;
+        } catch (error) {
+            console.error('❌ Error in createPOAMDraft:', error);
+            console.error('❌ Stack trace:', error.stack);
+            throw error;
+        }
     }
 
     mapSeverityToSLA(severity) {

@@ -264,6 +264,9 @@ class PipelineProgressUI {
     showComplete(counts) {
         const statusEl = document.getElementById('status-text');
         if (statusEl) {
+            const mergeInfo = (counts.poamsMerged > 0 || counts.poamsAutoResolved > 0)
+                ? `<br><span class="text-sm text-blue-600">Re-import: ${counts.poamsMerged || 0} updated, ${counts.poamsAutoResolved || 0} auto-resolved</span>`
+                : '';
             statusEl.innerHTML = `
                 <div class="text-green-600 font-medium">
                     ✅ Pipeline completed successfully!<br>
@@ -271,14 +274,18 @@ class PipelineProgressUI {
                         Created ${counts.poamsCreated} POAMs from ${counts.totalRows} findings
                         (${counts.excludedCount} excluded, ${counts.poamsSkipped} skipped)
                     </span>
+                    ${mergeInfo}
+                    <div class="mt-3 flex gap-2 justify-center">
+                        <button type="button" onclick="showModule('dashboard'); document.getElementById('pipeline-progress-container')?.classList.add('hidden')" class="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-chart-line mr-1"></i> Go to Dashboard
+                        </button>
+                        <button type="button" onclick="document.getElementById('pipeline-progress-container')?.classList.add('hidden')" class="px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-200 rounded-lg hover:bg-slate-300 transition-colors">
+                            Stay Here
+                        </button>
+                    </div>
                 </div>
             `;
         }
-        
-        // Auto-hide after 3 seconds
-        setTimeout(() => {
-            this.hide();
-        }, 3000);
     }
 
     showError(error) {

@@ -70,6 +70,17 @@ function showSettingsTab(tabName) {
         selectedTab.classList.remove('hidden');
     }
 
+    // Update tab button active state
+    document.querySelectorAll('.settings-tab-btn').forEach(btn => {
+        btn.classList.remove('border-indigo-500', 'text-indigo-600');
+        btn.classList.add('border-transparent', 'text-slate-500');
+    });
+    const activeBtn = document.getElementById(`btn-settings-${finalTabName}`);
+    if (activeBtn) {
+        activeBtn.classList.remove('border-transparent', 'text-slate-500');
+        activeBtn.classList.add('border-indigo-500', 'text-indigo-600');
+    }
+
     // Update sidebar active state
     updateSettingsSubmenuActiveState(finalTabName);
     
@@ -81,6 +92,8 @@ function showSettingsTab(tabName) {
         if (typeof settingsManager !== 'undefined') {
             settingsManager.renderSystemsSettings();
         }
+    } else if (finalTabName === 'critical-assets') {
+        if (typeof loadCriticalAssetsRegistry === 'function') loadCriticalAssetsRegistry();
     }
     
     // Close mobile sidebar after selection
