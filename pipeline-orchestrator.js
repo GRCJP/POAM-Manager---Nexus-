@@ -660,10 +660,14 @@ class PipelineOrchestrator {
         }
         this.logger.info(`Saved ${saved.saved || saved} POAMs`);
         
-        // Dispatch event for notification system (feature flag controlled)
-        window.dispatchEvent(new CustomEvent('poam-batch-saved', { 
-            detail: { poams: poamDrafts, isBaseline: existingPOAMs.length === 0 } 
-        }));
+        // Dispatch event for notification system (feature flag controlled, non-blocking)
+        try {
+            window.dispatchEvent(new CustomEvent('poam-batch-saved', { 
+                detail: { poams: poamDrafts, isBaseline: existingPOAMs.length === 0 } 
+            }));
+        } catch (error) {
+            console.warn('⚠️ Event dispatch failed (non-critical):', error);
+        }
         
         this.currentRun.phaseProgress = 0.5;
         this.currentRun.overallProgress = 0.85;
