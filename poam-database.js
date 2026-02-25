@@ -7,7 +7,7 @@ console.log('📦 poam-database.js loading...');
 class POAMDatabase {
     constructor() {
         this.dbName = 'POAMDatabase';
-        this.version = 10;
+        this.version = 11;
         this.db = null;
     }
 
@@ -129,6 +129,32 @@ class POAMDatabase {
                     const caStore = db.createObjectStore('criticalAssets', { keyPath: 'id' });
                     caStore.createIndex('name', 'name', { unique: false });
                     caStore.createIndex('ip', 'ip', { unique: false });
+                }
+                
+                // Create notificationQueue object store for AI assistant notifications
+                if (!db.objectStoreNames.contains('notificationQueue')) {
+                    console.log('📦 Creating notificationQueue object store');
+                    const notifStore = db.createObjectStore('notificationQueue', { keyPath: 'id' });
+                    notifStore.createIndex('poamId', 'poamId', { unique: false });
+                    notifStore.createIndex('pocTeam', 'pocTeam', { unique: false });
+                    notifStore.createIndex('notificationStatus', 'notificationStatus', { unique: false });
+                    notifStore.createIndex('batchId', 'batchId', { unique: false });
+                }
+                
+                // Create feedbackResponses object store for user acknowledgments
+                if (!db.objectStoreNames.contains('feedbackResponses')) {
+                    console.log('📦 Creating feedbackResponses object store');
+                    const feedbackStore = db.createObjectStore('feedbackResponses', { keyPath: 'id' });
+                    feedbackStore.createIndex('poamId', 'poamId', { unique: false });
+                    feedbackStore.createIndex('status', 'status', { unique: false });
+                    feedbackStore.createIndex('submittedAt', 'submittedAt', { unique: false });
+                }
+                
+                // Create cveCache object store for vulnerability intelligence
+                if (!db.objectStoreNames.contains('cveCache')) {
+                    console.log('📦 Creating cveCache object store');
+                    const cveStore = db.createObjectStore('cveCache', { keyPath: 'cveId' });
+                    cveStore.createIndex('timestamp', 'timestamp', { unique: false });
                 }
                 
                 console.log('✅ Database upgrade complete');
