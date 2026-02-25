@@ -660,6 +660,11 @@ class PipelineOrchestrator {
         }
         this.logger.info(`Saved ${saved.saved || saved} POAMs`);
         
+        // Dispatch event for notification system (feature flag controlled)
+        window.dispatchEvent(new CustomEvent('poam-batch-saved', { 
+            detail: { poams: poamDrafts, isBaseline: existingPOAMs.length === 0 } 
+        }));
+        
         this.currentRun.phaseProgress = 0.5;
         this.currentRun.overallProgress = 0.85;
         await this.db.saveScanRun(this.currentRun);

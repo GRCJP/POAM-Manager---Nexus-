@@ -3290,9 +3290,14 @@
     </script>
     
     <!-- Application Scripts -->
+    <!-- AI Assistant Agent - Feature Flags & Configuration (Load First) -->
+    <script src="config/feature-flags.js?v=20260225-1"></script>
+    <script src="config/notification-config.js?v=20260225-1"></script>
+    <script src="vulnerability-intelligence.js?v=20260225-1"></script>
+    
     <script src="poam-database.js?v=20260224-1"></script>
     <script src="pipeline-logger.js?v=20260116-1"></script>
-    <script src="pipeline-orchestrator.js?v=20260224-1"></script>
+    <script src="pipeline-orchestrator.js?v=20260225-1"></script>
     <script src="pipeline-progress-ui.js?v=20260224-1"></script>
     <script src="vulnerability-analysis-engine.js?v=20260224-1"></script>
     <script src="csv-format-processors.js?v=20260210-1"></script>

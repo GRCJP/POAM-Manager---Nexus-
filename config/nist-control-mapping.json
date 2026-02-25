@@ -1,0 +1,203 @@
+{
+  "version": "1.0.0",
+  "description": "NIST SP 800-53 Rev 5 Control Family Mapping for Vulnerability Types",
+  "lastUpdated": "2026-02-25",
+  "mappings": [
+    {
+      "vulnerabilityType": "missing_patch",
+      "keywords": ["patch", "update", "hotfix", "security update", "kb"],
+      "controlFamily": "SI",
+      "controls": ["SI-2"],
+      "description": "Flaw Remediation - Security patches and updates",
+      "remediationType": "patch_cycle",
+      "estimatedEffort": "low",
+      "milestoneTemplate": "SI"
+    },
+    {
+      "vulnerabilityType": "configuration_issue",
+      "keywords": ["misconfiguration", "configuration", "settings", "hardening", "baseline"],
+      "controlFamily": "CM",
+      "controls": ["CM-6", "CM-7"],
+      "description": "Configuration Settings and Least Functionality",
+      "remediationType": "configuration",
+      "estimatedEffort": "medium",
+      "milestoneTemplate": "CM"
+    },
+    {
+      "vulnerabilityType": "weak_authentication",
+      "keywords": ["password", "authentication", "credential", "mfa", "2fa", "login"],
+      "controlFamily": "IA",
+      "controls": ["IA-2", "IA-5"],
+      "description": "Identification and Authentication",
+      "remediationType": "policy_change",
+      "estimatedEffort": "medium",
+      "milestoneTemplate": "IA"
+    },
+    {
+      "vulnerabilityType": "access_control",
+      "keywords": ["permission", "privilege", "access", "authorization", "rbac", "acl"],
+      "controlFamily": "AC",
+      "controls": ["AC-2", "AC-3", "AC-6"],
+      "description": "Access Control and Least Privilege",
+      "remediationType": "policy_change",
+      "estimatedEffort": "high",
+      "milestoneTemplate": "AC"
+    },
+    {
+      "vulnerabilityType": "encryption_issue",
+      "keywords": ["encryption", "tls", "ssl", "cipher", "cryptography", "certificate"],
+      "controlFamily": "SC",
+      "controls": ["SC-8", "SC-12", "SC-13"],
+      "description": "System and Communications Protection",
+      "remediationType": "configuration",
+      "estimatedEffort": "medium",
+      "milestoneTemplate": "SC"
+    },
+    {
+      "vulnerabilityType": "logging_monitoring",
+      "keywords": ["logging", "audit", "monitoring", "siem", "log"],
+      "controlFamily": "AU",
+      "controls": ["AU-2", "AU-3", "AU-6", "AU-12"],
+      "description": "Audit and Accountability",
+      "remediationType": "configuration",
+      "estimatedEffort": "medium",
+      "milestoneTemplate": "AU"
+    },
+    {
+      "vulnerabilityType": "network_security",
+      "keywords": ["firewall", "network", "port", "protocol", "segmentation"],
+      "controlFamily": "SC",
+      "controls": ["SC-7"],
+      "description": "Boundary Protection",
+      "remediationType": "configuration",
+      "estimatedEffort": "high",
+      "milestoneTemplate": "SC"
+    },
+    {
+      "vulnerabilityType": "code_vulnerability",
+      "keywords": ["sql injection", "xss", "csrf", "code", "application", "web"],
+      "controlFamily": "SA",
+      "controls": ["SA-11", "SA-15"],
+      "description": "System and Services Acquisition - Secure Development",
+      "remediationType": "code_fix",
+      "estimatedEffort": "high",
+      "milestoneTemplate": "CM"
+    },
+    {
+      "vulnerabilityType": "physical_security",
+      "keywords": ["physical", "access", "badge", "door", "facility"],
+      "controlFamily": "PE",
+      "controls": ["PE-2", "PE-3"],
+      "description": "Physical and Environmental Protection",
+      "remediationType": "policy_change",
+      "estimatedEffort": "medium",
+      "milestoneTemplate": "CM"
+    },
+    {
+      "vulnerabilityType": "incident_response",
+      "keywords": ["incident", "response", "breach", "compromise"],
+      "controlFamily": "IR",
+      "controls": ["IR-4", "IR-5", "IR-6"],
+      "description": "Incident Response",
+      "remediationType": "policy_change",
+      "estimatedEffort": "high",
+      "milestoneTemplate": "CM"
+    },
+    {
+      "vulnerabilityType": "maintenance",
+      "keywords": ["maintenance", "service", "support", "vendor"],
+      "controlFamily": "MA",
+      "controls": ["MA-2", "MA-4"],
+      "description": "System Maintenance",
+      "remediationType": "policy_change",
+      "estimatedEffort": "medium",
+      "milestoneTemplate": "CM"
+    },
+    {
+      "vulnerabilityType": "media_protection",
+      "keywords": ["media", "storage", "disposal", "sanitization"],
+      "controlFamily": "MP",
+      "controls": ["MP-6"],
+      "description": "Media Sanitization",
+      "remediationType": "policy_change",
+      "estimatedEffort": "low",
+      "milestoneTemplate": "CM"
+    },
+    {
+      "vulnerabilityType": "personnel_security",
+      "keywords": ["personnel", "training", "awareness", "background"],
+      "controlFamily": "PS",
+      "controls": ["PS-3", "PS-7"],
+      "description": "Personnel Security",
+      "remediationType": "policy_change",
+      "estimatedEffort": "medium",
+      "milestoneTemplate": "CM"
+    },
+    {
+      "vulnerabilityType": "planning",
+      "keywords": ["plan", "policy", "procedure", "documentation"],
+      "controlFamily": "PL",
+      "controls": ["PL-2"],
+      "description": "System Security Plan",
+      "remediationType": "documentation",
+      "estimatedEffort": "high",
+      "milestoneTemplate": "CM"
+    },
+    {
+      "vulnerabilityType": "program_management",
+      "keywords": ["program", "management", "governance", "oversight"],
+      "controlFamily": "PM",
+      "controls": ["PM-1"],
+      "description": "Information Security Program Plan",
+      "remediationType": "policy_change",
+      "estimatedEffort": "high",
+      "milestoneTemplate": "CM"
+    }
+  ],
+  "defaultMapping": {
+    "controlFamily": "CM",
+    "controls": ["CM-6"],
+    "description": "Configuration Management - General",
+    "remediationType": "configuration",
+    "estimatedEffort": "medium",
+    "milestoneTemplate": "CM"
+  },
+  "effortEstimates": {
+    "low": {
+      "description": "Simple patch or configuration change",
+      "estimatedDays": 7,
+      "examples": ["Apply security patch", "Enable security setting"]
+    },
+    "medium": {
+      "description": "Moderate configuration or policy change",
+      "estimatedDays": 30,
+      "examples": ["Reconfigure authentication", "Update firewall rules"]
+    },
+    "high": {
+      "description": "Complex remediation requiring coordination",
+      "estimatedDays": 90,
+      "examples": ["Code fixes", "Architecture changes", "Policy overhaul"]
+    }
+  },
+  "controlFamilies": {
+    "AC": "Access Control",
+    "AU": "Audit and Accountability",
+    "AT": "Awareness and Training",
+    "CM": "Configuration Management",
+    "CP": "Contingency Planning",
+    "IA": "Identification and Authentication",
+    "IR": "Incident Response",
+    "MA": "Maintenance",
+    "MP": "Media Protection",
+    "PS": "Personnel Security",
+    "PE": "Physical and Environmental Protection",
+    "PL": "Planning",
+    "PM": "Program Management",
+    "RA": "Risk Assessment",
+    "CA": "Assessment, Authorization, and Monitoring",
+    "SC": "System and Communications Protection",
+    "SI": "System and Information Integrity",
+    "SA": "System and Services Acquisition",
+    "SR": "Supply Chain Risk Management"
+  }
+}
