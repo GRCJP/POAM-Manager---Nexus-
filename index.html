@@ -9,6 +9,92 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <title>POAM Nexus | Management Dashboard</title>
+    <style>
+        /* Navy/Grey/Red Color Scheme - Custom Gradients */
+        .gradient-navy-bg { background: linear-gradient(180deg, #0F172A 0%, #1E3A8A 50%, #0F172A 100%); }
+        .gradient-red { background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%); }
+        .gradient-red:hover { background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); }
+        .gradient-separator { 
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, #CBD5E1 50%, transparent 100%); 
+        }
+        .btn-red-gradient {
+            background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-red-gradient:hover {
+            background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+        }
+        .btn-navy-outline {
+            border: 2px solid #1E3A8A;
+            color: #1E3A8A;
+            background: white;
+            transition: all 0.3s ease;
+        }
+        .btn-navy-outline:hover {
+            background: linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%);
+            color: white;
+            border-color: #0F172A;
+        }
+        .card-navy-border {
+            border-top: 5px solid #1E3A8A;
+            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.2), 0 0 30px rgba(30, 58, 138, 0.1);
+        }
+        .card-red-border {
+            border-top: 5px solid #DC2626;
+            box-shadow: 0 6px 16px rgba(220, 38, 38, 0.2), 0 0 30px rgba(220, 38, 38, 0.1);
+        }
+        .card-amber-border {
+            border-top: 5px solid #F59E0B;
+            box-shadow: 0 6px 16px rgba(245, 158, 11, 0.2), 0 0 30px rgba(245, 158, 11, 0.1);
+        }
+        .card-emerald-border {
+            border-top: 5px solid #10B981;
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.2), 0 0 30px rgba(16, 185, 129, 0.1);
+        }
+        .card-orange-border {
+            border-top: 5px solid #F97316;
+            box-shadow: 0 6px 16px rgba(249, 115, 22, 0.2), 0 0 30px rgba(249, 115, 22, 0.1);
+        }
+        .card-blue-border {
+            border-top: 5px solid #3B82F6;
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.2), 0 0 30px rgba(59, 130, 246, 0.1);
+        }
+        .card-green-border {
+            border-top: 5px solid #22C55E;
+            box-shadow: 0 6px 16px rgba(34, 197, 94, 0.2), 0 0 30px rgba(34, 197, 94, 0.1);
+        }
+        .card-teal-border {
+            border-top: 5px solid #14B8A6;
+            box-shadow: 0 6px 16px rgba(20, 184, 166, 0.2), 0 0 30px rgba(20, 184, 166, 0.1);
+        }
+        .icon-gradient-navy {
+            background: linear-gradient(135deg, #0F172A, #1E3A8A);
+        }
+        .icon-gradient-red {
+            background: linear-gradient(135deg, #DC2626, #991B1B);
+        }
+        .badge-gradient-navy {
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.2), rgba(15, 23, 42, 0.2));
+            color: #0F172A;
+            border: 1px solid #1E3A8A;
+        }
+        .section-header-gradient {
+            background: linear-gradient(90deg, #0F172A 0%, #1E3A8A 100%);
+            position: relative;
+        }
+        .section-header-gradient::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #DC2626 0%, #EF4444 50%, #DC2626 100%);
+        }
+    </style>
 </head>
 <body class="bg-slate-50 font-sans antialiased text-slate-900">
     
@@ -56,14 +142,14 @@
     <div id="pipeline-progress-container" class="hidden"></div>
 
     <!-- Top Header Bar -->
-    <header class="bg-white border-b border-slate-200 px-6 py-3 flex justify-between items-center sticky top-0 z-50">
+    <header class="bg-white border-b-2 border-slate-200 px-6 py-3 flex justify-between items-center sticky top-0 z-50" style="border-bottom: 2px solid; border-image: linear-gradient(90deg, #1E3A8A, #0F172A) 1;">
         <div class="flex items-center gap-4">
             <button id="sidebar-toggle" class="lg:hidden text-slate-600 hover:text-slate-900">
                 <i class="fas fa-bars text-xl"></i>
             </button>
             <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-indigo-600 rounded flex items-center justify-center text-white font-bold">P</div>
-                <span class="text-xl font-bold tracking-tight uppercase text-slate-800">POAM<span class="text-indigo-600">Nexus</span></span>
+                <div class="w-8 h-8 rounded flex items-center justify-center text-white font-bold" style="background: #0F172A;">P</div>
+                <span class="text-xl font-bold tracking-tight uppercase text-slate-800">POAM<span class="text-red-600">Nexus</span></span>
             </div>
         </div>
         <div class="flex items-center gap-4">
@@ -74,12 +160,13 @@
                     type="text" 
                     id="poam-search-input"
                     placeholder="Search POAMs..."
-                    class="w-64 pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    class="w-64 pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500"
                     oninput="applyPOAMFilters()">
             </div>
             
-            <button class="text-slate-600 hover:text-slate-900 hidden sm:block">
+            <button class="text-red-600 hover:text-red-700 hidden sm:block relative">
                 <i class="fas fa-bell text-lg"></i>
+                <span class="absolute -top-1 -right-1 w-2 h-2 bg-red-600 rounded-full"></span>
             </button>
             <button class="text-slate-600 hover:text-slate-900 hidden sm:block">
                 <i class="fas fa-question-circle text-lg"></i>
@@ -89,7 +176,7 @@
                     <p class="text-xs font-bold">Admin User</p>
                     <p class="text-[10px] text-slate-500">Security Operations</p>
                 </div>
-                <div class="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full border-2 border-white shadow-sm flex items-center justify-center text-white text-sm font-bold">
+                <div class="w-9 h-9 rounded-full border-2 border-white shadow-sm flex items-center justify-center text-white text-sm font-bold" style="background: linear-gradient(135deg, #0F172A 0%, #DC2626 100%);">
                     AU
                 </div>
             </div>
@@ -98,7 +185,7 @@
 
     <div class="flex h-screen overflow-hidden">
         <!-- Sidebar Navigation -->
-        <aside id="sidebar" class="w-64 bg-slate-900 text-slate-100 flex flex-col fixed lg:static inset-y-0 left-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out z-40 pt-16 lg:pt-0">
+        <aside id="sidebar" class="w-64 gradient-navy-bg text-slate-100 flex flex-col fixed lg:static inset-y-0 left-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out z-40 pt-16 lg:pt-0">
             <div class="flex-1 overflow-y-auto py-6 px-3">
                 <!-- Main Navigation -->
                 <nav class="space-y-1">
@@ -270,7 +357,7 @@
                     </div>
                     <div class="flex items-center gap-3">
                         <span id="dash-last-updated" class="text-xs text-slate-400"></span>
-                        <button onclick="loadDashboardMetrics()" class="text-xs px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors font-medium">
+                        <button onclick="loadDashboardMetrics()" class="text-xs px-3 py-1.5 btn-red-gradient text-white rounded-lg font-semibold">
                             <i class="fas fa-sync-alt mr-1"></i>Refresh
                         </button>
                     </div>
@@ -279,90 +366,81 @@
 
             <!-- Row 1: Primary KPI Tiles -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer" onclick="dashboardDrillDown('open')">
+                <div class="bg-white p-5 rounded-xl card-navy-border transition-all cursor-pointer" onclick="dashboardDrillDown('open')">
                     <div class="flex justify-between items-start mb-3">
-                        <span class="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><i class="fas fa-clipboard-list"></i></span>
-                        <span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded">OPEN</span>
+                        <span class="p-3 rounded-lg text-white shadow-lg icon-gradient-navy"><i class="fas fa-clipboard-list text-lg"></i></span>
+                        <span class="text-[10px] font-bold px-3 py-1.5 rounded shadow-sm badge-gradient-navy">OPEN</span>
                     </div>
-                    <h3 class="text-3xl font-bold tracking-tight" id="dash-total-open">—</h3>
-                    <p class="text-sm text-slate-500 font-medium">Total Open POAMs</p>
-                    <p class="text-xs text-slate-400 mt-1" id="dash-total-open-sub">Click to view</p>
+                    <h3 class="text-4xl font-bold tracking-tight text-slate-900" id="dash-total-open">—</h3>
+                    <p class="text-sm text-slate-700 font-bold mt-1">Total Open POAMs</p>
                 </div>
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-rose-300 transition-all cursor-pointer" onclick="dashboardDrillDown('overdue')">
+                <div class="bg-white p-5 rounded-xl card-red-border transition-all cursor-pointer" onclick="dashboardDrillDown('overdue')">
                     <div class="flex justify-between items-start mb-3">
-                        <span class="p-2 bg-rose-50 text-rose-600 rounded-lg"><i class="fas fa-exclamation-circle"></i></span>
-                        <span class="text-[10px] font-bold text-rose-400 bg-rose-50 px-2 py-1 rounded">OVERDUE</span>
+                        <span class="p-3 rounded-lg text-white shadow-lg icon-gradient-red"><i class="fas fa-exclamation-circle text-lg"></i></span>
+                        <span class="text-[10px] font-bold px-3 py-1.5 rounded shadow-sm" style="background: linear-gradient(135deg, rgba(220, 38, 38, 0.2), rgba(153, 27, 27, 0.2)); color: #991B1B; border: 1px solid #DC2626;">OVERDUE</span>
                     </div>
-                    <h3 class="text-3xl font-bold tracking-tight text-rose-600" id="dash-overdue">—</h3>
-                    <p class="text-sm text-slate-500 font-medium">Past Due Date</p>
-                    <p class="text-xs text-rose-400 mt-1" id="dash-overdue-sub">Requires attention</p>
+                    <h3 class="text-4xl font-bold tracking-tight text-red-600" id="dash-overdue">—</h3>
+                    <p class="text-sm text-slate-700 font-bold mt-1">Past Due Date</p>
                 </div>
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-amber-300 transition-all cursor-pointer" onclick="dashboardDrillDown('due-30')">
+                <div class="bg-white p-5 rounded-xl card-amber-border transition-all cursor-pointer" onclick="dashboardDrillDown('due-30')">
                     <div class="flex justify-between items-start mb-3">
-                        <span class="p-2 bg-amber-50 text-amber-600 rounded-lg"><i class="fas fa-clock"></i></span>
-                        <span class="text-[10px] font-bold text-amber-400 bg-amber-50 px-2 py-1 rounded">DUE SOON</span>
+                        <span class="p-3 rounded-lg text-white shadow-lg" style="background: linear-gradient(135deg, #F59E0B, #D97706);"><i class="fas fa-clock text-lg"></i></span>
+                        <span class="text-[10px] font-bold px-3 py-1.5 rounded shadow-sm" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.2)); color: #D97706; border: 1px solid #F59E0B;">DUE SOON</span>
                     </div>
-                    <h3 class="text-3xl font-bold tracking-tight text-amber-600" id="dash-coming-due">—</h3>
-                    <p class="text-sm text-slate-500 font-medium">Coming Due (30d)</p>
-                    <p class="text-xs text-amber-400 mt-1" id="dash-coming-due-sub">Workload forecast</p>
+                    <h3 class="text-4xl font-bold tracking-tight text-amber-600" id="dash-coming-due">—</h3>
+                    <p class="text-sm text-slate-700 font-bold mt-1">Coming Due (30d)</p>
                 </div>
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-emerald-300 transition-all cursor-pointer" onclick="dashboardDrillDown('closed')">
+                <div class="bg-white p-5 rounded-xl card-emerald-border transition-all cursor-pointer" onclick="dashboardDrillDown('closed')">
                     <div class="flex justify-between items-start mb-3">
-                        <span class="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><i class="fas fa-check-circle"></i></span>
-                        <span class="text-[10px] font-bold text-emerald-400 bg-emerald-50 px-2 py-1 rounded">CLOSED</span>
+                        <span class="p-3 rounded-lg text-white shadow-lg" style="background: linear-gradient(135deg, #10B981, #059669);"><i class="fas fa-check-circle text-lg"></i></span>
+                        <span class="text-[10px] font-bold px-3 py-1.5 rounded shadow-sm" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2)); color: #059669; border: 1px solid #10B981;">CLOSED</span>
                     </div>
-                    <h3 class="text-3xl font-bold tracking-tight text-emerald-600" id="dash-closed-month">—</h3>
-                    <p class="text-sm text-slate-500 font-medium">Closed This Month</p>
-                    <p class="text-xs text-emerald-400 mt-1" id="dash-closed-month-sub">Velocity indicator</p>
+                    <h3 class="text-4xl font-bold tracking-tight text-emerald-600" id="dash-closed-month">—</h3>
+                    <p class="text-sm text-slate-700 font-bold mt-1">Closed This Month</p>
                 </div>
             </div>
 
             <!-- Row 2: Secondary KPI Tiles -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-red-300 transition-all cursor-pointer" onclick="dashboardDrillDown('critical-high')">
+                <div class="bg-white p-5 rounded-xl card-red-border transition-all cursor-pointer" onclick="dashboardDrillDown('critical-high')">
                     <div class="flex justify-between items-start mb-3">
-                        <span class="p-2 bg-red-50 text-red-600 rounded-lg"><i class="fas fa-fire"></i></span>
-                        <span class="text-[10px] font-bold text-red-400 bg-red-50 px-2 py-1 rounded">SEVERITY</span>
+                        <span class="p-3 rounded-lg text-white shadow-lg icon-gradient-red"><i class="fas fa-fire text-lg"></i></span>
+                        <span class="text-[10px] font-bold px-3 py-1.5 rounded shadow-sm" style="background: linear-gradient(135deg, rgba(220, 38, 38, 0.2), rgba(153, 27, 27, 0.2)); color: #991B1B; border: 1px solid #DC2626;">SEVERITY</span>
                     </div>
-                    <h3 class="text-3xl font-bold tracking-tight text-red-600" id="dash-crit-high">—</h3>
-                    <p class="text-sm text-slate-500 font-medium">Critical + High</p>
-                    <p class="text-xs text-slate-400 mt-1" id="dash-crit-high-sub">Severity exposure</p>
+                    <h3 class="text-4xl font-bold tracking-tight text-red-600" id="dash-crit-high">—</h3>
+                    <p class="text-sm text-slate-700 font-bold mt-1">Critical + High</p>
                 </div>
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-blue-300 transition-all cursor-pointer" onclick="dashboardDrillDown('closed')">
+                <div class="bg-white p-5 rounded-xl card-blue-border transition-all cursor-pointer" onclick="dashboardDrillDown('closed')">
                     <div class="flex justify-between items-start mb-3">
-                        <span class="p-2 bg-blue-50 text-blue-600 rounded-lg"><i class="fas fa-stopwatch"></i></span>
-                        <span class="text-[10px] font-bold text-blue-400 bg-blue-50 px-2 py-1 rounded">MTTR</span>
+                        <span class="p-3 rounded-lg text-white shadow-lg" style="background: linear-gradient(135deg, #3B82F6, #2563EB);"><i class="fas fa-stopwatch text-lg"></i></span>
+                        <span class="text-[10px] font-bold px-3 py-1.5 rounded shadow-sm" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.2)); color: #1E40AF; border: 1px solid #3B82F6;">MTTR</span>
                     </div>
-                    <h3 class="text-3xl font-bold tracking-tight text-blue-600" id="dash-mttr">—</h3>
-                    <p class="text-sm text-slate-500 font-medium">Mean Time to Remediate</p>
-                    <p class="text-xs text-slate-400 mt-1" id="dash-mttr-sub">Avg days to close</p>
+                    <h3 class="text-4xl font-bold tracking-tight text-blue-600" id="dash-mttr">—</h3>
+                    <p class="text-sm text-slate-700 font-bold mt-1">Mean Time to Remediate</p>
                 </div>
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-green-300 transition-all cursor-pointer" onclick="dashboardDrillDown('patchable')">
+                <div class="bg-white p-5 rounded-xl card-green-border transition-all cursor-pointer" onclick="dashboardDrillDown('patchable')">
                     <div class="flex justify-between items-start mb-3">
-                        <span class="p-2 bg-green-50 text-green-600 rounded-lg"><i class="fas fa-wrench"></i></span>
-                        <span class="text-[10px] font-bold text-green-400 bg-green-50 px-2 py-1 rounded">EASY WINS</span>
+                        <span class="p-3 rounded-lg text-white shadow-lg" style="background: linear-gradient(135deg, #22C55E, #16A34A);"><i class="fas fa-wrench text-lg"></i></span>
+                        <span class="text-[10px] font-bold px-3 py-1.5 rounded shadow-sm" style="background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.2)); color: #15803D; border: 1px solid #22C55E;">EASY WINS</span>
                     </div>
-                    <h3 class="text-3xl font-bold tracking-tight text-green-600" id="dash-patchable">—</h3>
-                    <p class="text-sm text-slate-500 font-medium">Patchable / Easy Wins</p>
-                    <p class="text-xs text-slate-400 mt-1" id="dash-patchable-sub">vs coordination required</p>
+                    <h3 class="text-4xl font-bold tracking-tight text-green-600" id="dash-patchable">—</h3>
+                    <p class="text-sm text-slate-700 font-bold mt-1">Patchable / Easy Wins</p>
                 </div>
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-orange-300 transition-all cursor-pointer" onclick="dashboardDrillDown('delayed')">
+                <div class="bg-white p-5 rounded-xl card-orange-border transition-all cursor-pointer" onclick="dashboardDrillDown('delayed')">
                     <div class="flex justify-between items-start mb-3">
-                        <span class="p-2 bg-orange-50 text-orange-600 rounded-lg"><i class="fas fa-calendar-times"></i></span>
-                        <span class="text-[10px] font-bold text-orange-400 bg-orange-50 px-2 py-1 rounded">SLIPPED</span>
+                        <span class="p-3 rounded-lg text-white shadow-lg" style="background: linear-gradient(135deg, #F97316, #EA580C);"><i class="fas fa-calendar-times text-lg"></i></span>
+                        <span class="text-[10px] font-bold px-3 py-1.5 rounded shadow-sm" style="background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(234, 88, 12, 0.2)); color: #C2410C; border: 1px solid #F97316;">SLIPPED</span>
                     </div>
-                    <h3 class="text-3xl font-bold tracking-tight text-orange-600" id="dash-delayed">—</h3>
-                    <p class="text-sm text-slate-500 font-medium">Delayed / Extended</p>
-                    <p class="text-xs text-slate-400 mt-1" id="dash-delayed-sub">Schedule slippage</p>
+                    <h3 class="text-4xl font-bold tracking-tight text-orange-600" id="dash-delayed">—</h3>
+                    <p class="text-sm text-slate-700 font-bold mt-1">Delayed / Extended</p>
                 </div>
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-teal-300 transition-all cursor-pointer" onclick="dashboardDrillDown('open')">
+                <div class="bg-white p-5 rounded-xl card-teal-border transition-all cursor-pointer" onclick="dashboardDrillDown('open')">
                     <div class="flex justify-between items-start mb-3">
-                        <span class="p-2 bg-teal-50 text-teal-600 rounded-lg"><i class="fas fa-shield-alt"></i></span>
-                        <span class="text-[10px] font-bold text-teal-400 bg-teal-50 px-2 py-1 rounded">SLA</span>
+                        <span class="p-3 rounded-lg text-white shadow-lg" style="background: linear-gradient(135deg, #14B8A6, #0D9488);"><i class="fas fa-shield-alt text-lg"></i></span>
+                        <span class="text-[10px] font-bold px-3 py-1.5 rounded shadow-sm" style="background: linear-gradient(135deg, rgba(20, 184, 166, 0.2), rgba(13, 148, 136, 0.2)); color: #0F766E; border: 1px solid #14B8A6;">SLA</span>
                     </div>
-                    <h3 class="text-3xl font-bold tracking-tight text-teal-600" id="dash-sla-compliance">—</h3>
-                    <p class="text-sm text-slate-500 font-medium">SLA Compliance</p>
-                    <p class="text-xs text-slate-400 mt-1" id="dash-sla-compliance-sub">% within SLA window</p>
+                    <h3 class="text-4xl font-bold tracking-tight text-teal-600" id="dash-sla-compliance">—</h3>
+                    <p class="text-sm text-slate-700 font-bold mt-1">SLA Compliance</p>
                 </div>
             </div>
 
