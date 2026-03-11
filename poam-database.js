@@ -167,37 +167,83 @@ class POAMDatabase {
             await this.init();
         }
 
-        const transaction = this.db.transaction(['poams'], 'readwrite');
-        const store = transaction.objectStore('poams');
+        console.log('📦 addPOAMsBatch: Starting with', poams.length, 'POAMs');
 
         // Transform each POAM to formal structure
         const formalPOAMs = poams.map(poam => this.transformToFormalPOAM(poam));
+        console.log('📦 addPOAMsBatch: Transformed', formalPOAMs.length, 'POAMs');
 
         return new Promise((resolve, reject) => {
+            const BATCH_TIMEOUT = 30000; // 30 second timeout
+            let timeoutId;
             let completed = 0;
             let errors = [];
+            let transactionComplete = false;
 
-            formalPOAMs.forEach(poam => {
-                const request = store.put(poam);
-                request.onsuccess = () => {
-                    completed++;
-                    if (completed === formalPOAMs.length) {
-                        if (errors.length > 0) {
-                            console.warn('⚠️ Some POAMs failed to save:', errors);
+            // Create transaction
+            console.log('📦 addPOAMsBatch: Creating transaction...');
+            const transaction = this.db.transaction(['poams'], 'readwrite');
+            const store = transaction.objectStore('poams');
+
+            // Handle transaction completion
+            transaction.oncomplete = () => {
+                console.log('📦 addPOAMsBatch: Transaction completed');
+                transactionComplete = true;
+                clearTimeout(timeoutId);
+                console.log(`✅ Saved ${completed - errors.length} POAMs to database`);
+                resolve({ saved: completed - errors.length, errors });
+            };
+
+            transaction.onerror = (e) => {
+                console.error('📦 addPOAMsBatch: Transaction error:', e.target.error);
+                clearTimeout(timeoutId);
+                reject(new Error('Transaction failed: ' + e.target.error?.message));
+            };
+
+            transaction.onabort = (e) => {
+                console.error('📦 addPOAMsBatch: Transaction aborted:', e.target.error);
+                clearTimeout(timeoutId);
+                reject(new Error('Transaction aborted: ' + e.target.error?.message));
+            };
+
+            // Timeout protection
+            timeoutId = setTimeout(() => {
+                if (!transactionComplete) {
+                    console.error('📦 addPOAMsBatch: TIMEOUT after', BATCH_TIMEOUT, 'ms');
+                    try {
+                        transaction.abort();
+                    } catch (e) {
+                        // ignore abort errors
+                    }
+                    reject(new Error(`Batch save timeout - only ${completed} of ${formalPOAMs.length} completed`));
+                }
+            }, BATCH_TIMEOUT);
+
+            // Process each POAM
+            formalPOAMs.forEach((poam, index) => {
+                try {
+                    const request = store.put(poam);
+                    
+                    request.onsuccess = () => {
+                        completed++;
+                        if (completed % 50 === 0) {
+                            console.log(`📦 addPOAMsBatch: Progress ${completed}/${formalPOAMs.length}`);
                         }
-                        console.log(`✅ Saved ${completed - errors.length} POAMs to database`);
-                        resolve({ saved: completed - errors.length, errors });
-                    }
-                };
-                request.onerror = () => {
-                    errors.push({ poam: poam.id, error: request.error });
+                    };
+                    
+                    request.onerror = (e) => {
+                        console.error(`📦 addPOAMsBatch: Error saving POAM ${poam.id}:`, e.target.error);
+                        errors.push({ poam: poam.id, error: e.target.error?.message });
+                        completed++;
+                    };
+                } catch (err) {
+                    console.error(`📦 addPOAMsBatch: Exception for POAM ${poam.id}:`, err);
+                    errors.push({ poam: poam.id, error: err.message });
                     completed++;
-                    if (completed === formalPOAMs.length) {
-                        console.warn('⚠️ Some POAMs failed to save:', errors);
-                        resolve({ saved: completed - errors.length, errors });
-                    }
-                };
+                }
             });
+
+            console.log('📦 addPOAMsBatch: All', formalPOAMs.length, 'requests queued');
         });
     }
 
@@ -369,13 +415,55 @@ class POAMDatabase {
             await this.init();
         }
 
-        const transaction = this.db.transaction(['poams'], 'readonly');
-        const store = transaction.objectStore('poams');
+        console.log('📦 getAllPOAMs: Starting fetch...');
 
         return new Promise((resolve, reject) => {
-            const request = store.getAll();
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
+            const FETCH_TIMEOUT = 10000; // 10 second timeout
+            let timeoutId;
+            let transactionComplete = false;
+
+            try {
+                const transaction = this.db.transaction(['poams'], 'readonly');
+                const store = transaction.objectStore('poams');
+
+                transaction.oncomplete = () => {
+                    transactionComplete = true;
+                    clearTimeout(timeoutId);
+                };
+
+                transaction.onerror = (e) => {
+                    clearTimeout(timeoutId);
+                    console.error('📦 getAllPOAMs: Transaction error:', e.target.error);
+                    reject(new Error('Failed to fetch POAMs: ' + e.target.error?.message));
+                };
+
+                const request = store.getAll();
+                
+                request.onsuccess = () => {
+                    clearTimeout(timeoutId);
+                    console.log('📦 getAllPOAMs: Fetched', request.result.length, 'POAMs');
+                    resolve(request.result);
+                };
+                
+                request.onerror = (e) => {
+                    clearTimeout(timeoutId);
+                    console.error('📦 getAllPOAMs: Request error:', e.target.error);
+                    reject(new Error('Failed to fetch POAMs: ' + e.target.error?.message));
+                };
+
+                // Timeout protection
+                timeoutId = setTimeout(() => {
+                    if (!transactionComplete) {
+                        console.error('📦 getAllPOAMs: TIMEOUT after', FETCH_TIMEOUT, 'ms');
+                        reject(new Error('Fetch POAMs timeout - database may be locked'));
+                    }
+                }, FETCH_TIMEOUT);
+
+            } catch (err) {
+                clearTimeout(timeoutId);
+                console.error('📦 getAllPOAMs: Exception:', err);
+                reject(new Error('Failed to fetch POAMs: ' + err.message));
+            }
         });
     }
 
