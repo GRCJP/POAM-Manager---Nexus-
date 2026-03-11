@@ -255,33 +255,28 @@ class PipelineOrchestrator {
         
         const eligibleFindings = [];
         const excludedFindings = [];
-        const now = new Date();
-        const ELIGIBILITY_THRESHOLD_DAYS = 30;
+        const INACTIVE_STATUSES = ['fixed', 'closed', 'resolved', 'ignored', 'disabled'];
+
+        console.log(`🔍 PHASE 1: Processing ${rawVulnerabilities.length} raw findings`);
+        if (rawVulnerabilities.length > 0) {
+            const sample = rawVulnerabilities[0];
+            console.log('🔍 PHASE 1: Sample finding fields:', Object.keys(sample).join(', '));
+            console.log('🔍 PHASE 1: Sample finding status:', sample.status, '| severity:', sample.severity, '| title:', sample.title?.substring(0, 60));
+        }
         
         for (let i = 0; i < rawVulnerabilities.length; i++) {
             const finding = rawVulnerabilities[i];
             
-            // Parse first_detected date
-            const firstDetected = this.parseDate(finding.firstDetected);
-            
-            if (!firstDetected) {
-                // No first_detected date - include by default
-                eligibleFindings.push(finding);
+            // Gate: exclude only Fixed/Closed/Resolved findings
+            // Active findings of ANY age are eligible — age and SLA are tracked as metadata
+            const status = (finding.status || '').toLowerCase();
+            if (INACTIVE_STATUSES.includes(status)) {
+                excludedFindings.push({
+                    finding,
+                    reason: `Inactive status: ${finding.status}`
+                });
             } else {
-                // Calculate days since first detection
-                const daysSinceDetection = Math.floor((now - firstDetected) / (1000 * 60 * 60 * 24));
-                
-                if (daysSinceDetection > ELIGIBILITY_THRESHOLD_DAYS) {
-                    // Older than 30 days - eligible for POAM
-                    eligibleFindings.push(finding);
-                } else {
-                    // Within 30 days - exclude (still in normal remediation cycle)
-                    excludedFindings.push({
-                        finding,
-                        reason: 'Within 30-day remediation cycle',
-                        daysSinceDetection
-                    });
-                }
+                eligibleFindings.push(finding);
             }
             
             // Update progress every 100 findings
@@ -291,6 +286,13 @@ class PipelineOrchestrator {
                 await this.db.saveScanRun(this.currentRun);
                 this.updateProgress();
             }
+        }
+
+        console.log(`🔍 PHASE 1: ${eligibleFindings.length} eligible, ${excludedFindings.length} excluded (inactive status)`);
+        if (excludedFindings.length > 0) {
+            const reasons = {};
+            excludedFindings.forEach(e => { reasons[e.reason] = (reasons[e.reason] || 0) + 1; });
+            console.log('🔍 PHASE 1: Exclusion reasons:', reasons);
         }
         
         // Update counts
