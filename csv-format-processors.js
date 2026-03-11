@@ -133,8 +133,17 @@ class QualysProcessor {
                 row[header] = rowArray[index];
             });
             
-            // Skip rows without CVE (first column check)
-            if (!row['CVE'] || row['CVE'].trim() === '') {
+            // Skip rows with no meaningful identifier (need at least QID or Title)
+            // CVE is optional — many valid findings (config issues, potential vulns) have no CVE
+            const hasQID = row['QID'] && row['QID'].trim() !== '';
+            const hasTitle = row['Title'] && row['Title'].trim() !== '';
+            if (!hasQID && !hasTitle) {
+                continue;
+            }
+
+            // Skip severity 1-2 (informational) — these don't need POAMs
+            const severityNum = parseInt(row['Severity'] || '0');
+            if (severityNum > 0 && severityNum < 3) {
                 continue;
             }
 
