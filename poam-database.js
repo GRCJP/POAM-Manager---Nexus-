@@ -248,49 +248,58 @@ class POAMDatabase {
     }
 
     transformToFormalPOAM(poam) {
+        // CRITICAL: Spread all source fields FIRST so nothing is lost
+        // (especially remediationSignature, statusHistory, title, vulnerability, etc.)
+        // Then override with formal/normalized field names
         return {
+            ...poam,
+
             // Core identification
             id: poam.id,
             findingIdentifier: poam.findingIdentifier || poam.id,
-            
+
             // Classification
             controlFamily: poam.controlFamily || this.inferControlFamily(poam),
             vulnerabilityName: poam.vulnerabilityName || poam.title || poam.vulnerability,
             findingDescription: poam.findingDescription || poam.description || poam.vulnerability,
             findingSource: poam.findingSource || 'Vulnerability Scan',
-            
+
             // Responsibility
             poc: poam.poc || poam.pocTeam || '',
             pocTeam: poam.pocTeam || poam.poc || '',
             resourcesRequired: poam.resourcesRequired || '',
-            
+
             // Scheduling
             dueDate: poam.dueDate || poam.initialScheduledCompletionDate || this.calculateDueDate(poam),
             initialScheduledCompletionDate: poam.initialScheduledCompletionDate || poam.dueDate || this.calculateDueDate(poam),
             updatedScheduledCompletionDate: poam.updatedScheduledCompletionDate || poam.dueDate || this.calculateDueDate(poam),
             actualCompletionDate: poam.actualCompletionDate || null,
-            
+
             // Status and risk
             findingStatus: poam.findingStatus || poam.status || 'Open',
             riskLevel: poam.riskLevel || poam.risk || 'medium',
-            
+            risk: poam.risk || poam.riskLevel || 'medium',
+
             // Mitigation
             mitigation: poam.mitigation || '',
-            
+
             // Metadata
             createdDate: poam.createdDate || new Date().toISOString(),
-            lastModifiedDate: new Date().toISOString(),
+            lastModifiedDate: poam.lastModifiedDate || new Date().toISOString(),
             scanId: poam.scanId || null,
             needsReview: poam.needsReview || false,
             notes: poam.notes || '',
-            
-            // Data preservation (Critical Fix: Phase 6.20)
+
+            // Data preservation
             affectedAssets: poam.affectedAssets ? this.transformAssetsWithMetadata(poam.affectedAssets) : [],
             totalAffectedAssets: poam.totalAffectedAssets || poam.affectedAssets?.length || 0,
             rawFindings: poam.rawFindings || [],
 
             // Milestones (embedded on POAM for POAM Detail view)
-            milestones: Array.isArray(poam.milestones) ? poam.milestones : []
+            milestones: Array.isArray(poam.milestones) ? poam.milestones : [],
+
+            // Status history MUST be preserved — do NOT lose it on re-save
+            statusHistory: Array.isArray(poam.statusHistory) ? poam.statusHistory : []
         };
     }
 

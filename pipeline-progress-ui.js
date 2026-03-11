@@ -264,66 +264,74 @@ class PipelineProgressUI {
     showComplete(counts) {
         const statusEl = document.getElementById('status-text');
         
+        // Mark all phases as complete
+        for (let i = 1; i <= 5; i++) {
+            const icon = document.getElementById(`phase-${i}-icon`);
+            const status = document.getElementById(`phase-${i}-status`);
+            if (icon) {
+                icon.classList.remove('border-gray-300', 'border-blue-500');
+                icon.classList.add('border-green-500', 'bg-green-500');
+                icon.innerHTML = '<svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>';
+            }
+            if (status) {
+                status.textContent = 'Complete';
+                status.className = 'text-xs text-green-600 phase-status';
+            }
+        }
+
+        // Set overall progress to 100%
+        this.updateOverallProgress(1);
+
         // Get scan analysis if available
         const analysis = window.lastScanAnalysis || {};
-        const hasReImportDetails = (counts.poamsMerged > 0 || counts.poamsAutoResolved > 0 || analysis.autoClosedPOAMs > 0);
+        const isReImport = (counts.poamsMerged > 0 || counts.poamsAutoResolved > 0 || analysis.autoClosedPOAMs > 0);
         
-        // Build detailed completion message
         let detailsHtml = '';
-        
-        if (hasReImportDetails) {
-            detailsHtml += `<div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-left">`;
-            detailsHtml += `<h4 class="text-sm font-semibold text-blue-800 mb-2">📊 Re-import Analysis</h4>`;
-            detailsHtml += `<ul class="text-xs text-blue-700 space-y-1">`;
-            detailsHtml += `<li>✅ <strong>${counts.poamsCreated || 0}</strong> new POAMs created</li>`;
-            detailsHtml += `<li>🔄 <strong>${counts.poamsMerged || analysis.updatedPOAMs || 0}</strong> existing POAMs updated</li>`;
-            detailsHtml += `<li>✓ <strong>${counts.poamsAutoResolved || analysis.autoClosedPOAMs || 0}</strong> POAMs auto-closed (no longer in scan)</li>`;
-            detailsHtml += `</ul>`;
-            
-            // Show auto-closed POAMs list if any
-            if (analysis.autoClosedIds && analysis.autoClosedIds.length > 0) {
-                detailsHtml += `<div class="mt-2 text-xs text-blue-600">`;
-                detailsHtml += `<strong>Auto-closed POAMs:</strong> ${analysis.autoClosedIds.join(', ')}`;
-                detailsHtml += `</div>`;
-            }
-            
-            // Show previously open POAMs that were closed
-            if (analysis.previouslyOpenPOAMs && analysis.previouslyOpenPOAMs.length > 0) {
-                detailsHtml += `<div class="mt-2 text-xs text-slate-600 max-h-24 overflow-y-auto">`;
-                detailsHtml += `<strong>Resolved vulnerabilities:</strong><br>`;
-                analysis.previouslyOpenPOAMs.slice(0, 5).forEach(p => {
-                    detailsHtml += `• ${p.id}: ${p.title.substring(0, 40)}${p.title.length > 40 ? '...' : ''}<br>`;
-                });
-                if (analysis.previouslyOpenPOAMs.length > 5) {
-                    detailsHtml += `... and ${analysis.previouslyOpenPOAMs.length - 5} more`;
-                }
-                detailsHtml += `</div>`;
-            }
-            
-            detailsHtml += `</div>`;
+        if (isReImport) {
+            detailsHtml = `
+                <div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-left text-xs text-blue-700 space-y-1">
+                    <div class="font-semibold text-blue-800 mb-1">📊 Re-import Analysis</div>
+                    <div>✅ <strong>${counts.poamsCreated || 0}</strong> new POAMs created</div>
+                    <div>🔄 <strong>${counts.poamsMerged || analysis.updatedPOAMs || 0}</strong> existing POAMs updated</div>
+                    <div>✓ <strong>${counts.poamsAutoResolved || analysis.autoClosedPOAMs || 0}</strong> POAMs auto-closed (no longer in scan)</div>
+                    ${analysis.autoClosedIds && analysis.autoClosedIds.length > 0 ? `<div class="mt-1 text-blue-600"><strong>Closed:</strong> ${analysis.autoClosedIds.slice(0, 5).join(', ')}${analysis.autoClosedIds.length > 5 ? ` +${analysis.autoClosedIds.length - 5} more` : ''}</div>` : ''}
+                </div>`;
         } else {
-            detailsHtml += `<span class="text-sm text-gray-600">`;
-            detailsHtml += `Created ${counts.poamsCreated} POAMs from ${counts.totalRows} findings`;
-            detailsHtml += ` (${counts.excludedCount} excluded, ${counts.poamsSkipped} skipped)`;
-            detailsHtml += `</span>`;
+            detailsHtml = `<div class="mt-2 text-sm text-gray-600">Created <strong>${counts.poamsCreated || 0}</strong> POAMs from <strong>${counts.totalRows || 0}</strong> findings (${counts.excludedCount || 0} excluded)</div>`;
         }
-        
+
         if (statusEl) {
             statusEl.innerHTML = `
                 <div class="text-green-600 font-medium">
                     ✅ Pipeline completed successfully!
                     ${detailsHtml}
-                    <div class="mt-3 flex gap-2 justify-center">
-                        <button type="button" onclick="showModule('dashboard'); document.getElementById('pipeline-progress-container')?.classList.add('hidden')" class="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
+                    <div class="mt-3 text-xs text-gray-400">Auto-closing in <span id="close-countdown">4</span>s...</div>
+                    <div class="mt-2 flex gap-2 justify-center">
+                        <button type="button" onclick="showModule('dashboard'); document.getElementById('pipeline-progress-container')?.classList.add('hidden')" 
+                            class="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
                             <i class="fas fa-chart-line mr-1"></i> Go to Dashboard
                         </button>
-                        <button type="button" onclick="document.getElementById('pipeline-progress-container')?.classList.add('hidden')" class="px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-200 rounded-lg hover:bg-slate-300 transition-colors">
+                        <button type="button" onclick="document.getElementById('pipeline-progress-container')?.classList.add('hidden')" 
+                            class="px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-200 rounded-lg hover:bg-slate-300 transition-colors">
                             Stay Here
                         </button>
                     </div>
                 </div>
             `;
         }
+
+        // Auto-close after 4 seconds
+        let countdown = 4;
+        const countdownInterval = setInterval(() => {
+            countdown--;
+            const el = document.getElementById('close-countdown');
+            if (el) el.textContent = countdown;
+            if (countdown <= 0) {
+                clearInterval(countdownInterval);
+                const container = document.getElementById('pipeline-progress-container');
+                if (container) container.classList.add('hidden');
+            }
+        }, 1000);
     }
 
     showError(error) {
