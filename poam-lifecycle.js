@@ -271,6 +271,8 @@ async function mergePOAMsFromScan(newPOAMs) {
 
     // Check for POAMs no longer in scan (potential closures)
     const closureCandidates = [];
+    const previouslyOpenPOAMs = [];
+    
     for (const existing of existingPOAMs) {
         if (!existing.remediationSignature) continue;
         if (newSignatures.has(existing.remediationSignature)) continue;
@@ -280,9 +282,37 @@ async function mergePOAMsFromScan(newPOAMs) {
 
         // This POAM was in the previous scan but not in the new one — mark as closure candidate
         closureCandidates.push(existing);
+        previouslyOpenPOAMs.push({
+            id: existing.id,
+            title: existing.title || existing.vulnerabilityName || 'Unknown',
+            signature: existing.remediationSignature,
+            status: existing.findingStatus || existing.status
+        });
+    }
+    
+    // Log detailed analysis of what changed
+    console.log(`📊 SCAN ANALYSIS REPORT:`);
+    console.log(`   - New POAMs created: ${created}`);
+    console.log(`   - Existing POAMs updated: ${updated}`);
+    console.log(`   - POAMs no longer in scan (to be closed): ${closureCandidates.length}`);
+    
+    if (closureCandidates.length > 0) {
+        console.log(`   📋 POAMs that will be AUTO-CLOSED:`);
+        closureCandidates.forEach((p, i) => {
+            console.log(`      ${i + 1}. ${p.id}: ${p.title || p.vulnerabilityName || 'Unknown'}`);
+        });
+    }
+    
+    if (updated > 0) {
+        console.log(`   📋 Existing POAMs updated with new scan data:`);
+        mergedPOAMs.filter(p => p.lastScanDate && p.statusHistory && 
+            p.statusHistory.some(h => h.action === 'scan_update')).forEach((p, i) => {
+            console.log(`      ${i + 1}. ${p.id}: ${p.title || p.vulnerabilityName || 'Unknown'}`);
+        });
     }
 
     // Auto-close POAMs not found in new scan
+    const autoClosedIds = [];
     for (const candidate of closureCandidates) {
         candidate.statusHistory = candidate.statusHistory || [];
         candidate.statusHistory.push({
@@ -298,7 +328,18 @@ async function mergePOAMsFromScan(newPOAMs) {
         candidate.lastModifiedDate = new Date().toISOString();
         candidate.lastScanDate = new Date().toISOString();
         mergedPOAMs.push(candidate);
+        autoClosedIds.push(candidate.id);
     }
+    
+    // Store scan analysis for UI display
+    window.lastScanAnalysis = {
+        timestamp: new Date().toISOString(),
+        newPOAMs: created,
+        updatedPOAMs: updated,
+        autoClosedPOAMs: closureCandidates.length,
+        autoClosedIds: autoClosedIds,
+        previouslyOpenPOAMs: previouslyOpenPOAMs
+    };
 
     console.log(`🔄 Merge results: ${created} new, ${updated} updated, ${closureCandidates.length} auto-resolved`);
 

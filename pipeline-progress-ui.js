@@ -263,18 +263,56 @@ class PipelineProgressUI {
     
     showComplete(counts) {
         const statusEl = document.getElementById('status-text');
+        
+        // Get scan analysis if available
+        const analysis = window.lastScanAnalysis || {};
+        const hasReImportDetails = (counts.poamsMerged > 0 || counts.poamsAutoResolved > 0 || analysis.autoClosedPOAMs > 0);
+        
+        // Build detailed completion message
+        let detailsHtml = '';
+        
+        if (hasReImportDetails) {
+            detailsHtml += `<div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-left">`;
+            detailsHtml += `<h4 class="text-sm font-semibold text-blue-800 mb-2">📊 Re-import Analysis</h4>`;
+            detailsHtml += `<ul class="text-xs text-blue-700 space-y-1">`;
+            detailsHtml += `<li>✅ <strong>${counts.poamsCreated || 0}</strong> new POAMs created</li>`;
+            detailsHtml += `<li>🔄 <strong>${counts.poamsMerged || analysis.updatedPOAMs || 0}</strong> existing POAMs updated</li>`;
+            detailsHtml += `<li>✓ <strong>${counts.poamsAutoResolved || analysis.autoClosedPOAMs || 0}</strong> POAMs auto-closed (no longer in scan)</li>`;
+            detailsHtml += `</ul>`;
+            
+            // Show auto-closed POAMs list if any
+            if (analysis.autoClosedIds && analysis.autoClosedIds.length > 0) {
+                detailsHtml += `<div class="mt-2 text-xs text-blue-600">`;
+                detailsHtml += `<strong>Auto-closed POAMs:</strong> ${analysis.autoClosedIds.join(', ')}`;
+                detailsHtml += `</div>`;
+            }
+            
+            // Show previously open POAMs that were closed
+            if (analysis.previouslyOpenPOAMs && analysis.previouslyOpenPOAMs.length > 0) {
+                detailsHtml += `<div class="mt-2 text-xs text-slate-600 max-h-24 overflow-y-auto">`;
+                detailsHtml += `<strong>Resolved vulnerabilities:</strong><br>`;
+                analysis.previouslyOpenPOAMs.slice(0, 5).forEach(p => {
+                    detailsHtml += `• ${p.id}: ${p.title.substring(0, 40)}${p.title.length > 40 ? '...' : ''}<br>`;
+                });
+                if (analysis.previouslyOpenPOAMs.length > 5) {
+                    detailsHtml += `... and ${analysis.previouslyOpenPOAMs.length - 5} more`;
+                }
+                detailsHtml += `</div>`;
+            }
+            
+            detailsHtml += `</div>`;
+        } else {
+            detailsHtml += `<span class="text-sm text-gray-600">`;
+            detailsHtml += `Created ${counts.poamsCreated} POAMs from ${counts.totalRows} findings`;
+            detailsHtml += ` (${counts.excludedCount} excluded, ${counts.poamsSkipped} skipped)`;
+            detailsHtml += `</span>`;
+        }
+        
         if (statusEl) {
-            const mergeInfo = (counts.poamsMerged > 0 || counts.poamsAutoResolved > 0)
-                ? `<br><span class="text-sm text-blue-600">Re-import: ${counts.poamsMerged || 0} updated, ${counts.poamsAutoResolved || 0} auto-resolved</span>`
-                : '';
             statusEl.innerHTML = `
                 <div class="text-green-600 font-medium">
-                    ✅ Pipeline completed successfully!<br>
-                    <span class="text-sm text-gray-600">
-                        Created ${counts.poamsCreated} POAMs from ${counts.totalRows} findings
-                        (${counts.excludedCount} excluded, ${counts.poamsSkipped} skipped)
-                    </span>
-                    ${mergeInfo}
+                    ✅ Pipeline completed successfully!
+                    ${detailsHtml}
                     <div class="mt-3 flex gap-2 justify-center">
                         <button type="button" onclick="showModule('dashboard'); document.getElementById('pipeline-progress-container')?.classList.add('hidden')" class="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
                             <i class="fas fa-chart-line mr-1"></i> Go to Dashboard
