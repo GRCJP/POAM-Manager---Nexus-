@@ -122,8 +122,13 @@ class QualysProcessor {
         for (let i = headerRowIndex + 1; i < data.length; i++) {
             const rowArray = data[i];
             
-            // Skip empty rows
-            if (!rowArray || rowArray.length === 0 || !rowArray[0]) {
+            // Skip truly empty rows (all cells blank)
+            // Do NOT check rowArray[0] alone — CVE column is often empty for non-CVE findings
+            if (!rowArray || rowArray.length === 0) {
+                continue;
+            }
+            const hasAnyData = rowArray.some(cell => cell && cell.toString().trim() !== '');
+            if (!hasAnyData) {
                 continue;
             }
             
@@ -138,12 +143,6 @@ class QualysProcessor {
             const hasQID = row['QID'] && row['QID'].trim() !== '';
             const hasTitle = row['Title'] && row['Title'].trim() !== '';
             if (!hasQID && !hasTitle) {
-                continue;
-            }
-
-            // Skip severity 1-2 (informational) — these don't need POAMs
-            const severityNum = parseInt(row['Severity'] || '0');
-            if (severityNum > 0 && severityNum < 3) {
                 continue;
             }
 
