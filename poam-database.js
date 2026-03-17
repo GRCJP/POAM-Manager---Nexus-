@@ -248,12 +248,8 @@ class POAMDatabase {
     }
 
     transformToFormalPOAM(poam) {
-        // CRITICAL: Spread all source fields FIRST so nothing is lost
-        // (especially remediationSignature, statusHistory, title, vulnerability, etc.)
-        // Then override with formal/normalized field names
+        // EXPLICIT field selection only - no spread operator to avoid copying large arrays
         return {
-            ...poam,
-
             // Core identification
             id: poam.id,
             findingIdentifier: poam.findingIdentifier || poam.id,
@@ -277,6 +273,7 @@ class POAMDatabase {
 
             // Status and risk
             findingStatus: poam.findingStatus || poam.status || 'Open',
+            status: poam.status || poam.findingStatus || 'Open',
             riskLevel: poam.riskLevel || poam.risk || 'medium',
             risk: poam.risk || poam.riskLevel || 'medium',
 
@@ -290,10 +287,22 @@ class POAMDatabase {
             needsReview: poam.needsReview || false,
             notes: poam.notes || '',
 
+            // Essential fields for UI
+            title: poam.title || poam.vulnerabilityName,
+            vulnerability: poam.vulnerability || poam.vulnerabilityName,
+            description: poam.description || poam.findingDescription,
+            
+            // Identifiers
+            cves: Array.isArray(poam.cves) ? poam.cves : [],
+            qids: Array.isArray(poam.qids) ? poam.qids : [],
+            remediationSignature: poam.remediationSignature || '',
+            patchable: poam.patchable || false,
+            confidenceScore: poam.confidenceScore || 0,
+            isPriority: poam.isPriority || false,
+
             // Data preservation
             affectedAssets: poam.affectedAssets ? this.transformAssetsWithMetadata(poam.affectedAssets) : [],
             totalAffectedAssets: poam.totalAffectedAssets || poam.affectedAssets?.length || 0,
-            // rawFindings removed - stored in scan summaries to reduce POAM size
 
             // Milestones (embedded on POAM for POAM Detail view)
             milestones: Array.isArray(poam.milestones) ? poam.milestones : [],
