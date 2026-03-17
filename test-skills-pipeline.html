@@ -327,6 +327,15 @@
                 log('\n🔧 Step 6: Grouping by remediation signature...', 'info');
                 const groupingSkill = new GroupingSkill();
                 const groupResult = await groupingSkill.execute({ findings: classified });
+                
+                // Debug: Check severity values in first group
+                if (groupResult.data.groups.length > 0) {
+                    const firstGroup = groupResult.data.groups[0];
+                    log(`\n   Debug - First group findings severities:`, 'info');
+                    firstGroup.findings.slice(0, 3).forEach((f, i) => {
+                        log(`      Finding ${i+1}: sla.severity="${f.sla?.severity}", severity="${f.severity}"`, 'info');
+                    });
+                }
 
                 if (!groupResult.success) {
                     throw new Error('Grouping failed: ' + groupResult.errors.join(', '));
