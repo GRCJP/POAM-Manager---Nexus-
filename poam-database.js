@@ -172,9 +172,17 @@ class POAMDatabase {
         // Transform each POAM to formal structure
         const formalPOAMs = poams.map(poam => this.transformToFormalPOAM(poam));
         console.log('📦 addPOAMsBatch: Transformed', formalPOAMs.length, 'POAMs');
+        
+        // Debug: Check size of first transformed POAM
+        if (formalPOAMs.length > 0) {
+            const sampleSize = JSON.stringify(formalPOAMs[0]).length;
+            const estimatedTotal = (sampleSize * formalPOAMs.length) / (1024 * 1024);
+            console.log(`📦 addPOAMsBatch: Sample POAM size: ${(sampleSize / 1024).toFixed(2)}KB, Estimated total: ${estimatedTotal.toFixed(2)}MB`);
+            console.log('📦 addPOAMsBatch: Sample POAM keys:', Object.keys(formalPOAMs[0]));
+        }
 
-        // Process in smaller chunks to avoid QuotaExceededError
-        const CHUNK_SIZE = 50;
+        // Process in very small chunks to avoid QuotaExceededError
+        const CHUNK_SIZE = 10; // Reduced from 50 to 10 for safety
         let totalSaved = 0;
         let allErrors = [];
 
