@@ -264,11 +264,15 @@ class POAMDatabase {
     }
 
     transformToFormalPOAM(poam) {
-        // CRITICAL: Spread all source fields FIRST so nothing is lost
-        // (especially remediationSignature, statusHistory, title, vulnerability, etc.)
-        // Then override with formal/normalized field names
+        // Strip heavy payload fields to prevent QuotaExceededError
+        const lightPoam = { ...poam };
+        delete lightPoam.rawFindings; // Can be hundreds of objects per POAM
+        delete lightPoam.evidenceSamples;
+        delete lightPoam.raw;
+        delete lightPoam.rawData;
+        
         return {
-            ...poam,
+            ...lightPoam,
 
             // Core identification
             id: poam.id,
@@ -306,10 +310,12 @@ class POAMDatabase {
             needsReview: poam.needsReview || false,
             notes: poam.notes || '',
 
-            // Data preservation
-            affectedAssets: poam.affectedAssets ? this.transformAssetsWithMetadata(poam.affectedAssets) : [],
+            // Data preservation - lightweight assets only
+            affectedAssets: poam.affectedAssets ? this.transformAssetsLightweight(poam.affectedAssets) : [],
             totalAffectedAssets: poam.totalAffectedAssets || poam.affectedAssets?.length || 0,
-            rawFindings: poam.rawFindings || [],
+            
+            // Store metadata about raw findings without the actual data
+            rawFindingsCount: poam.rawFindings?.length || 0,
 
             // Milestones (embedded on POAM for POAM Detail view)
             milestones: Array.isArray(poam.milestones) ? poam.milestones : [],
@@ -319,7 +325,8 @@ class POAMDatabase {
         };
     }
 
-    transformAssetsWithMetadata(assets) {
+    transformAssetsLightweight(assets) {
+        // Store only essential asset metadata to reduce storage footprint
         return assets.map(asset => ({
             id: asset.id || asset.assetId || asset.asset_id || asset.name || 'Unknown',
             name: asset.name || asset.assetName || asset.asset_name || asset.assetId || 'Unknown Asset',
@@ -327,19 +334,27 @@ class POAMDatabase {
             asset_name: asset.asset_name || asset.assetName || asset.name || 'Unknown Asset',
             ipv4: asset.ipv4 || asset.ip || asset.asset_ipv4 || '',
             os: asset.os || asset.operatingSystem || 'Unknown',
-            source_field: asset.source_field || '',
             status: asset.status || 'affected',
             firstDetected: asset.firstDetected || asset.scanDate || new Date().toISOString().split('T')[0],
             lastDetected: asset.lastDetected || asset.scanDate || new Date().toISOString().split('T')[0],
-            result: asset.results || asset.result || asset.vulnerability || 'Scan metadata not available for this asset',
-            results: asset.results || asset.result || asset.vulnerability || 'Scan metadata not available for this asset',
-            solution: asset.solution || asset.remediation || 'Scan metadata not available for this asset',
-            raw: asset.raw || asset.rawData || 'No raw scan data available',
+            // Truncate verbose fields to prevent bloat
+            result: this.truncateField(asset.results || asset.result || asset.vulnerability, 500),
+            solution: this.truncateField(asset.solution || asset.remediation, 500),
             ip: asset.ip || asset.ipv4 || asset.asset_ipv4 || '',
             port: asset.port || '',
-            protocol: asset.protocol || '',
-            operatingSystem: asset.operatingSystem || asset.os || 'Unknown'
+            protocol: asset.protocol || ''
         }));
+    }
+    
+    transformAssetsWithMetadata(assets) {
+        // Alias for backward compatibility
+        return this.transformAssetsLightweight(assets);
+    }
+    
+    truncateField(value, maxLength) {
+        if (!value) return '';
+        const str = String(value);
+        return str.length > maxLength ? str.substring(0, maxLength) + '...' : str;
     }
 
     inferControlFamily(poam) {
