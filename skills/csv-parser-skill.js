@@ -303,8 +303,8 @@ class CSVParserSkill extends BaseSkill {
             solution: (row.solution || row['Solution'] || '').trim() || '',
             results: (row.results || row['Results'] || '').trim() || '',
             
-            // Status
-            status: (row.status || row['Status'] || '').trim() || 'unknown',
+            // Status (default to ACTIVE if not present, matching original engine)
+            status: (row.status || row['Status'] || '').trim() || 'ACTIVE',
             firstDetected,
             lastDetected,
             
@@ -321,7 +321,7 @@ class CSVParserSkill extends BaseSkill {
             cve: this.extractCVEs(row.cve || row['CVE']),
             host: (row.assetName || row['Host'] || '').trim() || 'unknown',
             severity: (row.severity || row['Severity'] || '').trim() || 'unknown',
-            status: (row.status || row['State'] || '').trim() || 'unknown',
+            status: (row.status || row['State'] || '').trim() || 'ACTIVE',
             raw: row
         };
     }
@@ -334,7 +334,7 @@ class CSVParserSkill extends BaseSkill {
             cve: this.extractCVEs(row.cve || row['CVE']),
             host: (row.assetName || row['Resource'] || '').trim() || 'unknown',
             severity: (row.severity || row['Severity'] || '').trim() || 'unknown',
-            status: (row.status || row['Status'] || '').trim() || 'unknown',
+            status: (row.status || row['Status'] || '').trim() || 'ACTIVE',
             raw: row
         };
     }
