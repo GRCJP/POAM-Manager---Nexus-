@@ -154,9 +154,16 @@ class CSVParserSkill extends BaseSkill {
             const normalized = header.toLowerCase().trim();
 
             for (const [standardField, variations] of Object.entries(fieldMappings)) {
-                if (variations.some(v => normalized === v || normalized.includes(v))) {
-                    map[standardField] = index;
-                    break;
+                // Use exact match first, then substring match for compound headers
+                const exactMatch = variations.some(v => normalized === v);
+                const substringMatch = variations.some(v => v.length > 3 && normalized.includes(v));
+                
+                if (exactMatch || substringMatch) {
+                    // Prefer exact matches - don't override if already mapped
+                    if (!map[standardField] || exactMatch) {
+                        map[standardField] = index;
+                    }
+                    if (exactMatch) break;
                 }
             }
         });
