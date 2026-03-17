@@ -1475,7 +1475,7 @@ function loadPOAMIdConfigIntoSettings() {
     }
 }
 
-function savePOAMIdConfigFromSettings() {
+async function savePOAMIdConfigFromSettings() {
     const prefix = document.getElementById('settings-poam-id-prefix').value || 'POAM-';
     const startNum = parseInt(document.getElementById('settings-poam-id-start').value) || 1;
     
@@ -1486,8 +1486,34 @@ function savePOAMIdConfigFromSettings() {
         setupCompleted: true
     };
     
-    // Save to localStorage
     localStorage.setItem('poamIdConfig', JSON.stringify(config));
+    
+    const shouldRenumber = confirm('Apply new POAM ID format to all existing POAMs now?');
+    if (shouldRenumber) {
+        try {
+            const result = await renumberAllPOAMIds(prefix, startNum);
+            const updatedConfig = {
+                ...config,
+                currentNumber: result.nextNumber,
+                updatedAt: new Date().toISOString()
+            };
+            localStorage.setItem('poamIdConfig', JSON.stringify(updatedConfig));
+            
+            if (typeof displayVulnerabilityPOAMs === 'function') {
+                await displayVulnerabilityPOAMs();
+            }
+            if (typeof updateVulnerabilityModuleMetrics === 'function') {
+                await updateVulnerabilityModuleMetrics();
+            }
+            
+            alert(`POAM ID configuration updated. Renumbered ${result.updated} POAMs.`);
+            return;
+        } catch (error) {
+            console.error('Error renumbering POAM IDs:', error);
+            alert('POAM ID config saved, but renumbering failed: ' + error.message);
+            return;
+        }
+    }
     
     alert('POAM ID configuration updated successfully!');
 }
@@ -1512,6 +1538,10 @@ function loadPOAMIdConfig() {
     loadPOAMIdConfigIntoSettings();
 }
 
+function formatPOAMId(prefix, number) {
+    return prefix + String(number).padStart(3, '0');
+}
+
 function getNextPOAMId() {
     const config = JSON.parse(localStorage.getItem('poamIdConfig') || '{}');
     
@@ -1519,7 +1549,7 @@ function getNextPOAMId() {
     const prefix = config.prefix || 'POAM-';
     let currentNumber = config.currentNumber || 1;
     
-    const nextId = prefix + String(currentNumber).padStart(3, '0');
+    const nextId = formatPOAMId(prefix, currentNumber);
     
     // Update the current number for next time
     currentNumber++;
@@ -1531,6 +1561,81 @@ function getNextPOAMId() {
     localStorage.setItem('poamIdConfig', JSON.stringify(updatedConfig));
     
     return nextId;
+}
+
+async function ensurePOAMIdConfigForBaselineImport() {
+    const existingConfig = localStorage.getItem('poamIdConfig');
+    if (existingConfig) return true;
+    
+    try {
+        if (typeof poamDB !== 'undefined' && typeof poamDB.countPOAMs === 'function') {
+            const count = await poamDB.countPOAMs();
+            if (count > 0) return true;
+        }
+    } catch (e) {
+        console.warn('Could not check existing POAM count before baseline import:', e);
+    }
+    
+    const wantsSetup = confirm('Set POAM ID format before baseline import?\n\nThis will be used for all imported POAM IDs.');
+    if (!wantsSetup) {
+        const defaultConfig = {
+            prefix: 'POAM-',
+            currentNumber: 1,
+            setupCompleted: true,
+            createdAt: new Date().toISOString()
+        };
+        localStorage.setItem('poamIdConfig', JSON.stringify(defaultConfig));
+        return true;
+    }
+    
+    const prefixInput = prompt('Enter POAM ID prefix:', 'POAM-');
+    if (prefixInput === null) return false;
+    const prefix = prefixInput.trim() || 'POAM-';
+    
+    const startInput = prompt('Enter starting POAM number:', '1');
+    if (startInput === null) return false;
+    const startNum = Math.max(1, parseInt(startInput, 10) || 1);
+    
+    const config = {
+        prefix,
+        currentNumber: startNum,
+        setupCompleted: true,
+        createdAt: new Date().toISOString()
+    };
+    localStorage.setItem('poamIdConfig', JSON.stringify(config));
+    return true;
+}
+
+async function renumberAllPOAMIds(prefix, startNum) {
+    if (typeof poamDB === 'undefined' || typeof poamDB.getAllPOAMs !== 'function') {
+        return { updated: 0, nextNumber: startNum };
+    }
+    
+    const existing = await poamDB.getAllPOAMs();
+    if (!existing || existing.length === 0) {
+        return { updated: 0, nextNumber: startNum };
+    }
+    
+    const sorted = [...existing].sort((a, b) => {
+        const aDate = new Date(a.createdDate || a.lastModifiedDate || 0).getTime();
+        const bDate = new Date(b.createdDate || b.lastModifiedDate || 0).getTime();
+        return aDate - bDate;
+    });
+    
+    let n = startNum;
+    const renumbered = sorted.map(poam => {
+        const newId = formatPOAMId(prefix, n++);
+        return {
+            ...poam,
+            id: newId,
+            findingIdentifier: newId
+        };
+    });
+    
+    await poamDB.clearAllPOAMs();
+    await poamDB.addPOAMsBatch(renumbered);
+    
+    return { updated: renumbered.length, nextNumber: n };
 }
 
 // Update openNewPOAMModal to check for first-time setup

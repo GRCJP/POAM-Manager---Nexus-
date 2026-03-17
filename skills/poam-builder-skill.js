@@ -40,7 +40,8 @@ class POAMBuilderSkill extends BaseSkill {
         console.log(`   Auto-prioritize top: ${this.autoPrioritizeTop}`);
         
         const poams = [];
-        let poamIdCounter = 1;
+        const idConfig = this.getPOAMIdConfig();
+        let poamIdCounter = idConfig.currentNumber;
         this.poamsCreated = 0;
         this.poamsSkipped = 0;
         this.skipReasons = {};
@@ -100,7 +101,7 @@ class POAMBuilderSkill extends BaseSkill {
             // Build POAM object
             const poam = {
                 // Identifiers
-                id: `POAM-${String(poamIdCounter).padStart(4, '0')}`,
+                id: this.formatPOAMId(idConfig.prefix, poamIdCounter),
                 source: 'Vulnerability Scan Report',
                 
                 // Display fields
@@ -197,6 +198,9 @@ class POAMBuilderSkill extends BaseSkill {
             poamIdCounter++;
         }
         
+        // Persist next POAM ID number for subsequent imports
+        this.savePOAMIdConfig(idConfig.prefix, poamIdCounter);
+        
         // Auto-prioritize top POAMs if baseline mode
         if (this.isBaselineMode && this.autoPrioritizeTop > 0 && poams.length > 0) {
             this.autoPrioritizePOAMs(poams, this.autoPrioritizeTop);
@@ -221,6 +225,37 @@ class POAMBuilderSkill extends BaseSkill {
                 prioritized: this.isBaselineMode ? this.autoPrioritizeTop : 0
             }
         };
+    }
+
+    getPOAMIdConfig() {
+        try {
+            const cfg = JSON.parse(localStorage.getItem('poamIdConfig') || '{}');
+            return {
+                prefix: cfg.prefix || 'POAM-',
+                currentNumber: Math.max(1, parseInt(cfg.currentNumber, 10) || 1)
+            };
+        } catch (e) {
+            return { prefix: 'POAM-', currentNumber: 1 };
+        }
+    }
+
+    savePOAMIdConfig(prefix, nextNumber) {
+        try {
+            const cfg = JSON.parse(localStorage.getItem('poamIdConfig') || '{}');
+            localStorage.setItem('poamIdConfig', JSON.stringify({
+                ...cfg,
+                prefix: prefix || cfg.prefix || 'POAM-',
+                currentNumber: Math.max(1, parseInt(nextNumber, 10) || 1),
+                updatedAt: new Date().toISOString(),
+                setupCompleted: true
+            }));
+        } catch (e) {
+            console.warn('Could not persist POAM ID config:', e);
+        }
+    }
+
+    formatPOAMId(prefix, number) {
+        return `${prefix}${String(number).padStart(3, '0')}`;
     }
 
     analyzeGroupBreach(group) {
