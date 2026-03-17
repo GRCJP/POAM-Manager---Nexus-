@@ -128,15 +128,22 @@ class QualysProcessor {
         };
         
         // Build reverse lookup: header name -> standard field
+        // Prefer exact matches and avoid short substring collisions
+        // (e.g., "TruRisk Score" incorrectly matching "risk" for severity)
         headers.forEach((header, index) => {
             if (!header) return;
             const normalized = header.toLowerCase().trim();
             
-            // Find matching standard field
             for (const [standardField, variations] of Object.entries(fieldMappings)) {
-                if (variations.some(v => normalized === v || normalized.includes(v))) {
-                    map[standardField] = index;
-                    break;
+                const exactMatch = variations.some(v => normalized === v);
+                const substringMatch = variations.some(v => v.length > 3 && normalized.includes(v));
+                
+                if (exactMatch || substringMatch) {
+                    // Keep existing exact mapping unless this is a new exact match
+                    if (!map[standardField] || exactMatch) {
+                        map[standardField] = index;
+                    }
+                    if (exactMatch) break;
                 }
             }
         });
@@ -357,7 +364,7 @@ class QualysProcessor {
                 type: (row.type || row['Type Detected'] || '').trim() || 'vulnerability',
                 
                 // Status and flags with flexible field access
-                status: (row.status || row['Status'] || '').trim() || 'unknown',
+                status: (row.status || row['Status'] || '').trim() || 'ACTIVE',
                 disabled: (row.disabled || row['Disabled'] || '').trim() === 'Yes',
                 ignored: (row.ignored || row['Ignored'] || '').trim() === 'Yes',
                 patchable: (row.patchable || row['Vuln Patchable'] || '').trim() === 'Yes',
