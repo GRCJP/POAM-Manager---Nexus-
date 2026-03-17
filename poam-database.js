@@ -182,15 +182,18 @@ class POAMDatabase {
             console.log('📦 DEBUG: Sample POAM keys:', Object.keys(sample));
             console.log('📦 DEBUG: Estimated total:', ((sampleSize * formalPOAMs.length) / (1024 * 1024)).toFixed(2), 'MB');
             
-            // Check individual field sizes
+            // Check individual field sizes - show ALL fields
             const fieldSizes = {};
             for (const key of Object.keys(sample)) {
-                const fieldSize = JSON.stringify(sample[key]).length;
-                if (fieldSize > 1000) { // Only log fields > 1KB
+                try {
+                    const value = sample[key];
+                    const fieldSize = JSON.stringify(value !== undefined ? value : null).length;
                     fieldSizes[key] = (fieldSize / 1024).toFixed(2) + 'KB';
+                } catch (e) {
+                    fieldSizes[key] = 'ERROR';
                 }
             }
-            console.log('📦 DEBUG: Large fields (>1KB):', fieldSizes);
+            console.log('📦 DEBUG: All field sizes:', fieldSizes);
         }
 
         return new Promise((resolve, reject) => {
