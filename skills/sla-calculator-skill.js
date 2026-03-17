@@ -35,7 +35,8 @@ class SLACalculatorSkill extends BaseSkill {
         const enrichedFindings = findings.map((finding, idx) => {
             const firstDetected = this.parseDate(finding.firstDetected);
             const lastDetected = this.parseDate(finding.lastDetected);
-            const severity = this.normalizeSeverity(finding.severity);
+            const status = finding.status || 'ACTIVE';
+            const severity = this.normalizeSeverity(finding.severity || finding.risk);
             
             if (!firstDetected) nullFirstDetected++;
             if (!lastDetected) nullLastDetected++;
@@ -46,20 +47,20 @@ class SLACalculatorSkill extends BaseSkill {
             // Get SLA days for this severity
             const slaDays = this.slaConfig[severity] || this.slaConfig.medium;
             
-            // Normalize status - if no status field, default to 'ACTIVE' for eligible findings
-            // (Phase 1 already filtered out inactive statuses)
-            const rawStatus = finding.status || finding.Status || '';
-            const statusUpper = rawStatus ? rawStatus.toUpperCase() : 'ACTIVE';
-            const INACTIVE_STATUSES = ['FIXED', 'CLOSED', 'RESOLVED', 'IGNORED', 'DISABLED', 'NOT_APPLICABLE'];
-            const isActiveStatus = !INACTIVE_STATUSES.includes(statusUpper);
-            
-            // Determine if breached
-            const breached = isActiveStatus && (
-                firstDetected === null ? true : ageDays > slaDays
-            );
+            // Determine if breached (exact logic from original engine)
+            // For baseline imports: if no detection date, default to breached (conservative)
+            let breached;
+            if (firstDetected === null) {
+                // Missing detection date - treat as breached for baseline import
+                breached = (status === 'ACTIVE' || status === 'NEW' || status === 'OPEN');
+            } else {
+                // Normal calculation with detection date
+                breached = (status === 'ACTIVE' || status === 'NEW' || status === 'OPEN') && 
+                           (ageDays > slaDays);
+            }
             
             if (breached) breachedCount++;
-            else if (isActiveStatus) withinSLACount++;
+            else if (status === 'ACTIVE' || status === 'NEW' || status === 'OPEN') withinSLACount++;
             
             // Calculate breach date
             const breachDate = firstDetected ? 
@@ -68,8 +69,6 @@ class SLACalculatorSkill extends BaseSkill {
             // Log first 3 for diagnostics
             if (idx < 3) {
                 console.log(`   Finding ${idx + 1}:`);
-                console.log(`      Raw status field: "${finding.status}" (type: ${typeof finding.status})`);
-                console.log(`      Computed statusUpper: "${statusUpper}"`);
                 console.log(`      Raw firstDetected: ${finding.firstDetected}`);
                 console.log(`      Parsed: ${firstDetected}`);
                 console.log(`      Age: ${ageDays} days, SLA: ${slaDays} days`);
@@ -86,7 +85,7 @@ class SLACalculatorSkill extends BaseSkill {
                     breachDate: breachDate ? breachDate.toISOString().split('T')[0] : null,
                     firstDetected: firstDetected ? firstDetected.toISOString().split('T')[0] : null,
                     lastDetected: lastDetected ? lastDetected.toISOString().split('T')[0] : null,
-                    status: statusUpper
+                    status
                 }
             };
         });
