@@ -256,11 +256,18 @@ class PipelineOrchestrator {
         const eligibleFindings = [];
         const excludedFindings = [];
         const INACTIVE_STATUSES = ['fixed', 'closed', 'resolved', 'ignored', 'disabled'];
-        const SLA_THRESHOLD_DAYS = 30;
+        
+        // Severity-based SLA thresholds (configurable, defaults to 15/30/90/180)
+        const SLA_CONFIG = {
+            critical: 15,
+            high: 30,
+            medium: 90,
+            low: 180
+        };
         const now = new Date();
 
         console.log(`🔍 PHASE 1: Processing ${rawVulnerabilities.length} raw findings`);
-        console.log(`🔍 PHASE 1: SLA threshold = ${SLA_THRESHOLD_DAYS} days from first detected`);
+        console.log(`🔍 PHASE 1: Severity-based SLA thresholds: Critical=${SLA_CONFIG.critical}d, High=${SLA_CONFIG.high}d, Medium=${SLA_CONFIG.medium}d, Low=${SLA_CONFIG.low}d`);
         if (rawVulnerabilities.length > 0) {
             const sample = rawVulnerabilities[0];
             console.log('🔍 PHASE 1: Sample finding fields:', Object.keys(sample).join(', '));
@@ -281,16 +288,21 @@ class PipelineOrchestrator {
                 continue;
             }
             
-            // Gate 2: Exclude findings < 30 days old (not yet SLA-eligible)
+            // Gate 2: Exclude findings that haven't reached their severity-based SLA threshold
             const firstDetected = finding.firstDetected || finding.first_detected || finding.firstFound;
             if (firstDetected) {
                 const detectedDate = new Date(firstDetected);
                 if (!isNaN(detectedDate.getTime())) {
                     const ageInDays = Math.floor((now - detectedDate) / (1000 * 60 * 60 * 24));
-                    if (ageInDays < SLA_THRESHOLD_DAYS) {
+                    
+                    // Normalize severity to get SLA threshold
+                    const severity = this.normalizeSeverity(finding.severity);
+                    const slaThreshold = SLA_CONFIG[severity] || SLA_CONFIG.medium;
+                    
+                    if (ageInDays < slaThreshold) {
                         excludedFindings.push({
                             finding,
-                            reason: `Too recent: ${ageInDays} days old (threshold: ${SLA_THRESHOLD_DAYS} days)`
+                            reason: `Too recent: ${ageInDays} days old (${severity} threshold: ${slaThreshold} days)`
                         });
                         continue;
                     }
@@ -927,6 +939,29 @@ class PipelineOrchestrator {
         }
         
         return primaryOS;
+    }
+
+    normalizeSeverity(severity) {
+        if (!severity) return 'medium';
+        
+        const sev = severity.toString().toLowerCase().trim();
+        
+        // Numeric severity (1-5)
+        if (/^[1-5]$/.test(sev)) {
+            const num = parseInt(sev);
+            if (num <= 2) return 'low';
+            if (num === 3) return 'medium';
+            if (num === 4) return 'high';
+            if (num === 5) return 'critical';
+        }
+        
+        // Text severity
+        if (sev.includes('crit')) return 'critical';
+        if (sev.includes('high')) return 'high';
+        if (sev.includes('med') || sev.includes('mod')) return 'medium';
+        if (sev.includes('low')) return 'low';
+        
+        return 'medium';
     }
 
     updateProgress() {
