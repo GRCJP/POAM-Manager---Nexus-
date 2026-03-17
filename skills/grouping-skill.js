@@ -43,7 +43,7 @@ class GroupingSkill extends BaseSkill {
                     cves: new Set(),
                     qids: new Set(),
                     evidenceSamples: [],
-                    remediation
+                    remediation: rem
                 });
                 groupsCreated++;
                 
