@@ -16,6 +16,14 @@ class ClassificationSkill extends BaseSkill {
         
         console.log(`\n🏷️  CLASSIFICATION SKILL: Processing ${findings.length} findings`);
         
+        // Debug: Check first finding to see what fields are available
+        if (findings.length > 0) {
+            const sample = findings[0];
+            console.log(`   📋 Sample finding fields:`, Object.keys(sample).join(', '));
+            console.log(`   📋 Sample solution:`, sample.solution?.substring(0, 100) || 'MISSING');
+            console.log(`   📋 Sample title:`, sample.title?.substring(0, 100) || 'MISSING');
+        }
+        
         const classified = findings.map(f => {
             const solution = f.solution || '';
             const title = f.title || '';
