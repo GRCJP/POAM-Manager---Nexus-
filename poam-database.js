@@ -172,65 +172,36 @@ class POAMDatabase {
         // Transform each POAM to formal structure
         const formalPOAMs = poams.map(poam => this.transformToFormalPOAM(poam));
         console.log('📦 addPOAMsBatch: Transformed', formalPOAMs.length, 'POAMs');
-        
-        // Debug: Check size of first transformed POAM
-        if (formalPOAMs.length > 0) {
-            const sampleSize = JSON.stringify(formalPOAMs[0]).length;
-            const estimatedTotal = (sampleSize * formalPOAMs.length) / (1024 * 1024);
-            console.log(`📦 addPOAMsBatch: Sample POAM size: ${(sampleSize / 1024).toFixed(2)}KB, Estimated total: ${estimatedTotal.toFixed(2)}MB`);
-            console.log('📦 addPOAMsBatch: Sample POAM keys:', Object.keys(formalPOAMs[0]));
-        }
 
-        // Process in very small chunks to avoid QuotaExceededError
-        const CHUNK_SIZE = 10; // Reduced from 50 to 10 for safety
-        let totalSaved = 0;
-        let allErrors = [];
-
-        for (let i = 0; i < formalPOAMs.length; i += CHUNK_SIZE) {
-            const chunk = formalPOAMs.slice(i, i + CHUNK_SIZE);
-            console.log(`📦 addPOAMsBatch: Processing chunk ${Math.floor(i / CHUNK_SIZE) + 1}/${Math.ceil(formalPOAMs.length / CHUNK_SIZE)} (${chunk.length} POAMs)`);
-
-            try {
-                const result = await this.addPOAMsChunk(chunk);
-                totalSaved += result.saved;
-                allErrors = allErrors.concat(result.errors);
-            } catch (err) {
-                console.error(`📦 addPOAMsBatch: Chunk ${Math.floor(i / CHUNK_SIZE) + 1} failed:`, err);
-                throw err;
-            }
-        }
-
-        console.log(`✅ Saved ${totalSaved} POAMs to database (${allErrors.length} errors)`);
-        return { saved: totalSaved, errors: allErrors };
-    }
-
-    async addPOAMsChunk(poams) {
         return new Promise((resolve, reject) => {
-            const CHUNK_TIMEOUT = 10000; // 10 second timeout per chunk
+            const BATCH_TIMEOUT = 30000; // 30 second timeout
             let timeoutId;
             let completed = 0;
             let errors = [];
             let transactionComplete = false;
 
-            // Create transaction for this chunk
+            // Create transaction
+            console.log('📦 addPOAMsBatch: Creating transaction...');
             const transaction = this.db.transaction(['poams'], 'readwrite');
             const store = transaction.objectStore('poams');
 
             // Handle transaction completion
             transaction.oncomplete = () => {
+                console.log('📦 addPOAMsBatch: Transaction completed');
                 transactionComplete = true;
                 clearTimeout(timeoutId);
+                console.log(`✅ Saved ${completed - errors.length} POAMs to database`);
                 resolve({ saved: completed - errors.length, errors });
             };
 
             transaction.onerror = (e) => {
-                console.error('📦 addPOAMsChunk: Transaction error:', e.target.error);
+                console.error('📦 addPOAMsBatch: Transaction error:', e.target.error);
                 clearTimeout(timeoutId);
                 reject(new Error('Transaction failed: ' + e.target.error?.message));
             };
 
             transaction.onabort = (e) => {
-                console.error('📦 addPOAMsChunk: Transaction aborted:', e.target.error);
+                console.error('📦 addPOAMsBatch: Transaction aborted:', e.target.error);
                 clearTimeout(timeoutId);
                 reject(new Error('Transaction aborted: ' + e.target.error?.message));
             };
@@ -238,90 +209,101 @@ class POAMDatabase {
             // Timeout protection
             timeoutId = setTimeout(() => {
                 if (!transactionComplete) {
-                    console.error('📦 addPOAMsChunk: TIMEOUT after', CHUNK_TIMEOUT, 'ms');
+                    console.error('📦 addPOAMsBatch: TIMEOUT after', BATCH_TIMEOUT, 'ms');
                     try {
                         transaction.abort();
                     } catch (e) {
                         // ignore abort errors
                     }
-                    reject(new Error(`Chunk save timeout - only ${completed} of ${poams.length} completed`));
+                    reject(new Error(`Batch save timeout - only ${completed} of ${formalPOAMs.length} completed`));
                 }
-            }, CHUNK_TIMEOUT);
+            }, BATCH_TIMEOUT);
 
-            // Process each POAM in this chunk
-            poams.forEach((poam, index) => {
+            // Process each POAM
+            formalPOAMs.forEach((poam, index) => {
                 try {
                     const request = store.put(poam);
                     
                     request.onsuccess = () => {
                         completed++;
+                        if (completed % 50 === 0) {
+                            console.log(`📦 addPOAMsBatch: Progress ${completed}/${formalPOAMs.length}`);
+                        }
                     };
                     
                     request.onerror = (e) => {
-                        console.error(`📦 addPOAMsChunk: Error saving POAM ${poam.id}:`, e.target.error);
+                        console.error(`📦 addPOAMsBatch: Error saving POAM ${poam.id}:`, e.target.error);
                         errors.push({ poam: poam.id, error: e.target.error?.message });
                         completed++;
                     };
                 } catch (err) {
-                    console.error(`📦 addPOAMsChunk: Exception for POAM ${poam.id}:`, err);
+                    console.error(`📦 addPOAMsBatch: Exception for POAM ${poam.id}:`, err);
                     errors.push({ poam: poam.id, error: err.message });
                     completed++;
                 }
             });
+
+            console.log('📦 addPOAMsBatch: All', formalPOAMs.length, 'requests queued');
         });
     }
 
     transformToFormalPOAM(poam) {
-        // ULTRA-MINIMAL: Store absolute minimum to avoid QuotaExceededError
-        // Asset details stored separately in poamScanSummaries store
+        // CRITICAL: Spread all source fields FIRST so nothing is lost
+        // (especially remediationSignature, statusHistory, title, vulnerability, etc.)
+        // Then override with formal/normalized field names
         return {
+            ...poam,
+
             // Core identification
             id: poam.id,
-            
+            findingIdentifier: poam.findingIdentifier || poam.id,
+
             // Classification
             controlFamily: poam.controlFamily || this.inferControlFamily(poam),
-            vulnerabilityName: this.truncateField(poam.vulnerabilityName || poam.title || poam.vulnerability, 200),
-            findingDescription: this.truncateField(poam.findingDescription || poam.description || poam.vulnerability, 500),
-            
+            vulnerabilityName: poam.vulnerabilityName || poam.title || poam.vulnerability,
+            findingDescription: poam.findingDescription || poam.description || poam.vulnerability,
+            findingSource: poam.findingSource || 'Vulnerability Scan',
+
             // Responsibility
             poc: poam.poc || poam.pocTeam || '',
             pocTeam: poam.pocTeam || poam.poc || '',
+            resourcesRequired: poam.resourcesRequired || '',
 
             // Scheduling
             dueDate: poam.dueDate || poam.initialScheduledCompletionDate || this.calculateDueDate(poam),
-            scheduledCompletionDate: poam.updatedScheduledCompletionDate || poam.dueDate || this.calculateDueDate(poam),
+            initialScheduledCompletionDate: poam.initialScheduledCompletionDate || poam.dueDate || this.calculateDueDate(poam),
+            updatedScheduledCompletionDate: poam.updatedScheduledCompletionDate || poam.dueDate || this.calculateDueDate(poam),
+            actualCompletionDate: poam.actualCompletionDate || null,
 
             // Status and risk
-            status: poam.status || poam.findingStatus || 'Open',
+            findingStatus: poam.findingStatus || poam.status || 'Open',
+            riskLevel: poam.riskLevel || poam.risk || 'medium',
             risk: poam.risk || poam.riskLevel || 'medium',
 
-            // Mitigation (heavily truncated)
-            mitigation: this.truncateField(poam.mitigation || '', 500),
+            // Mitigation
+            mitigation: poam.mitigation || '',
 
             // Metadata
             createdDate: poam.createdDate || new Date().toISOString(),
             lastModifiedDate: poam.lastModifiedDate || new Date().toISOString(),
             scanId: poam.scanId || null,
-            
-            // Asset count only - full details in scan summaries
+            needsReview: poam.needsReview || false,
+            notes: poam.notes || '',
+
+            // Data preservation
+            affectedAssets: poam.affectedAssets ? this.transformAssetsWithMetadata(poam.affectedAssets) : [],
             totalAffectedAssets: poam.totalAffectedAssets || poam.affectedAssets?.length || 0,
-            
-            // Minimal milestone data - just dates
-            milestones: Array.isArray(poam.milestones) ? poam.milestones.slice(0, 4).map(m => ({
-                name: this.truncateField(m.name || m.milestoneName, 50),
-                targetDate: m.targetDate || m.scheduledCompletionDate,
-                status: m.status || 'Scheduled'
-            })) : [],
-            
-            // Minimal identifiers
-            cves: Array.isArray(poam.cves) ? poam.cves.slice(0, 5).map(c => String(c).substring(0, 20)) : [],
-            remediationSignature: this.truncateField(poam.remediationSignature || '', 100),
-            patchable: poam.patchable || false
+            rawFindings: poam.rawFindings || [],
+
+            // Milestones (embedded on POAM for POAM Detail view)
+            milestones: Array.isArray(poam.milestones) ? poam.milestones : [],
+
+            // Status history MUST be preserved — do NOT lose it on re-save
+            statusHistory: Array.isArray(poam.statusHistory) ? poam.statusHistory : []
         };
     }
 
-    transformAssetsLightweight(assets) {
-        // Store only essential asset metadata to reduce storage footprint
+    transformAssetsWithMetadata(assets) {
         return assets.map(asset => ({
             id: asset.id || asset.assetId || asset.asset_id || asset.name || 'Unknown',
             name: asset.name || asset.assetName || asset.asset_name || asset.assetId || 'Unknown Asset',
@@ -329,27 +311,19 @@ class POAMDatabase {
             asset_name: asset.asset_name || asset.assetName || asset.name || 'Unknown Asset',
             ipv4: asset.ipv4 || asset.ip || asset.asset_ipv4 || '',
             os: asset.os || asset.operatingSystem || 'Unknown',
+            source_field: asset.source_field || '',
             status: asset.status || 'affected',
             firstDetected: asset.firstDetected || asset.scanDate || new Date().toISOString().split('T')[0],
             lastDetected: asset.lastDetected || asset.scanDate || new Date().toISOString().split('T')[0],
-            // Truncate verbose fields to prevent bloat
-            result: this.truncateField(asset.results || asset.result || asset.vulnerability, 500),
-            solution: this.truncateField(asset.solution || asset.remediation, 500),
+            result: asset.results || asset.result || asset.vulnerability || 'Scan metadata not available for this asset',
+            results: asset.results || asset.result || asset.vulnerability || 'Scan metadata not available for this asset',
+            solution: asset.solution || asset.remediation || 'Scan metadata not available for this asset',
+            raw: asset.raw || asset.rawData || 'No raw scan data available',
             ip: asset.ip || asset.ipv4 || asset.asset_ipv4 || '',
             port: asset.port || '',
-            protocol: asset.protocol || ''
+            protocol: asset.protocol || '',
+            operatingSystem: asset.operatingSystem || asset.os || 'Unknown'
         }));
-    }
-    
-    transformAssetsWithMetadata(assets) {
-        // Alias for backward compatibility
-        return this.transformAssetsLightweight(assets);
-    }
-    
-    truncateField(value, maxLength) {
-        if (!value) return '';
-        const str = String(value);
-        return str.length > maxLength ? str.substring(0, maxLength) + '...' : str;
     }
 
     inferControlFamily(poam) {
