@@ -380,7 +380,8 @@ class QualysProcessor {
         
         if (match) {
             const [, month, day, year, hour, minute] = match;
-            return new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${hour.padStart(2, '0')}:${minute.padStart(2, '0')}:00Z`);
+            // Return ISO string for compatibility with analysis engine's parseDate
+            return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${hour.padStart(2, '0')}:${minute.padStart(2, '0')}:00Z`;
         }
         
         return null;
