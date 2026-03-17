@@ -231,25 +231,17 @@ class POAMBuilderSkill extends BaseSkill {
         let oldestDetectionDate = null;
         let oldestBreachDate = null;
         let oldestAge = 0;
-        let highestRisk = 'Low';
+        let highestRisk = 'low';
         let slaDays = 90;
         
-        const riskPriority = { 'Critical': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
-        
         group.findings.forEach(finding => {
-            const asset = finding.host || finding.ip || finding.asset?.hostname || finding.asset?.assetId || 'unknown';
+            const asset = finding.asset?.hostname || finding.host || finding.ip || finding.asset?.assetId || 'unknown';
             const sla = finding.sla;
             
             if (!sla) return;
             
-            // Check if finding is inactive (already filtered by Phase 1, but double-check)
-            const status = (sla.status || 'ACTIVE').toUpperCase();
-            const INACTIVE_STATUSES = ['FIXED', 'CLOSED', 'RESOLVED', 'IGNORED', 'DISABLED'];
-            const isActive = !INACTIVE_STATUSES.includes(status);
-            
-            // If finding passed Phase 1 eligibility, treat it as active
-            // (Phase 1 already filtered out inactive statuses and findings too recent)
-            if (isActive) {
+            // Track active assets (exact logic from original engine)
+            if (sla.status === 'ACTIVE' || sla.status === 'NEW' || sla.status === 'OPEN') {
                 activeAssets.add(asset);
                 
                 // Track breached vs within SLA
@@ -269,24 +261,29 @@ class POAMBuilderSkill extends BaseSkill {
                 }
             }
             
-            // Track highest risk
-            const severity = this.normalizeSeverity(sla.severity || finding.severity);
-            if (riskPriority[severity] > riskPriority[highestRisk]) {
-                highestRisk = severity;
+            // Track highest risk (using isHigherRisk logic)
+            if (this.isHigherRisk(sla.severity, highestRisk)) {
+                highestRisk = sla.severity;
             }
         });
         
-        // Determine skip reason if no active findings
+        // Determine if group is breached
+        const groupBreached = breachedAssets.size > 0;
+        
+        // Determine skip reason if not breached (exact logic from original engine)
         let skipReason = null;
-        if (activeAssets.size === 0) {
-            if (group.findings.every(f => f.sla?.status === 'FIXED' || f.sla?.status === 'CLOSED')) {
-                skipReason = 'All findings fixed/closed';
+        if (!groupBreached) {
+            if (activeAssets.size === 0) {
+                skipReason = 'No active findings (all fixed or closed)';
+            } else if (withinSlaAssets.size > 0) {
+                skipReason = 'All active findings within SLA';
             } else {
-                skipReason = 'No active findings';
+                skipReason = 'Missing detection dates';
             }
         }
         
         return {
+            groupBreached,
             breachedAssets,
             activeAssets,
             withinSlaAssets,
@@ -295,9 +292,15 @@ class POAMBuilderSkill extends BaseSkill {
             oldestAge,
             highestRisk,
             slaDays,
-            skipReason,
-            groupBreached: breachedAssets.size > 0
+            skipReason
         };
+    }
+
+    isHigherRisk(severity1, severity2) {
+        const riskOrder = { 'critical': 4, 'high': 3, 'medium': 2, 'low': 1 };
+        const s1 = (severity1 || 'low').toLowerCase();
+        const s2 = (severity2 || 'low').toLowerCase();
+        return (riskOrder[s1] || 1) > (riskOrder[s2] || 1);
     }
 
     calculateDueDate(risk, firstDetectedDate, breachDate) {
