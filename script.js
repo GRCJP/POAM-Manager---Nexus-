@@ -1,5 +1,23 @@
 // POAM Nexus JavaScript functionality
 
+// Cache-busting mechanism: Force reload when storage is cleared
+(function initCacheBuster() {
+    const CACHE_VERSION_KEY = 'poamNexusCacheVersion';
+    const CURRENT_VERSION = '20260317-1'; // Update this when code changes
+    
+    const storedVersion = localStorage.getItem(CACHE_VERSION_KEY);
+    
+    if (!storedVersion) {
+        // First run or storage was cleared - set version and continue
+        localStorage.setItem(CACHE_VERSION_KEY, CURRENT_VERSION);
+    } else if (storedVersion !== CURRENT_VERSION) {
+        // Version mismatch - force hard reload to get latest code
+        console.log(`🔄 Cache version mismatch (stored: ${storedVersion}, current: ${CURRENT_VERSION}) - forcing reload...`);
+        localStorage.setItem(CACHE_VERSION_KEY, CURRENT_VERSION);
+        window.location.reload(true);
+    }
+})();
+
 // Module navigation
 function showModule(moduleName) {
     // Save current module to localStorage for page refresh persistence
