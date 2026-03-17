@@ -1564,51 +1564,132 @@ function getNextPOAMId() {
 }
 
 async function ensurePOAMIdConfigForBaselineImport() {
-    let existingConfig = null;
-    try {
-        existingConfig = JSON.parse(localStorage.getItem('poamIdConfig') || 'null');
-    } catch (e) {
-        existingConfig = null;
-    }
-    const hasCompletedSetup = !!(existingConfig && existingConfig.setupCompleted && existingConfig.prefix && existingConfig.currentNumber);
-    if (hasCompletedSetup) return true;
+    // Check if this is truly a first-run baseline import
+    const isFirstRun = await isFirstRunBaselineImport();
+    if (!isFirstRun) return true;
     
+    // Show comprehensive first-run setup for SLA + POAM ID
+    return await showFirstRunSetup();
+}
+
+async function isFirstRunBaselineImport() {
+    // Check if POAM ID config already exists and is complete
+    let poamIdConfig = null;
+    try {
+        poamIdConfig = JSON.parse(localStorage.getItem('poamIdConfig') || 'null');
+    } catch (e) {
+        poamIdConfig = null;
+    }
+    const hasPoamIdSetup = !!(poamIdConfig && poamIdConfig.setupCompleted && poamIdConfig.prefix && poamIdConfig.currentNumber);
+    
+    // Check if SLA config already exists
+    let slaConfig = null;
+    try {
+        slaConfig = JSON.parse(localStorage.getItem('slaConfig') || 'null');
+    } catch (e) {
+        slaConfig = null;
+    }
+    const hasSlaSetup = !!(slaConfig && (slaConfig.critical || slaConfig.high || slaConfig.medium || slaConfig.low));
+    
+    // Check if database has any POAMs
+    let hasPOAMs = false;
     try {
         if (typeof poamDB !== 'undefined' && typeof poamDB.countPOAMs === 'function') {
             const count = await poamDB.countPOAMs();
-            if (count > 0) return true;
+            hasPOAMs = count > 0;
         }
     } catch (e) {
-        console.warn('Could not check existing POAM count before baseline import:', e);
+        console.warn('Could not check existing POAM count:', e);
     }
     
-    const wantsSetup = confirm('Set POAM ID format before baseline import?\n\nThis will be used for all imported POAM IDs.');
-    if (!wantsSetup) {
-        const defaultConfig = {
+    // First run if: no POAMs AND (no POAM ID setup OR no SLA setup)
+    return !hasPOAMs && (!hasPoamIdSetup || !hasSlaSetup);
+}
+
+async function showFirstRunSetup() {
+    const proceed = confirm(
+        '🎯 First-Time Baseline Import Setup\n\n' +
+        'Before importing your first scan, let\'s configure:\n' +
+        '  • SLA thresholds (days by severity)\n' +
+        '  • POAM ID naming convention\n\n' +
+        'Click OK to configure now, or Cancel to use defaults.'
+    );
+    
+    if (!proceed) {
+        // User canceled - apply defaults
+        const defaultPoamIdConfig = {
             prefix: 'POAM-',
             currentNumber: 1,
             setupCompleted: true,
             createdAt: new Date().toISOString()
         };
-        localStorage.setItem('poamIdConfig', JSON.stringify(defaultConfig));
+        localStorage.setItem('poamIdConfig', JSON.stringify(defaultPoamIdConfig));
+        
+        const defaultSlaConfig = {
+            critical: 15,
+            high: 30,
+            medium: 90,
+            low: 180
+        };
+        localStorage.setItem('slaConfig', JSON.stringify(defaultSlaConfig));
+        
+        alert('✅ Default settings applied:\n\nSLA: Critical=15d, High=30d, Medium=90d, Low=180d\nPOAM ID: POAM-001, POAM-002, ...');
         return true;
     }
     
-    const prefixInput = prompt('Enter POAM ID prefix:', 'POAM-');
+    // Step 1: Configure SLA thresholds
+    alert('Step 1 of 2: SLA Configuration\n\nSet remediation deadlines (in days) by severity level.');
+    
+    const criticalSLA = prompt('Critical severity SLA (days):', '15');
+    if (criticalSLA === null) return false;
+    const critical = Math.max(1, parseInt(criticalSLA, 10) || 15);
+    
+    const highSLA = prompt('High severity SLA (days):', '30');
+    if (highSLA === null) return false;
+    const high = Math.max(1, parseInt(highSLA, 10) || 30);
+    
+    const mediumSLA = prompt('Medium severity SLA (days):', '90');
+    if (mediumSLA === null) return false;
+    const medium = Math.max(1, parseInt(mediumSLA, 10) || 90);
+    
+    const lowSLA = prompt('Low severity SLA (days):', '180');
+    if (lowSLA === null) return false;
+    const low = Math.max(1, parseInt(lowSLA, 10) || 180);
+    
+    const slaConfig = { critical, high, medium, low };
+    localStorage.setItem('slaConfig', JSON.stringify(slaConfig));
+    
+    // Step 2: Configure POAM ID format
+    alert('Step 2 of 2: POAM ID Format\n\nDefine how POAM IDs will be numbered.');
+    
+    const prefixInput = prompt('POAM ID prefix (e.g., POAM-, FND-, VUL-):', 'POAM-');
     if (prefixInput === null) return false;
     const prefix = prefixInput.trim() || 'POAM-';
     
-    const startInput = prompt('Enter starting POAM number:', '1');
+    const startInput = prompt('Starting number:', '1');
     if (startInput === null) return false;
     const startNum = Math.max(1, parseInt(startInput, 10) || 1);
     
-    const config = {
+    const poamIdConfig = {
         prefix,
         currentNumber: startNum,
         setupCompleted: true,
         createdAt: new Date().toISOString()
     };
-    localStorage.setItem('poamIdConfig', JSON.stringify(config));
+    localStorage.setItem('poamIdConfig', JSON.stringify(poamIdConfig));
+    
+    // Show confirmation
+    const exampleId = prefix + String(startNum).padStart(3, '0');
+    alert(
+        '✅ Configuration Complete!\n\n' +
+        `SLA Thresholds:\n` +
+        `  Critical: ${critical} days\n` +
+        `  High: ${high} days\n` +
+        `  Medium: ${medium} days\n` +
+        `  Low: ${low} days\n\n` +
+        `POAM ID Format: ${exampleId}, ${prefix + String(startNum + 1).padStart(3, '0')}, ...`
+    );
+    
     return true;
 }
 

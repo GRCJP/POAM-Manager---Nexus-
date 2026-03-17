@@ -625,6 +625,23 @@ class PipelineOrchestrator {
         const engine = new VulnerabilityAnalysisEngineV3();
         engine.scanId = this.currentRun.scanId;
         
+        // Load user-configured SLA thresholds if available
+        try {
+            const slaConfig = JSON.parse(localStorage.getItem('slaConfig') || 'null');
+            if (slaConfig && (slaConfig.critical || slaConfig.high || slaConfig.medium || slaConfig.low)) {
+                engine.slaConfig = {
+                    critical: slaConfig.critical || 15,
+                    high: slaConfig.high || 30,
+                    medium: slaConfig.medium || 90,
+                    moderate: slaConfig.medium || 90,
+                    low: slaConfig.low || 180
+                };
+                this.logger.info(`Using configured SLA thresholds: Critical=${engine.slaConfig.critical}d, High=${engine.slaConfig.high}d, Medium=${engine.slaConfig.medium}d, Low=${engine.slaConfig.low}d`);
+            }
+        } catch (e) {
+            this.logger.warn('Could not load SLA config, using defaults:', e);
+        }
+        
         // Check if this is a baseline import
         // Ensure poamDB is initialized
         if (!window.poamDB || !window.poamDB.db) {
