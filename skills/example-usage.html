@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skills Architecture - Example Usage</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #2c3e50; }
+        h2 { color: #34495e; margin-top: 30px; }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .output {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+        }
+        .success { color: #4caf50; }
+        .error { color: #f44336; }
+        .warning { color: #ff9800; }
+        .info { color: #2196f3; }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 10px 10px 0;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .metric-card {
+            background: #f9f9f9;
+            border-left: 4px solid #4CAF50;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Skills-Based Architecture Demo</h1>
+        <p>This demonstrates the new modular, testable skills architecture for POAM processing.</p>
+
+        <h2>1. Test Individual Skills</h2>
+        <button onclick="testParserSkill()">Test CSV Parser Skill</button>
+        <button onclick="testSLASkill()">Test SLA Calculator Skill</button>
+        <button onclick="testGroupingSkill()">Test Grouping Skill</button>
+        <button onclick="testAllSkills()">Test All Skills</button>
+        <div id="test-output" class="output" style="display: none;"></div>
+
+        <h2>2. Execute Full Pipeline</h2>
+        <button onclick="executePipeline()">Run Scan Processing Pipeline</button>
+        <div id="pipeline-output" class="output" style="display: none;"></div>
+
+        <h2>3. View Metrics</h2>
+        <button onclick="viewMetrics()">Show Performance Metrics</button>
+        <button onclick="resetMetrics()">Reset Metrics</button>
+        <div id="metrics-output" class="output" style="display: none;"></div>
+
+        <h2>4. Generate Report</h2>
+        <button onclick="generateReport()">Generate Performance Report</button>
+        <div id="report-output" class="output" style="display: none;"></div>
+    </div>
+
+    <!-- Load skills -->
+    <script src="base-skill.js"></script>
+    <script src="csv-parser-skill.js"></script>
+    <script src="sla-calculator-skill.js"></script>
+    <script src="grouping-skill.js"></script>
+    <script src="skill-orchestrator.js"></script>
+
+    <script>
+        // Initialize orchestrator
+        const orchestrator = new SkillOrchestrator();
+
+        // Register skills
+        orchestrator.registerSkill('parser', new CSVParserSkill());
+        orchestrator.registerSkill('sla', new SLACalculatorSkill());
+        orchestrator.registerSkill('grouping', new GroupingSkill());
+
+        // Define pipeline
+        orchestrator.definePipeline('scan-processing', [
+            'parser',
+            'sla',
+            'grouping'
+        ]);
+
+        // Sample CSV data for testing
+        const sampleCSVData = [
+            ['CVE', 'QID', 'Title', 'Severity', 'Asset Name', 'First Detected', 'Last Detected', 'Status', 'Solution', 'Operating System'],
+            ['CVE-2024-1234', '12345', 'Windows KB5068781 Security Update Missing', '4', 'server01', '1/13/2025 22:51', '3/15/2025 10:30', 'Active', 'Install KB5068781', 'Windows Server 2019'],
+            ['CVE-2024-1234', '12345', 'Windows KB5068781 Security Update Missing', '4', 'server02', '1/13/2025 22:51', '3/15/2025 10:30', 'Active', 'Install KB5068781', 'Windows Server 2019'],
+            ['CVE-2024-5678', '12346', 'SSL/TLS Configuration Issue', '3', 'webserver01', '2/1/2025 08:15', '3/15/2025 10:30', 'Active', 'Configure SSL/TLS settings', 'Linux Ubuntu 20.04'],
+            ['', '12347', 'Outdated Apache Version', '4', 'webserver01', '12/1/2024 14:20', '3/15/2025 10:30', 'Active', 'Upgrade Apache to latest version', 'Linux Ubuntu 20.04']
+        ];
+
+        async function testParserSkill() {
+            const output = document.getElementById('test-output');
+            output.style.display = 'block';
+            output.innerHTML = '🧪 Testing CSV Parser Skill...\n\n';
+
+            const skill = orchestrator.skills.get('parser');
+            const result = await skill.test();
+
+            output.innerHTML += formatTestResults(result);
+        }
+
+        async function testSLASkill() {
+            const output = document.getElementById('test-output');
+            output.style.display = 'block';
+            output.innerHTML = '🧪 Testing SLA Calculator Skill...\n\n';
+
+            const skill = orchestrator.skills.get('sla');
+            const result = await skill.test();
+
+            output.innerHTML += formatTestResults(result);
+        }
+
+        async function testGroupingSkill() {
+            const output = document.getElementById('test-output');
+            output.style.display = 'block';
+            output.innerHTML = '🧪 Testing Grouping Skill...\n\n';
+
+            const skill = orchestrator.skills.get('grouping');
+            const result = await skill.test();
+
+            output.innerHTML += formatTestResults(result);
+        }
+
+        async function testAllSkills() {
+            const output = document.getElementById('test-output');
+            output.style.display = 'block';
+            output.innerHTML = '🧪 Testing All Skills...\n\n';
+
+            const result = await orchestrator.testAllSkills();
+
+            output.innerHTML += `\n${result.allPassed ? '✅' : '❌'} Overall: ${result.allPassed ? 'PASSED' : 'FAILED'}\n\n`;
+            
+            result.results.forEach(r => {
+                output.innerHTML += `${r.passed ? '✅' : '❌'} ${r.skill}\n`;
+                r.results.forEach(test => {
+                    output.innerHTML += `   ${test.passed ? '✅' : '❌'} ${test.name}\n`;
+                });
+            });
+        }
+
+        async function executePipeline() {
+            const output = document.getElementById('pipeline-output');
+            output.style.display = 'block';
+            output.innerHTML = '🚀 Executing Scan Processing Pipeline...\n\n';
+
+            try {
+                const result = await orchestrator.executePipeline('scan-processing', {
+                    csvData: sampleCSVData,
+                    format: 'qualys',
+                    filename: 'sample-scan.csv'
+                });
+
+                if (result.success) {
+                    output.innerHTML += '<span class="success">✅ Pipeline completed successfully!</span>\n\n';
+                    output.innerHTML += `📊 Results:\n`;
+                    output.innerHTML += `   Findings parsed: ${result.data.summary.totalFindings}\n`;
+                    output.innerHTML += `   Groups created: ${result.data.summary.totalGroups}\n`;
+                    output.innerHTML += `   Avg findings/group: ${result.data.summary.avgFindingsPerGroup}\n\n`;
+                    
+                    output.innerHTML += `📦 Sample Group:\n`;
+                    if (result.data.groups.length > 0) {
+                        const group = result.data.groups[0];
+                        output.innerHTML += `   Signature: ${group.signature}\n`;
+                        output.innerHTML += `   Findings: ${group.findings.length}\n`;
+                        output.innerHTML += `   Assets: ${group.assets.length}\n`;
+                        output.innerHTML += `   CVEs: ${group.cves.join(', ')}\n`;
+                    }
+                } else {
+                    output.innerHTML += '<span class="error">❌ Pipeline failed!</span>\n\n';
+                    output.innerHTML += `Errors: ${result.execution.errors.join(', ')}\n`;
+                }
+
+                output.innerHTML += `\n⏱️  Total Duration: ${result.execution.duration}ms\n`;
+            } catch (error) {
+                output.innerHTML += `<span class="error">❌ Error: ${error.message}</span>\n`;
+            }
+        }
+
+        async function viewMetrics() {
+            const output = document.getElementById('metrics-output');
+            output.style.display = 'block';
+            output.innerHTML = '📊 Skill Performance Metrics\n\n';
+
+            const metrics = orchestrator.getAllMetrics();
+
+            for (const [name, metric] of Object.entries(metrics)) {
+                output.innerHTML += `\n${name}:\n`;
+                output.innerHTML += `   Executions: ${metric.executionCount}\n`;
+                output.innerHTML += `   Success Rate: ${metric.successRate}\n`;
+                output.innerHTML += `   Avg Duration: ${metric.avgDuration.toFixed(2)}ms\n`;
+                output.innerHTML += `   Total Duration: ${metric.totalDuration.toFixed(2)}ms\n`;
+                
+                if (metric.errors.length > 0) {
+                    output.innerHTML += `   <span class="error">Recent Errors: ${metric.errors.length}</span>\n`;
+                }
+            }
+
+            const history = orchestrator.getExecutionHistory();
+            if (history.length > 0) {
+                output.innerHTML += `\n\nPipeline Executions: ${history.length}\n`;
+                const successful = history.filter(e => e.success).length;
+                output.innerHTML += `Success Rate: ${((successful / history.length) * 100).toFixed(2)}%\n`;
+            }
+        }
+
+        function resetMetrics() {
+            orchestrator.resetAllMetrics();
+            const output = document.getElementById('metrics-output');
+            output.style.display = 'block';
+            output.innerHTML = '✅ All metrics have been reset.\n';
+        }
+
+        function generateReport() {
+            const output = document.getElementById('report-output');
+            output.style.display = 'block';
+            
+            // Capture console output
+            const originalLog = console.log;
+            let reportText = '';
+            console.log = function(...args) {
+                reportText += args.join(' ') + '\n';
+                originalLog.apply(console, args);
+            };
+
+            orchestrator.generateReport();
+
+            console.log = originalLog;
+            output.innerHTML = reportText;
+        }
+
+        function formatTestResults(result) {
+            let output = '';
+            output += `${result.passed ? '✅' : '❌'} Tests ${result.passed ? 'PASSED' : 'FAILED'}\n\n`;
+            
+            result.results.forEach(test => {
+                output += `${test.passed ? '✅' : '❌'} ${test.name}\n`;
+                if (!test.passed) {
+                    output += `   Errors: ${test.result.errors.join(', ')}\n`;
+                }
+            });
+            
+            return output;
+        }
+
+        // Auto-run initial test on load
+        console.log('Skills architecture loaded successfully!');
+        console.log('Use the buttons above to test individual skills or run the full pipeline.');
+    </script>
+</body>
+</html>
