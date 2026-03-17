@@ -23,11 +23,16 @@ class GroupingSkill extends BaseSkill {
         let findingsGrouped = 0;
         
         findings.forEach((finding, idx) => {
-            // Extract remediation metadata
-            const remediation = this.extractRemediationMetadata(finding);
+            // Findings should already have remediation object from classification step
+            const rem = finding.remediation;
             
-            // Build signature
-            const signature = this.buildSignature(remediation);
+            if (!rem) {
+                console.warn(`⚠️ Finding ${idx} missing remediation object - skipping`);
+                return;
+            }
+            
+            // Build signature from remediation object
+            const signature = `${rem.actionType || 'other'}::${rem.targetKey || 'unknown'}::${rem.assetClass || 'general'}`;
             
             // Create or update group
             if (!groups.has(signature)) {

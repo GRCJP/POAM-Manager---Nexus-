@@ -28,13 +28,15 @@ class SkillsIntegration {
         // Register skills
         this.orchestrator.registerSkill('parser', new CSVParserSkill());
         this.orchestrator.registerSkill('sla', new SLACalculatorSkill());
+        this.orchestrator.registerSkill('classification', new ClassificationSkill());
         this.orchestrator.registerSkill('grouping', new GroupingSkill());
 
-        // Define pipeline
+        // Define pipeline (matches original engine flow)
         this.orchestrator.definePipeline('scan-processing', [
-            'parser',
-            'sla',
-            'grouping'
+            'parser',      // Parse CSV
+            'sla',         // Calculate SLA status
+            'classification', // Classify remediation strategies
+            'grouping'     // Group by remediation signature
         ]);
 
         this.initialized = true;
