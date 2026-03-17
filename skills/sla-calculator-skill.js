@@ -68,6 +68,8 @@ class SLACalculatorSkill extends BaseSkill {
             // Log first 3 for diagnostics
             if (idx < 3) {
                 console.log(`   Finding ${idx + 1}:`);
+                console.log(`      Raw status field: "${finding.status}" (type: ${typeof finding.status})`);
+                console.log(`      Computed statusUpper: "${statusUpper}"`);
                 console.log(`      Raw firstDetected: ${finding.firstDetected}`);
                 console.log(`      Parsed: ${firstDetected}`);
                 console.log(`      Age: ${ageDays} days, SLA: ${slaDays} days`);
