@@ -113,6 +113,9 @@
         </div>
     </div>
 
+    <!-- Load PapaParse for proper CSV parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    
     <!-- Load all required scripts -->
     <script src="poam-database.js?v=20260317"></script>
     <script src="skills/base-skill.js?v=20260317"></script>
@@ -181,33 +184,13 @@
                 }
                 const csvText = await response.text();
                 
-                // Proper CSV parsing that handles quoted fields
-                const csvLines = csvText.split('\n').map(line => {
-                    const result = [];
-                    let current = '';
-                    let inQuotes = false;
-                    
-                    for (let i = 0; i < line.length; i++) {
-                        const char = line[i];
-                        const nextChar = line[i + 1];
-                        
-                        if (char === '"') {
-                            if (inQuotes && nextChar === '"') {
-                                current += '"';
-                                i++; // Skip next quote
-                            } else {
-                                inQuotes = !inQuotes;
-                            }
-                        } else if (char === ',' && !inQuotes) {
-                            result.push(current);
-                            current = '';
-                        } else {
-                            current += char;
-                        }
-                    }
-                    result.push(current);
-                    return result;
+                // Use PapaParse for proper CSV parsing (same as original engine)
+                const papaResult = Papa.parse(csvText, {
+                    header: false,
+                    skipEmptyLines: true
                 });
+                
+                const csvLines = papaResult.data;
                 log(`✅ Loaded CSV: ${csvLines.length} rows`, 'success');
 
                 // Step 2: Parse CSV with CSVParserSkill
