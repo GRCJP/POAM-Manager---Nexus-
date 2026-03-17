@@ -1360,24 +1360,40 @@ async function clearAllPOAMsWithBackup() {
             return;
         }
 
-        const confirmed = confirm(
-            `This will delete all ${poams.length} POAMs from the database.\n\n` +
-            `A backup will be downloaded first.\n\n` +
-            `Continue?`
+        // Ask if user wants to backup first
+        const wantBackup = confirm(
+            `⚠️ WARNING: This will delete all ${poams.length} POAMs from the database.\n\n` +
+            `Do you want to download a backup first?\n\n` +
+            `Click OK to backup before clearing, or Cancel to clear without backup.`
         );
-        if (!confirmed) return;
 
-        // Auto-backup before clearing
-        await exportPOAMBackup();
-
-        // Wait a moment for download to start
-        await new Promise(r => setTimeout(r, 500));
+        if (wantBackup) {
+            console.log('📦 User requested backup before clearing');
+            await exportPOAMBackup();
+            // Wait for download to start
+            await new Promise(r => setTimeout(r, 500));
+        } else {
+            // Final confirmation if they chose not to backup
+            const finalConfirm = confirm(
+                `⚠️ FINAL WARNING: You chose NOT to backup.\n\n` +
+                `All ${poams.length} POAMs will be permanently deleted.\n\n` +
+                `Are you absolutely sure?`
+            );
+            if (!finalConfirm) {
+                console.log('🚫 User cancelled clear operation');
+                return;
+            }
+        }
 
         await poamDB.clearAllPOAMs();
         console.log('✅ All POAMs cleared');
 
+        const message = wantBackup 
+            ? `Cleared ${poams.length} POAMs (backup downloaded)` 
+            : `Cleared ${poams.length} POAMs (no backup)`;
+
         if (typeof showUpdateFeedback === 'function') {
-            showUpdateFeedback(`Cleared ${poams.length} POAMs (backup downloaded)`, 'success');
+            showUpdateFeedback(message, 'success');
         }
 
         // Refresh views
