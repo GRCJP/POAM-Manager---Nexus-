@@ -242,9 +242,14 @@ class POAMBuilderSkill extends BaseSkill {
             
             if (!sla) return;
             
-            // Track active assets
-            const status = (sla.status || '').toUpperCase();
-            if (status === 'ACTIVE' || status === 'NEW' || status === 'OPEN') {
+            // Check if finding is inactive (already filtered by Phase 1, but double-check)
+            const status = (sla.status || 'ACTIVE').toUpperCase();
+            const INACTIVE_STATUSES = ['FIXED', 'CLOSED', 'RESOLVED', 'IGNORED', 'DISABLED'];
+            const isActive = !INACTIVE_STATUSES.includes(status);
+            
+            // If finding passed Phase 1 eligibility, treat it as active
+            // (Phase 1 already filtered out inactive statuses and findings too recent)
+            if (isActive) {
                 activeAssets.add(asset);
                 
                 // Track breached vs within SLA
