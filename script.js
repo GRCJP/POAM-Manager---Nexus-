@@ -51,10 +51,11 @@ function showModule(moduleName) {
     } else if (moduleName === 'scan-history') {
         // Load scan history when history module is shown
         renderScanHistory();
-    } else if (moduleName === 'vulnerability') {
-        // Initialize vulnerability tracking
-        showVulnerabilityTab('upload');
-        // updateSLAMetrics(); // Disabled - using new Security Posture Overview instead
+    } else if (moduleName === 'vulnerability' || moduleName === 'vulnerability-tracking') {
+        // Initialize vulnerability tracking and load existing POAMs
+        if (typeof showVulnerabilityTab === 'function') showVulnerabilityTab('upload');
+        if (typeof displayVulnerabilityPOAMs === 'function') displayVulnerabilityPOAMs();
+        if (typeof updateVulnerabilityModuleMetrics === 'function') updateVulnerabilityModuleMetrics();
     } else if (moduleName === 'evidence') {
         // Load evidence vault data
         loadEvidenceFiles();
@@ -2051,12 +2052,9 @@ async function initializeModule(moduleName) {
             loadPOAMIdConfig();
             updateApplicationPOAMCounts();
         } else if (moduleName === 'vulnerability' || moduleName === 'vulnerability-tracking') {
-            if (typeof showVulnerabilityTab === 'function') {
-                showVulnerabilityTab('upload');
-            }
-            if (typeof updateVulnerabilityModuleMetrics === 'function') {
-                updateVulnerabilityModuleMetrics();
-            }
+            if (typeof showVulnerabilityTab === 'function') showVulnerabilityTab('upload');
+            if (typeof displayVulnerabilityPOAMs === 'function') displayVulnerabilityPOAMs();
+            if (typeof updateVulnerabilityModuleMetrics === 'function') updateVulnerabilityModuleMetrics();
             if (typeof activeFilters !== 'undefined' && activeFilters.custom === 'needs-review') {
                 activeFilters.custom = '';
                 console.log('🧹 Cleared disabled needs-review filter');
