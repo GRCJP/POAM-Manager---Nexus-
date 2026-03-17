@@ -99,82 +99,179 @@ class GroupingSkill extends BaseSkill {
     extractRemediationMetadata(finding) {
         const solution = finding.solution || '';
         const title = finding.title || '';
-        const category = finding.category || '';
+        const os = finding.operatingSystem || finding.asset?.operatingSystem || finding.os || '';
         
         // Extract action type
         const actionType = this.extractActionType(solution);
         
-        // Extract target (what needs to be fixed)
-        const targetKey = this.extractTargetKey(solution, title, finding);
+        // Extract version/target
+        const rawVersion = this.extractTargetVersion(solution);
+        const fixedTarget = rawVersion || '';
+        const truncatedVersion = rawVersion ? this.truncateVersion(rawVersion) : null;
+        const targetKey = truncatedVersion || this.normalizeForHash(solution);
         
         // Extract asset class
         const assetClass = this.extractAssetClass(finding);
         
-        // Extract patch date if applicable
-        const patchDate = finding.patchReleased || null;
+        // Extract product and vendor
+        const component = this.extractProduct(title);
+        const vendor = this.extractVendor(title, solution);
+        
+        // Extract patch date
+        const patchDate = this.extractPatchMonth(solution);
+        
+        // Determine targeting strategy
+        const targetingStrategy = (rawVersion || patchDate) ? 'version' : 'asset';
+        
+        // Map actionType to remediationType
+        let remediationType = actionType;
+        if (actionType === 'upgrade') remediationType = 'patch_update';
+        else if (actionType === 'patch') remediationType = 'patch_update';
+        else if (actionType === 'configure') remediationType = 'config_change';
+        else if (actionType === 'remove') remediationType = 'removal';
+        else if (actionType === 'workaround') remediationType = 'operational_mitigation';
+        else remediationType = 'operational_mitigation';
         
         return {
+            remediationType,
             actionType,
-            targetKey,
-            assetClass,
+            component,
+            platform: assetClass,
+            targetingStrategy,
+            fixedTarget,
+            fixedTargetKey: component ? `${component}:${fixedTarget}` : fixedTarget,
+            actionText: solution || title || '',
+            vendor,
             patchDate,
-            remediationType: this.determineRemediationType(actionType, targetKey)
+            targetKey,
+            assetClass
         };
+    }
+    
+    extractPatchMonth(solution) {
+        if (!solution) return null;
+        const monthYear = solution.match(/(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{4})/i);
+        return monthYear ? monthYear[1].toLowerCase() + '_' + monthYear[2] : null;
     }
 
     extractActionType(solution) {
         if (!solution) return 'other';
         const s = solution.toLowerCase();
-        
-        if (s.includes('install') || s.includes('apply') || s.includes('patch')) return 'patch';
-        if (s.includes('upgrade') || s.includes('update')) return 'upgrade';
-        if (s.includes('configure') || s.includes('disable') || s.includes('enable')) return 'configure';
+        if (s.includes('upgrade') || s.includes('update to')) return 'upgrade';
+        if (/kb\d+/i.test(s) || s.includes('hotfix') || s.includes('apply patch')) return 'patch';
+        if (s.includes('configure') || s.includes('disable') || s.includes('enable') || s.includes('harden') || s.includes('set ')) return 'configure';
         if (s.includes('remove') || s.includes('uninstall')) return 'remove';
-        if (s.includes('restrict') || s.includes('block')) return 'restrict';
-        
+        if (s.includes('workaround') || s.includes('mitigat')) return 'workaround';
+        if (s.includes('patch') || s.includes('install')) return 'patch';
         return 'other';
     }
 
     extractTargetKey(solution, title, finding) {
-        // Try to extract KB numbers
-        const kbMatch = (solution + ' ' + title).match(/KB\d+/i);
-        if (kbMatch) return kbMatch[0].toUpperCase();
+        // Extract version/KB and use it as targetKey
+        const rawVersion = this.extractTargetVersion(solution);
+        const truncatedVersion = rawVersion ? this.truncateVersion(rawVersion) : null;
         
-        // Try to extract CVE
-        if (finding.cve && finding.cve.length > 0) {
-            return finding.cve[0];
+        // If we have a version, use it
+        if (truncatedVersion) {
+            return truncatedVersion;
         }
         
-        // Try to extract software name
-        const softwareMatch = title.match(/^([A-Za-z0-9\s\-\.]+?)(?:\s+\d|\s+vulnerability|\s+security|$)/i);
-        if (softwareMatch) {
-            return softwareMatch[1].trim();
+        // Otherwise, normalize the solution text for hashing
+        return this.normalizeForHash(solution);
+    }
+    
+    extractTargetVersion(solution) {
+        if (!solution) return null;
+        // Priority 1: KB number
+        const kb = solution.match(/KB(\d+)/i);
+        if (kb) return 'kb' + kb[1];
+        // Priority 2: Patch month
+        const monthYear = solution.match(/(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{4})/i);
+        if (monthYear) return monthYear[1].toLowerCase() + '_' + monthYear[2];
+        // Priority 3: Version from upgrade/update/install context
+        const ver = solution.match(/(?:upgrade|update|install)\s+(?:to\s+)?(?:version\s+)?(?:[a-zA-Z\s]+\s+)?(\d+(?:\.\d+)+)/i);
+        if (ver) return ver[1];
+        // Priority 4: Standalone version with "or later/higher"
+        const standaloneVer = solution.match(/(\d+\.\d+(?:\.\d+)*)\s+or\s+(?:later|higher|above|newer)/i);
+        if (standaloneVer) return standaloneVer[1];
+        return null;
+    }
+    
+    truncateVersion(version) {
+        if (!version) return null;
+        // KB numbers and patch months — keep as-is
+        if (version.startsWith('kb') || version.includes('_')) return version;
+        const parts = version.split('.');
+        // 2-part versions (e.g. 9.5, 115.18) — keep as-is
+        if (parts.length <= 2) return version;
+        // 3+ part versions — truncate to major.minor
+        return parts.slice(0, 2).join('.');
+    }
+    
+    normalizeForHash(solution) {
+        if (!solution) return 'no_solution';
+        let n = solution.toLowerCase()
+            .replace(/please\s+/g, '').replace(/kindly\s+/g, '')
+            .replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim()
+            .substring(0, 60);
+        let hash = 0;
+        for (let i = 0; i < n.length; i++) {
+            hash = ((hash << 5) - hash) + n.charCodeAt(i);
+            hash = hash & hash;
         }
-        
-        // Try to extract configuration item
-        const configMatch = solution.match(/(?:configure|disable|enable)\s+([A-Za-z0-9\s\-\.]+)/i);
-        if (configMatch) {
-            return configMatch[1].trim();
-        }
-        
-        // Fallback to QID
-        if (finding.qid && finding.qid.length > 0) {
-            return `QID-${finding.qid[0]}`;
-        }
-        
-        return 'unknown';
+        return Math.abs(hash).toString(16).substring(0, 6) + '_' + n.substring(0, 20).replace(/\s+/g, '_');
     }
 
     extractAssetClass(finding) {
-        const os = (finding.operatingSystem || '').toLowerCase();
+        const os = (finding.operatingSystem || finding.asset?.operatingSystem || finding.os || '').toLowerCase();
         
-        if (os.includes('windows')) return 'windows';
-        if (os.includes('linux') || os.includes('ubuntu') || os.includes('centos') || os.includes('redhat')) return 'linux';
-        if (os.includes('mac') || os.includes('darwin')) return 'macos';
-        if (os.includes('network') || os.includes('cisco') || os.includes('juniper')) return 'network';
-        if (os.includes('vmware') || os.includes('esxi')) return 'virtualization';
+        if (!os) return 'general';
+        if (os.includes('server')) return 'server';
+        if (os.includes('windows 10') || os.includes('windows 11') || os.includes('workstation') || os.includes('macos') || os.includes('mac os')) return 'endpoint';
+        if (os.includes('cisco') || os.includes('juniper') || os.includes('fortinet') || os.includes('palo alto') || os.includes('network')) return 'network';
+        if (os.includes('linux') || os.includes('rhel') || os.includes('centos') || os.includes('ubuntu') || os.includes('debian') || os.includes('suse') || os.includes('red hat')) return 'server';
+        if (os.includes('windows')) return 'endpoint';
         
         return 'general';
+    }
+    
+    extractProduct(title) {
+        if (!title) return '';
+        const lower = title.toLowerCase();
+        // Known product patterns
+        if (lower.includes('chrome') || lower.includes('chromium')) return 'chrome';
+        if (lower.includes('firefox')) return 'firefox';
+        if (lower.includes('edge')) return 'edge';
+        if (lower.includes('windows')) return 'windows';
+        if (lower.includes('apache') && lower.includes('tomcat')) return 'tomcat';
+        if (lower.includes('apache')) return 'apache';
+        if (lower.includes('nginx')) return 'nginx';
+        if (lower.includes('openssh') || lower.includes('ssh')) return 'openssh';
+        if (lower.includes('openssl') || lower.includes('ssl')) return 'openssl';
+        if (lower.includes('mysql')) return 'mysql';
+        if (lower.includes('postgresql')) return 'postgresql';
+        if (lower.includes('java')) return 'java';
+        if (lower.includes('python')) return 'python';
+        if (lower.includes('php')) return 'php';
+        if (lower.includes('cisco')) return 'cisco';
+        if (lower.includes('oracle')) return 'oracle';
+        // Fallback: first word of title
+        const words = title.split(/[\s\-:]/);
+        return words[0] ? words[0].toLowerCase() : 'unknown';
+    }
+    
+    extractVendor(title, solution) {
+        const text = ((title || '') + ' ' + (solution || '')).toLowerCase();
+        if (text.includes('microsoft') || text.includes('windows')) return 'Microsoft';
+        if (text.includes('mozilla') || text.includes('firefox')) return 'Mozilla';
+        if (text.includes('google') || text.includes('chrome') || text.includes('chromium')) return 'Google';
+        if (text.includes('oracle') || text.includes('java se')) return 'Oracle';
+        if (text.includes('apache')) return 'Apache';
+        if (text.includes('cisco')) return 'Cisco';
+        if (text.includes('redhat') || text.includes('red hat')) return 'Red Hat';
+        if (text.includes('canonical') || text.includes('ubuntu')) return 'Canonical';
+        if (text.includes('vmware')) return 'VMware';
+        return '';
     }
 
     determineRemediationType(actionType, targetKey) {

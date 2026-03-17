@@ -8,8 +8,8 @@
 console.log('🔌 skills-integration.js loading...');
 
 // Feature flag - set to true to use skills architecture
-// DISABLED: Skills architecture needs refinement to match original grouping quality
-window.USE_SKILLS_ARCHITECTURE = false;
+// ENABLED: GroupingSkill now mirrors proven working logic from VulnerabilityAnalysisEngineV3
+window.USE_SKILLS_ARCHITECTURE = true;
 
 class SkillsIntegration {
     constructor() {
