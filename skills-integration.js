@@ -8,7 +8,8 @@
 console.log('🔌 skills-integration.js loading...');
 
 // Feature flag - set to true to use skills architecture
-window.USE_SKILLS_ARCHITECTURE = true;
+// DISABLED: Skills architecture needs refinement to match original grouping quality
+window.USE_SKILLS_ARCHITECTURE = false;
 
 class SkillsIntegration {
     constructor() {
