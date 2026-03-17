@@ -293,7 +293,7 @@ class POAMDatabase {
             // Data preservation
             affectedAssets: poam.affectedAssets ? this.transformAssetsWithMetadata(poam.affectedAssets) : [],
             totalAffectedAssets: poam.totalAffectedAssets || poam.affectedAssets?.length || 0,
-            rawFindings: poam.rawFindings || [],
+            // rawFindings removed - stored in scan summaries to reduce POAM size
 
             // Milestones (embedded on POAM for POAM Detail view)
             milestones: Array.isArray(poam.milestones) ? poam.milestones : [],
@@ -304,25 +304,16 @@ class POAMDatabase {
     }
 
     transformAssetsWithMetadata(assets) {
+        // Store only essential asset identification - verbose fields in scan summaries
         return assets.map(asset => ({
             id: asset.id || asset.assetId || asset.asset_id || asset.name || 'Unknown',
             name: asset.name || asset.assetName || asset.asset_name || asset.assetId || 'Unknown Asset',
-            asset_id: asset.asset_id || asset.assetId || asset.id || 'Unknown',
-            asset_name: asset.asset_name || asset.assetName || asset.name || 'Unknown Asset',
             ipv4: asset.ipv4 || asset.ip || asset.asset_ipv4 || '',
             os: asset.os || asset.operatingSystem || 'Unknown',
-            source_field: asset.source_field || '',
             status: asset.status || 'affected',
             firstDetected: asset.firstDetected || asset.scanDate || new Date().toISOString().split('T')[0],
-            lastDetected: asset.lastDetected || asset.scanDate || new Date().toISOString().split('T')[0],
-            result: asset.results || asset.result || asset.vulnerability || 'Scan metadata not available for this asset',
-            results: asset.results || asset.result || asset.vulnerability || 'Scan metadata not available for this asset',
-            solution: asset.solution || asset.remediation || 'Scan metadata not available for this asset',
-            raw: asset.raw || asset.rawData || 'No raw scan data available',
-            ip: asset.ip || asset.ipv4 || asset.asset_ipv4 || '',
-            port: asset.port || '',
-            protocol: asset.protocol || '',
-            operatingSystem: asset.operatingSystem || asset.os || 'Unknown'
+            lastDetected: asset.lastDetected || asset.scanDate || new Date().toISOString().split('T')[0]
+            // Removed: result, results, solution, raw (stored in scan summaries)
         }));
     }
 
