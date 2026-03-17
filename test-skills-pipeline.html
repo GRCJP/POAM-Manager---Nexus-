@@ -180,7 +180,34 @@
                     throw new Error(`Failed to load CSV: ${response.statusText}`);
                 }
                 const csvText = await response.text();
-                const csvLines = csvText.split('\n').map(line => line.split(','));
+                
+                // Proper CSV parsing that handles quoted fields
+                const csvLines = csvText.split('\n').map(line => {
+                    const result = [];
+                    let current = '';
+                    let inQuotes = false;
+                    
+                    for (let i = 0; i < line.length; i++) {
+                        const char = line[i];
+                        const nextChar = line[i + 1];
+                        
+                        if (char === '"') {
+                            if (inQuotes && nextChar === '"') {
+                                current += '"';
+                                i++; // Skip next quote
+                            } else {
+                                inQuotes = !inQuotes;
+                            }
+                        } else if (char === ',' && !inQuotes) {
+                            result.push(current);
+                            current = '';
+                        } else {
+                            current += char;
+                        }
+                    }
+                    result.push(current);
+                    return result;
+                });
                 log(`✅ Loaded CSV: ${csvLines.length} rows`, 'success');
 
                 // Step 2: Parse CSV with CSVParserSkill
