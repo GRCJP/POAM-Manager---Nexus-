@@ -1293,21 +1293,28 @@
                 
                 <!-- Search Bar -->
                 <div class="mb-6">
-                    <div class="relative">
+                    <div class="relative flex items-center gap-2">
                         <input 
                             type="text" 
                             id="poam-search-input" 
                             placeholder="Search by vulnerability title..." 
                             class="w-full px-4 py-2 pl-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                             oninput="filterPOAMsBySearch()"
+                            onkeydown="if(event.key === 'Enter'){ executePOAMSearchFromInput(); }"
                         />
                         <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
                         <button 
                             id="clear-search-btn"
                             onclick="clearPOAMSearch()" 
-                            class="hidden absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                            class="hidden absolute right-24 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
                         >
                             <i class="fas fa-times"></i>
+                        </button>
+                        <button
+                            id="execute-search-btn"
+                            onclick="executePOAMSearchFromInput()"
+                            class="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 whitespace-nowrap">
+                            Search
                         </button>
                     </div>
                 </div>
@@ -3313,6 +3320,7 @@
     <script src="skills/classification-skill.js"></script>
     <script src="skills/grouping-skill.js"></script>
     <script src="skills/poam-builder-skill.js"></script>
+    <script src="skills/search-skill.js"></script>
     <script src="skills/skill-orchestrator.js"></script>
     <script src="skills-integration.js"></script>
     

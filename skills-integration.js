@@ -31,6 +31,7 @@ class SkillsIntegration {
         this.orchestrator.registerSkill('classification', new ClassificationSkill());
         this.orchestrator.registerSkill('grouping', new GroupingSkill());
         this.orchestrator.registerSkill('poamBuilder', new POAMBuilderSkill());
+        this.orchestrator.registerSkill('search', new SearchSkill());
 
         // Define pipeline (matches original engine flow)
         this.orchestrator.definePipeline('scan-processing', [
