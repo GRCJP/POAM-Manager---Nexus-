@@ -45,6 +45,201 @@ function getControlFamilyOptions(currentFamily) {
     return families.map(f => `<option value="${families.indexOf(f)}" ${currentFamily === f ? 'selected' : ''}>${f}</option>`).join('');
 }
 
+function isPOAMDelayedForAction(poam) {
+    const status = String(poam.findingStatus || poam.status || 'open').toLowerCase();
+    if (status === 'completed' || status === 'closed' || status === 'risk-accepted' || status === 'ignored') return false;
+    const due = new Date(poam.updatedScheduledCompletionDate || poam.dueDate);
+    return !isNaN(due.getTime()) && due < new Date();
+}
+
+function getDelayedJustificationOptions(controlFamily, actionType) {
+    const family = String(controlFamily || 'CM').toUpperCase();
+    const extensionByFamily = {
+        AC: [
+            'Dependency on enterprise IAM integration window approved by governance board.',
+            'Privileged access redesign requires staged validation to avoid production outage.',
+            'Compensating controls active while access control baseline hardening is completed.'
+        ],
+        CM: [
+            'Configuration baseline change requires CAB approval and maintenance window scheduling.',
+            'Patch and configuration sequencing needed to prevent service instability.',
+            'Compensating configuration monitoring is in place pending controlled rollout.'
+        ],
+        IR: [
+            'Incident response playbook update requires cross-team tabletop validation.',
+            'SOC tooling integration is pending vendor release and acceptance testing.',
+            'Temporary detective controls are operating while response workflow is finalized.'
+        ],
+        SC: [
+            'Network segmentation or encryption updates require phased deployment and validation.',
+            'Boundary control changes require coordinated outage window with operations.',
+            'Compensating security controls are documented and monitored during extension period.'
+        ],
+        SI: [
+            'Vulnerability remediation depends on upstream vendor patch availability.',
+            'Security tooling tuning requires false-positive reduction before enforcement.',
+            'Interim monitoring and alerting controls are active until full remediation.'
+        ]
+    };
+
+    const riskAcceptOptions = [
+        'Residual risk is formally accepted by Authorizing Official with compensating controls documented.',
+        'Remediation is not technically feasible in current architecture; continuous monitoring is implemented.',
+        'Operational mission impact outweighs immediate remediation; risk acceptance approved per RMF process.'
+    ];
+
+    if (actionType === 'risk-accepted') return riskAcceptOptions;
+    return extensionByFamily[family] || extensionByFamily.CM;
+}
+
+function buildDelayedJustificationOptionsHTML(controlFamily, actionType, selectedValue = '') {
+    const options = getDelayedJustificationOptions(controlFamily, actionType);
+    return [
+        '<option value="">Select justification...</option>',
+        ...options.map(opt => `<option value="${opt.replace(/"/g, '&quot;')}" ${selectedValue === opt ? 'selected' : ''}>${opt}</option>`)
+    ].join('');
+}
+
+function updateDelayedActionForm(poamId, controlFamily) {
+    const actionEl = document.getElementById(`delayed-action-type-${poamId}`);
+    const justificationEl = document.getElementById(`delayed-justification-${poamId}`);
+    const durationWrap = document.getElementById(`delayed-duration-wrap-${poamId}`);
+    if (!actionEl || !justificationEl) return;
+
+    const action = actionEl.value || 'extend';
+    justificationEl.innerHTML = buildDelayedJustificationOptionsHTML(controlFamily, action);
+    if (durationWrap) {
+        durationWrap.classList.toggle('hidden', action !== 'extend');
+    }
+}
+
+function addDaysISO(dateString, days) {
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return null;
+    d.setDate(d.getDate() + days);
+    return d.toISOString().split('T')[0];
+}
+
+async function applyDelayedPOAMAction(poamId, controlFamily) {
+    try {
+        if (!poamDB || !poamDB.db) await poamDB.init();
+
+        const action = document.getElementById(`delayed-action-type-${poamId}`)?.value;
+        const justification = document.getElementById(`delayed-justification-${poamId}`)?.value;
+        const extensionDays = parseInt(document.getElementById(`delayed-extension-days-${poamId}`)?.value || '30', 10);
+        const notesInput = document.getElementById(`delayed-action-notes-${poamId}`)?.value?.trim() || '';
+
+        if (!action) {
+            showUpdateFeedback('Select an action first', 'error');
+            return;
+        }
+        if (!justification) {
+            showUpdateFeedback('Select an audit justification', 'error');
+            return;
+        }
+
+        const poam = await poamDB.getPOAM(poamId);
+        if (!poam) return;
+
+        const nowIso = new Date().toISOString();
+        const today = nowIso.split('T')[0];
+        poam.statusHistory = poam.statusHistory || [];
+        poam.milestones = Array.isArray(poam.milestones) ? poam.milestones : [];
+
+        if (action === 'extend') {
+            const baseDate = poam.updatedScheduledCompletionDate || poam.dueDate || today;
+            const newDate = addDaysISO(baseDate, extensionDays);
+            if (!newDate) {
+                showUpdateFeedback('Unable to calculate extension date', 'error');
+                return;
+            }
+
+            poam.initialScheduledCompletionDate = poam.initialScheduledCompletionDate || poam.dueDate || baseDate;
+            poam.updatedScheduledCompletionDate = newDate;
+            poam.findingStatus = 'extended';
+            poam.status = 'extended';
+            poam.delayAction = 'extend';
+            poam.delayJustification = justification;
+            poam.delayExtensionDays = extensionDays;
+            poam.delayControlFamily = controlFamily;
+            poam.delayDecisionDate = today;
+
+            if (poam.milestones.length > 0) {
+                poam.milestones = poam.milestones.map(ms => {
+                    const oldDate = ms.targetDate || ms.date;
+                    const shifted = oldDate ? addDaysISO(oldDate, extensionDays) : oldDate;
+                    const updated = { ...ms, targetDate: shifted || oldDate };
+                    updated.changeLog = Array.isArray(updated.changeLog) ? updated.changeLog : [];
+                    updated.changeLog.push({
+                        fieldName: 'targetDate',
+                        oldValue: oldDate || '',
+                        newValue: shifted || oldDate || '',
+                        changedAt: nowIso,
+                        reason: `POAM extension (${extensionDays} days): ${justification}`
+                    });
+                    return updated;
+                });
+            } else {
+                poam.milestones = [{
+                    name: 'Extended Remediation Completion',
+                    description: `POAM extension approved for ${extensionDays} days`,
+                    targetDate: newDate,
+                    status: 'pending',
+                    weight: 100,
+                    changeLog: [{
+                        fieldName: 'targetDate',
+                        oldValue: baseDate,
+                        newValue: newDate,
+                        changedAt: nowIso,
+                        reason: `POAM extension (${extensionDays} days): ${justification}`
+                    }]
+                }];
+            }
+
+            poam.statusHistory.push({
+                date: nowIso,
+                action: 'extended',
+                details: `Extended by ${extensionDays} days. Justification: ${justification}`,
+                controlFamily: controlFamily || poam.controlFamily || '',
+                notes: notesInput
+            });
+        } else if (action === 'risk-accepted') {
+            poam.findingStatus = 'risk-accepted';
+            poam.status = 'risk-accepted';
+            poam.resourcesRequired = 'Risk Acceptance (No Additional Resources)';
+            poam.delayAction = 'risk-accepted';
+            poam.delayJustification = justification;
+            poam.delayControlFamily = controlFamily;
+            poam.delayDecisionDate = today;
+
+            poam.statusHistory.push({
+                date: nowIso,
+                action: 'risk_accepted',
+                details: `Risk accepted. Justification: ${justification}`,
+                controlFamily: controlFamily || poam.controlFamily || '',
+                notes: notesInput
+            });
+        }
+
+        if (notesInput) {
+            const line = `[${today}] Delayed POAM decision: ${action}. ${justification}. Notes: ${notesInput}`;
+            poam.notes = poam.notes ? `${poam.notes}\n${line}` : line;
+        }
+
+        poam.lastModifiedDate = nowIso;
+        await poamDB.savePOAM(poam);
+
+        showUpdateFeedback(action === 'extend' ? 'POAM extended and milestones updated' : 'POAM marked as risk accepted', 'success');
+        if (typeof displayVulnerabilityPOAMs === 'function') await displayVulnerabilityPOAMs();
+        if (typeof updateVulnerabilityModuleMetrics === 'function') await updateVulnerabilityModuleMetrics();
+        if (typeof loadDashboardMetrics === 'function') loadDashboardMetrics();
+        await showPOAMDetails(poamId);
+    } catch (error) {
+        console.error('Failed delayed POAM action:', error);
+        showUpdateFeedback('Failed to apply delayed POAM action', 'error');
+    }
+}
+
 async function updatePOAMField(poamId, field, value) {
     console.log(`Update POAM ${poamId}: ${field} = ${value}`);
     
@@ -181,6 +376,8 @@ function renderFocusedPOAMDetailPage(poam) {
         resources: poam.resourcesRequired || 'Human Capital',
         notes: poam.notes || ''
     };
+    const delayedActionVisible = isPOAMDelayedForAction(poam) || String(displayPOAM.status || '').toLowerCase() === 'extended';
+    const delayedJustificationOptions = buildDelayedJustificationOptionsHTML(displayPOAM.controlFamily || poam.controlFamily || 'CM', 'extend');
     
     detailContainer.innerHTML = `
         <div class="fixed inset-0 bg-black bg-opacity-50 z-50" onclick="closePOAMDetails()"></div>
@@ -340,6 +537,47 @@ function renderFocusedPOAMDetailPage(poam) {
                                                onchange="updatePOAMField('${poam.id}', 'actualCompletionDate', this.value)">
                                     </div>
                                 </div>
+                                ${delayedActionVisible ? `
+                                <div class="mt-3 p-3 border border-orange-200 bg-orange-50 rounded-lg">
+                                    <div class="text-[10px] font-bold text-orange-700 uppercase mb-2">Delayed POAM Decision</div>
+                                    <div class="grid grid-cols-1 gap-2">
+                                        <div>
+                                            <label class="text-[10px] font-bold text-slate-500 uppercase">Action</label>
+                                            <select id="delayed-action-type-${poam.id}"
+                                                    class="w-full text-sm border border-slate-200 rounded px-3 py-2"
+                                                    onchange="updateDelayedActionForm('${poam.id}', '${displayPOAM.controlFamily || poam.controlFamily || 'CM'}')">
+                                                <option value="extend">Extend</option>
+                                                <option value="risk-accepted">Risk Accept</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="text-[10px] font-bold text-slate-500 uppercase">Audit Justification (${displayPOAM.controlFamily || poam.controlFamily || 'CM'})</label>
+                                            <select id="delayed-justification-${poam.id}" class="w-full text-sm border border-slate-200 rounded px-3 py-2">
+                                                ${delayedJustificationOptions}
+                                            </select>
+                                        </div>
+                                        <div id="delayed-duration-wrap-${poam.id}">
+                                            <label class="text-[10px] font-bold text-slate-500 uppercase">Extension Duration</label>
+                                            <select id="delayed-extension-days-${poam.id}" class="w-full text-sm border border-slate-200 rounded px-3 py-2">
+                                                <option value="30">30 Days</option>
+                                                <option value="60">60 Days</option>
+                                                <option value="90">90 Days</option>
+                                                <option value="120">120 Days</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="text-[10px] font-bold text-slate-500 uppercase">Decision Notes</label>
+                                            <textarea id="delayed-action-notes-${poam.id}" rows="2"
+                                                      class="w-full text-sm border border-slate-200 rounded px-3 py-2 resize-none"
+                                                      placeholder="Optional notes for evidence and audit trail"></textarea>
+                                        </div>
+                                        <button onclick="applyDelayedPOAMAction('${poam.id}', '${displayPOAM.controlFamily || poam.controlFamily || 'CM'}')"
+                                                class="w-full px-3 py-2 text-sm font-semibold bg-orange-600 text-white rounded hover:bg-orange-700">
+                                            Apply Delayed POAM Decision
+                                        </button>
+                                    </div>
+                                </div>
+                                ` : ''}
                             </div>
                         </div>
                     </div>
