@@ -119,6 +119,16 @@ class QualysProcessor {
         console.log(`🔍 Exact header at expected position (column 30):`, JSON.stringify(headers[30]));
         
         // Process data rows (skip header row)
+        console.log(`\n📊 CSV PARSING DIAGNOSTICS:`);
+        console.log(`   Total rows in CSV: ${data.length}`);
+        console.log(`   Header row index: ${headerRowIndex}`);
+        console.log(`   Data rows to process: ${data.length - headerRowIndex - 1}`);
+        
+        let skippedEmpty = 0;
+        let skippedNoIdentifier = 0;
+        let skippedNormalizationFailed = 0;
+        let parsed = 0;
+        
         for (let i = headerRowIndex + 1; i < data.length; i++) {
             const rowArray = data[i];
             
@@ -129,6 +139,7 @@ class QualysProcessor {
             }
             const hasAnyData = rowArray.some(cell => cell && cell.toString().trim() !== '');
             if (!hasAnyData) {
+                skippedEmpty++;
                 continue;
             }
             
@@ -143,13 +154,46 @@ class QualysProcessor {
             const hasQID = row['QID'] && row['QID'].trim() !== '';
             const hasTitle = row['Title'] && row['Title'].trim() !== '';
             if (!hasQID && !hasTitle) {
+                skippedNoIdentifier++;
+                if (skippedNoIdentifier <= 3) {
+                    console.log(`   ⚠️ Row ${i} skipped (no QID/Title):`, {
+                        QID: row['QID'],
+                        Title: row['Title'],
+                        firstFewCells: rowArray.slice(0, 5)
+                    });
+                }
                 continue;
             }
 
             const vulnerability = this.normalizeQualysRow(row);
             if (vulnerability) {
                 vulnerabilities.push(vulnerability);
+                parsed++;
+            } else {
+                skippedNormalizationFailed++;
+                if (skippedNormalizationFailed <= 3) {
+                    console.log(`   ⚠️ Row ${i} normalization failed`);
+                }
             }
+        }
+        
+        console.log(`\n📊 CSV PARSING SUMMARY:`);
+        console.log(`   ✅ Successfully parsed: ${parsed}`);
+        console.log(`   ⏭️  Skipped (empty rows): ${skippedEmpty}`);
+        console.log(`   ⏭️  Skipped (no QID/Title): ${skippedNoIdentifier}`);
+        console.log(`   ❌ Skipped (normalization failed): ${skippedNormalizationFailed}`);
+        
+        if (parsed > 0) {
+            const sample = vulnerabilities[0];
+            console.log(`\n🔬 First parsed finding:`, {
+                title: sample.title,
+                qid: sample.qid,
+                cve: sample.cve,
+                severity: sample.severity,
+                status: sample.status,
+                host: sample.host,
+                firstDetected: sample.firstDetected
+            });
         }
 
         return vulnerabilities;
