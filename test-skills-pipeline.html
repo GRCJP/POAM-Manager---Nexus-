@@ -200,14 +200,38 @@
                 log(`✅ Parsed ${findings.length} findings`, 'success');
                 log(`   Parse rate: ${parseResult.data.quality.parseRate}`, 'info');
 
-                // Step 3: Phase 1 Eligibility Gate (30-day filter)
-                log('\n🚪 Step 3: Phase 1 Eligibility Gate (30-day SLA filter)...', 'info');
+                // Step 3: Phase 1 Eligibility Gate (severity-based SLA filter)
+                log('\n🚪 Step 3: Phase 1 Eligibility Gate (severity-based SLA filter)...', 'info');
                 const now = new Date();
-                const SLA_THRESHOLD_DAYS = 30;
+                const SLA_CONFIG = {
+                    critical: 15,
+                    high: 30,
+                    medium: 90,
+                    low: 180
+                };
+                log(`   SLA Thresholds: Critical=${SLA_CONFIG.critical}d, High=${SLA_CONFIG.high}d, Medium=${SLA_CONFIG.medium}d, Low=${SLA_CONFIG.low}d`, 'info');
+                
                 const INACTIVE_STATUSES = ['fixed', 'closed', 'resolved', 'ignored', 'disabled'];
                 
                 const eligibleFindings = [];
                 const excludedFindings = [];
+
+                const normalizeSeverity = (severity) => {
+                    if (!severity) return 'medium';
+                    const sev = severity.toString().toLowerCase().trim();
+                    if (/^[1-5]$/.test(sev)) {
+                        const num = parseInt(sev);
+                        if (num <= 2) return 'low';
+                        if (num === 3) return 'medium';
+                        if (num === 4) return 'high';
+                        if (num === 5) return 'critical';
+                    }
+                    if (sev.includes('crit')) return 'critical';
+                    if (sev.includes('high')) return 'high';
+                    if (sev.includes('med') || sev.includes('mod')) return 'medium';
+                    if (sev.includes('low')) return 'low';
+                    return 'medium';
+                };
 
                 findings.forEach(finding => {
                     // Gate 1: Exclude inactive statuses
@@ -217,14 +241,17 @@
                         return;
                     }
 
-                    // Gate 2: Exclude findings < 30 days old
+                    // Gate 2: Exclude findings that haven't reached their severity-based SLA threshold
                     const firstDetected = finding.firstDetected || finding.first_detected || finding.firstFound;
                     if (firstDetected) {
                         const detectedDate = new Date(firstDetected);
                         if (!isNaN(detectedDate.getTime())) {
                             const ageInDays = Math.floor((now - detectedDate) / (1000 * 60 * 60 * 24));
-                            if (ageInDays < SLA_THRESHOLD_DAYS) {
-                                excludedFindings.push({ finding, reason: `Too recent: ${ageInDays} days old` });
+                            const severity = normalizeSeverity(finding.severity);
+                            const slaThreshold = SLA_CONFIG[severity] || SLA_CONFIG.medium;
+                            
+                            if (ageInDays < slaThreshold) {
+                                excludedFindings.push({ finding, reason: `Too recent: ${ageInDays} days old (${severity} threshold: ${slaThreshold} days)` });
                                 return;
                             }
                         }
