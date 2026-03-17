@@ -290,7 +290,7 @@ class POAMBuilderSkill extends BaseSkill {
             oldestDetectionDate: oldestDetectionDate ? oldestDetectionDate.toISOString().split('T')[0] : null,
             oldestBreachDate,
             oldestAge,
-            highestRisk,
+            highestRisk: this.normalizeSeverity(highestRisk),
             slaDays,
             skipReason
         };
