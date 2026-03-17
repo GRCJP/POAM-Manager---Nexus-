@@ -86,6 +86,83 @@ class QualysProcessor {
         };
     }
 
+    buildHeaderMap(headers) {
+        // Map actual headers to standardized field names
+        // Handles variations: 'First Detected' vs 'First Detection Date' vs 'firstDetected'
+        const map = {};
+        
+        const fieldMappings = {
+            qid: ['qid', 'vuln id', 'vulnerability id'],
+            title: ['title', 'vulnerability', 'vuln name', 'vulnerability name'],
+            cve: ['cve', 'cve id', 'cve-id'],
+            severity: ['severity', 'risk', 'severity level'],
+            status: ['status', 'vuln status', 'finding status'],
+            firstDetected: ['first detected', 'first detection', 'first detection date', 'detection date'],
+            lastDetected: ['last detected', 'last detection', 'last detection date'],
+            assetName: ['asset name', 'hostname', 'host', 'dns', 'asset'],
+            assetId: ['asset id', 'asset identifier', 'assetid'],
+            ipv4: ['asset ipv4', 'ipv4', 'ip', 'ip address', 'asset ip'],
+            ipv6: ['asset ipv6', 'ipv6'],
+            operatingSystem: ['operating system', 'os', 'platform'],
+            port: ['port', 'service port'],
+            protocol: ['protocol', 'service protocol'],
+            solution: ['solution', 'remediation', 'fix'],
+            description: ['cve-description', 'description', 'vuln description'],
+            results: ['results', 'evidence', 'finding details'],
+            category: ['category', 'vuln category'],
+            threat: ['threat', 'threat level'],
+            patchable: ['vuln patchable', 'patchable'],
+            ignored: ['ignored', 'is ignored'],
+            disabled: ['disabled', 'is disabled'],
+            publishedDate: ['published date', 'published', 'cve published'],
+            patchReleased: ['patch released', 'patch date'],
+            cvssV2: ['cvssv2 base (nvd)', 'cvss v2', 'cvss2'],
+            cvssV3: ['cvssv3.1 base (nvd)', 'cvss v3', 'cvss3'],
+            qvsScore: ['qvs score', 'qvs'],
+            detectionAge: ['detection age', 'age'],
+            assetCriticalScore: ['asset critical score', 'asset criticality'],
+            truRiskScore: ['turisk score', 'trurisk'],
+            timesDetected: ['times detected', 'detection count'],
+            assetTags: ['asset tags', 'tags'],
+            kbSeverity: ['kb severity', 'kb']
+        };
+        
+        // Build reverse lookup: header name -> standard field
+        headers.forEach((header, index) => {
+            if (!header) return;
+            const normalized = header.toLowerCase().trim();
+            
+            // Find matching standard field
+            for (const [standardField, variations] of Object.entries(fieldMappings)) {
+                if (variations.some(v => normalized === v || normalized.includes(v))) {
+                    map[standardField] = index;
+                    break;
+                }
+            }
+        });
+        
+        return map;
+    }
+    
+    mapRowToStandardFields(rowArray, headers, headerMap) {
+        // Create object with both standard field names AND original header names
+        const row = {};
+        
+        // First, map using original headers (for backward compatibility)
+        headers.forEach((header, index) => {
+            if (header) {
+                row[header] = rowArray[index];
+            }
+        });
+        
+        // Then, add standard field mappings
+        for (const [standardField, columnIndex] of Object.entries(headerMap)) {
+            row[standardField] = rowArray[columnIndex];
+        }
+        
+        return row;
+    }
+    
     findHeaderRow(data) {
         // Data is array of arrays, look for row containing 'CVE', 'Title', 'Severity'
         for (let i = 0; i < Math.min(10, data.length); i++) {
@@ -108,15 +185,17 @@ class QualysProcessor {
         // Get headers from the header row
         const headers = data[headerRowIndex];
         console.log(`📋 Using ${headers.length} headers from row ${headerRowIndex + 1}`);
-        console.log(`📋 Header names:`, headers);
         
-        // Debug: Find OS-related headers
-        const osHeaders = headers.filter((h, idx) => {
-            const lower = (h || '').toLowerCase();
-            return lower.includes('operat') || lower.includes('os') || lower.includes('system');
-        });
-        console.log(`🔍 OS-related headers found:`, osHeaders);
-        console.log(`🔍 Exact header at expected position (column 30):`, JSON.stringify(headers[30]));
+        // Build flexible header map to handle variations and API vs CSV differences
+        const headerMap = this.buildHeaderMap(headers);
+        console.log(`📋 Mapped ${Object.keys(headerMap).length} standard fields from headers`);
+        
+        // Validate critical headers are present
+        const criticalFields = ['qid', 'title', 'severity'];
+        const missingCritical = criticalFields.filter(field => !headerMap[field]);
+        if (missingCritical.length > 0) {
+            console.warn(`⚠️  Missing critical headers: ${missingCritical.join(', ')}`);
+        }
         
         // Process data rows (skip header row)
         console.log(`\n📊 CSV PARSING DIAGNOSTICS:`);
@@ -143,16 +222,13 @@ class QualysProcessor {
                 continue;
             }
             
-            // Convert array to object using headers
-            const row = {};
-            headers.forEach((header, index) => {
-                row[header] = rowArray[index];
-            });
+            // Convert array to object using flexible header mapping
+            const row = this.mapRowToStandardFields(rowArray, headers, headerMap);
             
             // Skip rows with no meaningful identifier (need at least QID or Title)
             // CVE is optional — many valid findings (config issues, potential vulns) have no CVE
-            const hasQID = row['QID'] && row['QID'].trim() !== '';
-            const hasTitle = row['Title'] && row['Title'].trim() !== '';
+            const hasQID = row.qid && row.qid.trim() !== '';
+            const hasTitle = row.title && row.title.trim() !== '';
             if (!hasQID && !hasTitle) {
                 skippedNoIdentifier++;
                 if (skippedNoIdentifier <= 3) {
@@ -201,22 +277,22 @@ class QualysProcessor {
 
     normalizeQualysRow(row) {
         try {
-            // Extract and normalize Qualys-specific fields
-            const cveList = this.extractCVEs(row['CVE']);
-            const qidList = this.extractQIDs(row['QID']);
-            const kbList = this.extractKBs(row['KB Severity'] || '');
+            // Extract and normalize Qualys-specific fields using flexible field access
+            const cveList = this.extractCVEs(row.cve || row['CVE']);
+            const qidList = this.extractQIDs(row.qid || row['QID']);
+            const kbList = this.extractKBs(row.kbSeverity || row['KB Severity'] || '');
             
             // Map Qualys severity to normalized risk level
-            const severity = this.normalizeSeverity(row['Severity']);
+            const severity = this.normalizeSeverity(row.severity || row['Severity']);
             
             // Parse dates (Qualys format: "1/13/2026 22:51")
-            const firstDetected = this.parseQualysDate(row['First Detected']);
-            const lastDetected = this.parseQualysDate(row['Last Detected']);
-            const publishedDate = this.parseQualysDate(row['Published Date']);
-            const patchReleased = this.parseQualysDate(row['Patch Released']);
+            const firstDetected = this.parseQualysDate(row.firstDetected || row['First Detected']);
+            const lastDetected = this.parseQualysDate(row.lastDetected || row['Last Detected']);
+            const publishedDate = this.parseQualysDate(row.publishedDate || row['Published Date']);
+            const patchReleased = this.parseQualysDate(row.patchReleased || row['Patch Released']);
 
-            // Extract OS value
-            const osValue = row['Operating System']?.trim() || 'unknown';
+            // Extract OS value with flexible field access
+            const osValue = (row.operatingSystem || row['Operating System'] || '').trim() || 'unknown';
             
             // Clean OS value: remove "OS: " prefix if present
             let cleanedOS = osValue;
@@ -232,65 +308,65 @@ class QualysProcessor {
             }
             
             return {
-                // Core vulnerability data
-                title: row['Title']?.trim() || 'Unknown Vulnerability',
-                host: row['Asset Name']?.trim() || row['Asset Id']?.trim() || 'unknown',
-                operatingSystem: cleanedOS, // Top-level field for easier access
+                // Core vulnerability data with flexible field access
+                title: (row.title || row['Title'] || '').trim() || 'Unknown Vulnerability',
+                host: (row.assetName || row['Asset Name'] || row.assetId || row['Asset Id'] || '').trim() || 'unknown',
+                operatingSystem: cleanedOS,
                 asset: {
-                    hostname: row['Asset Name']?.trim() || row['Asset Id']?.trim() || 'unknown',
-                    assetId: row['Asset Id']?.trim() || 'unknown',
-                    ipv4: row['Asset IPV4']?.trim() || '',
-                    ipv6: row['Asset IPV6']?.trim() || '',
+                    hostname: (row.assetName || row['Asset Name'] || row.assetId || row['Asset Id'] || '').trim() || 'unknown',
+                    assetId: (row.assetId || row['Asset Id'] || '').trim() || 'unknown',
+                    ipv4: (row.ipv4 || row['Asset IPV4'] || '').trim() || '',
+                    ipv6: (row.ipv6 || row['Asset IPV6'] || '').trim() || '',
                     operatingSystem: cleanedOS,
-                    tags: this.parseAssetTags(row['Asset Tags'])
+                    tags: this.parseAssetTags(row.assetTags || row['Asset Tags'])
                 },
-                ip: row['Asset IPV4']?.trim() || '',
+                ip: (row.ipv4 || row['Asset IPV4'] || '').trim() || '',
                 
                 // Risk and severity
                 severity: severity,
                 risk: this.mapSeverityToRisk(severity),
                 
-                // Vulnerability details
-                description: row['CVE-Description']?.trim() || row['Description']?.trim() || row['Title']?.trim() || 'No description available',
-                solution: row['Solution']?.trim() || 'No solution available',
-                results: row['Results']?.trim() || '',
+                // Vulnerability details with flexible field access
+                description: (row.description || row['CVE-Description'] || row['Description'] || row.title || row['Title'] || '').trim() || 'No description available',
+                solution: (row.solution || row['Solution'] || '').trim() || 'No solution available',
+                results: (row.results || row['Results'] || '').trim() || '',
                 
-                // CVSS scores
+                // CVSS scores with flexible field access
                 cvss: {
-                    v2: this.parseCVSS(row['CVSSv2 Base (nvd)']),
-                    v3: this.parseCVSS(row['CVSSv3.1 Base (nvd)'])
+                    v2: this.parseCVSS(row.cvssV2 || row['CVSSv2 Base (nvd)']),
+                    v3: this.parseCVSS(row.cvssV3 || row['CVSSv3.1 Base (nvd)'])
                 },
                 
                 // Identifiers
                 cve: cveList,
                 qid: qidList,
                 kb: kbList,
-                port: row['Port']?.trim() || '',
-                protocol: row['Protocol']?.trim() || '',
+                port: (row.port || row['Port'] || '').trim() || '',
+                protocol: (row.protocol || row['Protocol'] || '').trim() || '',
                 
                 // Detection information
                 firstDetected: firstDetected,
                 lastDetected: lastDetected,
                 publishedOn: publishedDate,
                 patchReleased: patchReleased,
-                timesDetected: parseInt(row['Times Detected']) || 1,
+                timesDetected: parseInt(row.timesDetected || row['Times Detected']) || 1,
                 
-                // Classification
-                category: row['Category']?.trim() || 'unknown',
-                threat: row['Threat']?.trim() || 'unknown',
-                type: row['Type Detected']?.trim() || 'vulnerability',
+                // Classification with flexible field access
+                category: (row.category || row['Category'] || '').trim() || 'unknown',
+                threat: (row.threat || row['Threat'] || '').trim() || 'unknown',
+                type: (row.type || row['Type Detected'] || '').trim() || 'vulnerability',
                 
-                // Status and flags
-                status: row['Status']?.trim() || 'unknown',
-                disabled: row['Disabled']?.trim() === 'Yes',
-                ignored: row['Ignored']?.trim() === 'Yes',
-                patchable: row['Vuln Patchable']?.trim() === 'Yes',
+                // Status and flags with flexible field access
+                status: (row.status || row['Status'] || '').trim() || 'unknown',
+                disabled: (row.disabled || row['Disabled'] || '').trim() === 'Yes',
+                ignored: (row.ignored || row['Ignored'] || '').trim() === 'Yes',
+                patchable: (row.patchable || row['Vuln Patchable'] || '').trim() === 'Yes',
                 
-                // Scores and metrics
-                qvsScore: parseFloat(row['QVS Score']) || 0,
-                detectionAge: parseInt(row['Detection AGE']) || 0,
-                assetCriticalScore: parseFloat(row['Asset Critical Score']) || 0,
-                truRiskScore: parseFloat(row['TruRisk Score']) || 0,
+                // Scores and metrics with flexible field access
+                qvsScore: parseFloat(row.qvsScore || row['QVS Score']) || 0,
+                detectionAge: parseInt(row.detectionAge || row['Detection AGE']) || 0,
+                assetCriticalScore: parseFloat(row.assetCriticalScore || row['Asset Critical Score']) || 0,
+                truRiskScore: parseFloat(row.truRiskScore || row['TruRisk Score']) || 0,
                 
                 // Additional metadata
                 identifiers: {
@@ -298,8 +374,8 @@ class QualysProcessor {
                     qid: qidList,
                     kb: kbList
                 },
-                text: row['Title']?.trim() || '',
-                evidence: row['Results']?.trim() || '',
+                text: (row.title || row['Title'] || '').trim() || '',
+                evidence: (row.results || row['Results'] || '').trim() || '',
                 
                 // Raw data for reference
                 raw: row
