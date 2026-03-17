@@ -11,6 +11,12 @@ let _dashStatusDonut = null;
 let _dashAllPOAMs = [];
 let _dashTrendRange = 30;
 
+function dashNormalizeStatus(raw) {
+    const s = String(raw || 'open').toLowerCase().trim().replace('_', '-');
+    if (s === 'risk accepted') return 'risk-accepted';
+    return s;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // MAIN ENTRY POINT
 // ═══════════════════════════════════════════════════════════════
@@ -68,9 +74,17 @@ function computeAndRenderKPIs(poams) {
     const thirtyDays = new Date(now.getTime() + 30 * 86400000);
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const getStatus = p => (p.findingStatus || p.status || 'open').toLowerCase();
+    const normalizeStatus = (raw) => {
+        const s = String(raw || 'open').toLowerCase().trim().replace('_', '-');
+        if (s === 'risk accepted') return 'risk-accepted';
+        return s;
+    };
+    const getStatus = p => normalizeStatus(p.findingStatus || p.status || 'open');
     const getRisk = p => (p.riskLevel || p.risk || 'medium').toLowerCase();
-    const getDueDate = p => new Date(p.updatedScheduledCompletionDate || p.dueDate);
+    const getDueDate = p => {
+        const d = new Date(p.updatedScheduledCompletionDate || p.dueDate);
+        return Number.isNaN(d.getTime()) ? null : d;
+    };
     const isOpen = p => { const s = getStatus(p); return s !== 'completed' && s !== 'closed' && s !== 'risk-accepted' && s !== 'ignored'; };
     const isClosed = p => { const s = getStatus(p); return s === 'completed' || s === 'closed'; };
 
@@ -78,8 +92,8 @@ function computeAndRenderKPIs(poams) {
     const closedPOAMs = poams.filter(isClosed);
 
     const totalOpen = openPOAMs.length;
-    const overdue = openPOAMs.filter(p => getDueDate(p) < now).length;
-    const comingDue = openPOAMs.filter(p => { const d = getDueDate(p); return d >= now && d <= thirtyDays; }).length;
+    const overdue = openPOAMs.filter(p => { const d = getDueDate(p); return d && d < now; }).length;
+    const comingDue = openPOAMs.filter(p => { const d = getDueDate(p); return d && d >= now && d <= thirtyDays; }).length;
     const closedThisMonth = closedPOAMs.filter(p => {
         const d = new Date(p.actualCompletionDate || p.lastModifiedDate);
         return d >= monthStart;
@@ -155,13 +169,21 @@ function computeDelayed(poams) {
 }
 
 function computeSLACompliance(poams) {
+    const normalizeStatus = (raw) => {
+        const s = String(raw || 'open').toLowerCase().trim().replace('_', '-');
+        if (s === 'risk accepted') return 'risk-accepted';
+        return s;
+    };
     const open = poams.filter(p => {
-        const s = (p.findingStatus || p.status || 'open').toLowerCase();
-        return s !== 'completed' && s !== 'closed';
+        const s = normalizeStatus(p.findingStatus || p.status || 'open');
+        return s !== 'completed' && s !== 'closed' && s !== 'risk-accepted' && s !== 'ignored';
     });
     if (open.length === 0) return 100;
     const now = new Date();
-    const withinSLA = open.filter(p => new Date(p.updatedScheduledCompletionDate || p.dueDate) >= now).length;
+    const withinSLA = open.filter(p => {
+        const d = new Date(p.updatedScheduledCompletionDate || p.dueDate);
+        return !Number.isNaN(d.getTime()) && d >= now;
+    }).length;
     return Math.round(withinSLA / open.length * 100);
 }
 
@@ -189,7 +211,7 @@ function renderTrendChart(poams, scanRuns) {
     const newData = [];
     const closedData = [];
 
-    const getStatus = p => (p.findingStatus || p.status || 'open').toLowerCase();
+    const getStatus = p => dashNormalizeStatus(p.findingStatus || p.status || 'open');
     const isClosed = s => s === 'completed' || s === 'closed';
 
     const dayMs = 86400000;
@@ -351,7 +373,7 @@ function renderStatusDonut(poams) {
     canvas.style.display = 'block';
     if (emptyMsg) emptyMsg.classList.add('hidden');
 
-    const getStatus = p => (p.findingStatus || p.status || 'open').toLowerCase();
+    const getStatus = p => dashNormalizeStatus(p.findingStatus || p.status || 'open');
     const now = new Date();
     const statusCounts = { open: 0, 'in-progress': 0, completed: 0, overdue: 0, 'risk-accepted': 0 };
 
@@ -415,7 +437,7 @@ function renderControlFamilyHeatmap(poams) {
     }
 
     const getRisk = p => (p.riskLevel || p.risk || 'medium').toLowerCase();
-    const getStatus = p => (p.findingStatus || p.status || 'open').toLowerCase();
+    const getStatus = p => dashNormalizeStatus(p.findingStatus || p.status || 'open');
     const now = new Date();
     const families = {};
 
@@ -491,7 +513,7 @@ function renderTeamTable(poams) {
         return;
     }
 
-    const getStatus = p => (p.findingStatus || p.status || 'open').toLowerCase();
+    const getStatus = p => dashNormalizeStatus(p.findingStatus || p.status || 'open');
     const isOpen = p => { const s = getStatus(p); return s !== 'completed' && s !== 'closed' && s !== 'risk-accepted' && s !== 'ignored'; };
     const isClosed = p => { const s = getStatus(p); return s === 'completed' || s === 'closed'; };
     const now = new Date();
@@ -655,7 +677,7 @@ function renderCriticalAssetSection(poams, criticalAssets) {
 
     if (!kpiEl) return;
 
-    const getStatus = p => (p.findingStatus || p.status || 'open').toLowerCase();
+    const getStatus = p => dashNormalizeStatus(p.findingStatus || p.status || 'open');
     const isOpen = p => { const s = getStatus(p); return s !== 'completed' && s !== 'closed' && s !== 'risk-accepted' && s !== 'ignored'; };
     const getRisk = p => (p.riskLevel || p.risk || 'medium').toLowerCase();
 
@@ -862,7 +884,7 @@ async function generateReport(reportType) {
 
 function generateStatusSummary(poams, scanRuns) {
     const now = new Date();
-    const getStatus = p => (p.findingStatus || p.status || 'open').toLowerCase();
+    const getStatus = p => dashNormalizeStatus(p.findingStatus || p.status || 'open');
     const getRisk = p => (p.riskLevel || p.risk || 'medium').toLowerCase();
     const isOpen = p => { const s = getStatus(p); return s !== 'completed' && s !== 'closed' && s !== 'risk-accepted'; };
 
@@ -899,7 +921,7 @@ function generateStatusSummary(poams, scanRuns) {
 function generateQuarterlyCompliance(poams, scanRuns) {
     const now = new Date();
     const qStart = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
-    const getStatus = p => (p.findingStatus || p.status || 'open').toLowerCase();
+    const getStatus = p => dashNormalizeStatus(p.findingStatus || p.status || 'open');
     const isOpen = p => { const s = getStatus(p); return s !== 'completed' && s !== 'closed'; };
 
     const open = poams.filter(isOpen);
@@ -932,7 +954,7 @@ function generateQuarterlyCompliance(poams, scanRuns) {
 
 function generateExecutiveSummary(poams, scanRuns) {
     const now = new Date();
-    const getStatus = p => (p.findingStatus || p.status || 'open').toLowerCase();
+    const getStatus = p => dashNormalizeStatus(p.findingStatus || p.status || 'open');
     const getRisk = p => (p.riskLevel || p.risk || 'medium').toLowerCase();
     const isOpen = p => { const s = getStatus(p); return s !== 'completed' && s !== 'closed'; };
 
@@ -962,7 +984,7 @@ function generateExecutiveSummary(poams, scanRuns) {
 
 function generateRiskAssessment(poams) {
     const getRisk = p => (p.riskLevel || p.risk || 'medium').toLowerCase();
-    const getStatus = p => (p.findingStatus || p.status || 'open').toLowerCase();
+    const getStatus = p => dashNormalizeStatus(p.findingStatus || p.status || 'open');
     const now = new Date();
 
     const openPoams = poams.filter(p => { const s = getStatus(p); return s !== 'completed' && s !== 'closed'; });
@@ -993,7 +1015,7 @@ function generateRiskAssessment(poams) {
 }
 
 function generateTeamPerformance(poams) {
-    const getStatus = p => (p.findingStatus || p.status || 'open').toLowerCase();
+    const getStatus = p => dashNormalizeStatus(p.findingStatus || p.status || 'open');
     const isOpen = p => { const s = getStatus(p); return s !== 'completed' && s !== 'closed'; };
     const now = new Date();
 
@@ -1031,7 +1053,7 @@ function generateTeamPerformance(poams) {
 
 function generateControlFamilyReport(poams) {
     const getRisk = p => (p.riskLevel || p.risk || 'medium').toLowerCase();
-    const getStatus = p => (p.findingStatus || p.status || 'open').toLowerCase();
+    const getStatus = p => dashNormalizeStatus(p.findingStatus || p.status || 'open');
     const now = new Date();
 
     const families = {};
