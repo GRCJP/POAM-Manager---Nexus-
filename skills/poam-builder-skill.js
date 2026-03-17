@@ -335,10 +335,10 @@ class POAMBuilderSkill extends BaseSkill {
 
     getSLADays(risk) {
         const slaMap = {
-            'Critical': 15,
-            'High': 30,
-            'Medium': 90,
-            'Low': 180
+            'critical': 15, 'Critical': 15,
+            'high': 30,     'High': 30,
+            'medium': 90,   'Medium': 90,
+            'low': 180,     'Low': 180
         };
         return slaMap[risk] || 90;
     }
@@ -374,30 +374,69 @@ class POAMBuilderSkill extends BaseSkill {
     }
 
     selectPOAMTitle(rem, group, breachAnalysis) {
-        const firstFinding = group.findings[0];
+        // CRITICAL: Titles MUST come from scanner-provided vulnerability titles
+        const titles = group.findings.map(f => f.title || '').filter(t => t);
         
-        // Priority 1: Use component + version if available
-        if (rem.component && rem.fixedTarget) {
-            return `${rem.component} ${rem.fixedTarget} - Multiple Vulnerabilities`;
+        if (titles.length === 0) {
+            return 'Unknown Vulnerability (No title provided by scanner)';
         }
         
-        // Priority 2: Use component name
-        if (rem.component) {
-            return `${rem.component} - Multiple Vulnerabilities`;
+        // Rule 1: If all findings share the same exact title, use it verbatim
+        const uniqueTitles = [...new Set(titles)];
+        if (uniqueTitles.length === 1) {
+            return uniqueTitles[0];
         }
         
-        // Priority 3: Use first finding title
-        if (firstFinding?.title) {
-            return firstFinding.title;
+        // Rule 2: For latest_supported components, use dominant common prefix
+        if (rem.targetingStrategy === 'latest_supported') {
+            const commonPrefix = this.findCommonPrefix(titles);
+            if (commonPrefix && commonPrefix.length > 10) {
+                return `${commonPrefix.trim()} Multiple Vulnerabilities`;
+            }
         }
         
-        // Priority 4: Use vulnerability name
-        if (firstFinding?.vulnerability) {
-            return firstFinding.vulnerability;
+        // Rule 3: Windows patch cycle - retain exact month-based titles
+        if (rem.remediationType === 'patch_cycle' && rem.platform === 'windows') {
+            const patchTitle = titles.find(t => t.match(/\b(20\d{2})[-\s](0[1-9]|1[0-2])\b/) || 
+                                                  t.match(/\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+(20\d{2})\b/i));
+            if (patchTitle) return patchTitle;
+            return this.getMostCommonTitle(titles);
         }
         
-        // Fallback: Generic title
-        return `${breachAnalysis.highestRisk} Severity Vulnerability`;
+        // Rule 4: Config/mitigation findings - retain exact scanner titles
+        if (rem.remediationType === 'config_change' || 
+            rem.remediationType === 'operational_mitigation') {
+            return this.getMostCommonTitle(titles);
+        }
+        
+        // Rule 5: Default - most common title
+        return this.getMostCommonTitle(titles);
+    }
+
+    findCommonPrefix(titles) {
+        if (titles.length === 0) return '';
+        if (titles.length === 1) return titles[0];
+        let prefix = titles[0];
+        for (let i = 1; i < titles.length; i++) {
+            while (titles[i].indexOf(prefix) !== 0) {
+                prefix = prefix.substring(0, prefix.length - 1);
+                if (prefix === '') return '';
+            }
+        }
+        const lastSpace = prefix.lastIndexOf(' ');
+        if (lastSpace > 0) prefix = prefix.substring(0, lastSpace);
+        return prefix;
+    }
+
+    getMostCommonTitle(titles) {
+        const counts = {};
+        titles.forEach(title => { counts[title] = (counts[title] || 0) + 1; });
+        let maxCount = 0;
+        let mostCommon = titles[0];
+        for (const [title, count] of Object.entries(counts)) {
+            if (count > maxCount) { maxCount = count; mostCommon = title; }
+        }
+        return mostCommon;
     }
 
     assignPOC(rem, group) {
