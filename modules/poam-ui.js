@@ -256,6 +256,11 @@ async function updatePOAMField(poamId, field, value) {
 
     try {
         const updates = { [field]: value };
+        if (field === 'findingStatus') {
+            updates.status = value;
+        } else if (field === 'status') {
+            updates.findingStatus = value;
+        }
         await poamDB.updatePOAM(poamId, updates);
         
         // Visual feedback
@@ -267,6 +272,16 @@ async function updatePOAMField(poamId, field, value) {
         }
         if (typeof loadDashboardMetrics === 'function') {
             loadDashboardMetrics();
+        }
+
+        // Keep Generated POAMs list in sync for status edits made in detail view
+        if (field === 'findingStatus' || field === 'status') {
+            if (typeof allVulnerabilityPOAMs !== 'undefined') {
+                allVulnerabilityPOAMs = [];
+            }
+            if (typeof displayVulnerabilityPOAMs === 'function') {
+                await displayVulnerabilityPOAMs();
+            }
         }
     } catch (error) {
         console.error('❌ Failed to update POAM:', error);
