@@ -377,9 +377,28 @@ class PipelineOrchestrator {
             
             // Convert groups array to Map for compatibility
             groups = new Map();
-            groupResult.data.groups.forEach(group => {
-                groups.set(group.signature, group);
+            const groupsArray = groupResult.data.groups;
+            
+            if (!Array.isArray(groupsArray)) {
+                this.logger.error('GroupingSkill returned invalid groups:', groupsArray);
+                throw new Error('GroupingSkill must return groups as an array');
+            }
+            
+            groupsArray.forEach(group => {
+                if (group && group.signature) {
+                    // Convert assets/cves/qids back to Sets for compatibility with Phase 3
+                    const groupWithSets = {
+                        ...group,
+                        assets: new Set(group.assets || []),
+                        cves: new Set(group.cves || []),
+                        qids: new Set(group.qids || []),
+                        advisoryIds: new Set() // Initialize empty advisoryIds Set
+                    };
+                    groups.set(group.signature, groupWithSets);
+                }
             });
+            
+            this.logger.info(`Converted ${groups.size} groups from skills to Map format`);
             
             this.currentRun.phaseProgress = 0.8;
             await this.db.saveScanRun(this.currentRun);
