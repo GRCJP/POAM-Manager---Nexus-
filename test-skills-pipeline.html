@@ -199,6 +199,12 @@
                 const findings = parseResult.data.findings;
                 log(`✅ Parsed ${findings.length} findings`, 'success');
                 log(`   Parse rate: ${parseResult.data.quality.parseRate}`, 'info');
+                
+                // Show first 3 findings' status values
+                log(`\n   Sample status values from parsed findings:`, 'info');
+                findings.slice(0, 3).forEach((f, i) => {
+                    log(`      Finding ${i + 1}: status="${f.status}", title="${f.title?.substring(0, 40)}..."`, 'info');
+                });
 
                 // Step 3: Phase 1 Eligibility Gate (severity-based SLA filter)
                 log('\n🚪 Step 3: Phase 1 Eligibility Gate (severity-based SLA filter)...', 'info');
@@ -288,6 +294,12 @@
                 log(`   Breached: ${slaResult.data.summary.breached}`, 'error');
                 log(`   Within SLA: ${slaResult.data.summary.withinSLA}`, 'success');
                 log(`   Breach rate: ${slaResult.data.summary.breachRate}`, 'warning');
+                
+                // Show first 3 findings' SLA status values
+                log(`\n   Sample SLA status values:`, 'info');
+                withSLA.slice(0, 3).forEach((f, i) => {
+                    log(`      Finding ${i + 1}: sla.status="${f.sla?.status}", breached=${f.sla?.breached}`, 'info');
+                });
 
                 // Step 5: Classification
                 log('\n🏷️  Step 5: Classifying remediation strategies...', 'info');
