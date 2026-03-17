@@ -172,6 +172,26 @@ class POAMDatabase {
         // Transform each POAM to formal structure
         const formalPOAMs = poams.map(poam => this.transformToFormalPOAM(poam));
         console.log('📦 addPOAMsBatch: Transformed', formalPOAMs.length, 'POAMs');
+        
+        // DEBUG: Measure actual size
+        if (formalPOAMs.length > 0) {
+            const sample = formalPOAMs[0];
+            const sampleJSON = JSON.stringify(sample);
+            const sampleSize = sampleJSON.length;
+            console.log('📦 DEBUG: Sample POAM size:', (sampleSize / 1024).toFixed(2), 'KB');
+            console.log('📦 DEBUG: Sample POAM keys:', Object.keys(sample));
+            console.log('📦 DEBUG: Estimated total:', ((sampleSize * formalPOAMs.length) / (1024 * 1024)).toFixed(2), 'MB');
+            
+            // Check individual field sizes
+            const fieldSizes = {};
+            for (const key of Object.keys(sample)) {
+                const fieldSize = JSON.stringify(sample[key]).length;
+                if (fieldSize > 1000) { // Only log fields > 1KB
+                    fieldSizes[key] = (fieldSize / 1024).toFixed(2) + 'KB';
+                }
+            }
+            console.log('📦 DEBUG: Large fields (>1KB):', fieldSizes);
+        }
 
         return new Promise((resolve, reject) => {
             const BATCH_TIMEOUT = 30000; // 30 second timeout
