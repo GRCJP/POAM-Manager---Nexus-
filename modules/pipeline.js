@@ -398,10 +398,24 @@ class PipelineOrchestrator {
             await this.db.saveScanRun(this.currentRun);
             this.updateProgress();
             
+            // Use Classification skill to extract remediation metadata
+            this.logger.info('Classifying remediation strategies with ClassificationSkill...');
+            const classificationSkill = window.skillsIntegration.orchestrator.skills.get('classification');
+            const classResult = await classificationSkill.execute({ findings: withSLA });
+            
+            if (!classResult.success) {
+                throw new Error('Classification failed: ' + classResult.errors.join(', '));
+            }
+            
+            const classified = classResult.data.findings;
+            this.currentRun.phaseProgress = 0.6;
+            await this.db.saveScanRun(this.currentRun);
+            this.updateProgress();
+            
             // Use Grouping skill
             this.logger.info('Grouping with GroupingSkill...');
             const groupingSkill = window.skillsIntegration.orchestrator.skills.get('grouping');
-            const groupResult = await groupingSkill.execute({ findings: withSLA });
+            const groupResult = await groupingSkill.execute({ findings: classified });
             
             if (!groupResult.success) {
                 throw new Error('Grouping failed: ' + groupResult.errors.join(', '));
