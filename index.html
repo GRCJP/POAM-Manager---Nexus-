@@ -61,6 +61,120 @@
     <!-- Pipeline Progress UI Container -->
     <div id="pipeline-progress-container" class="hidden"></div>
 
+    <!-- First-Run Setup Modal -->
+    <div id="first-run-setup-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full">
+                <div class="p-8">
+                    <div class="text-center mb-6">
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-full mb-4">
+                            <i class="fas fa-rocket text-indigo-600 text-2xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-slate-900">First-Time Baseline Import Setup</h2>
+                        <p class="text-slate-600 mt-2">Configure your POAM system before importing your first scan</p>
+                    </div>
+
+                    <!-- Step Indicator -->
+                    <div class="flex items-center justify-center mb-8">
+                        <div class="flex items-center gap-2">
+                            <div id="setup-step-1-indicator" class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 text-white text-sm font-bold">1</div>
+                            <div class="w-16 h-1 bg-slate-200" id="setup-step-1-line"></div>
+                            <div id="setup-step-2-indicator" class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-200 text-slate-600 text-sm font-bold">2</div>
+                        </div>
+                    </div>
+
+                    <!-- Step 1: SLA Configuration -->
+                    <div id="setup-step-1" class="space-y-6">
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-900 mb-4">Step 1: SLA Thresholds</h3>
+                            <p class="text-sm text-slate-600 mb-6">Set remediation deadlines (in days) by severity level</p>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">
+                                    <i class="fas fa-exclamation-triangle text-rose-600 mr-1"></i> Critical Severity
+                                </label>
+                                <input type="number" id="setup-sla-critical" value="15" min="1" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <p class="text-xs text-slate-500 mt-1">Recommended: 15 days</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">
+                                    <i class="fas fa-exclamation-circle text-orange-600 mr-1"></i> High Severity
+                                </label>
+                                <input type="number" id="setup-sla-high" value="30" min="1" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <p class="text-xs text-slate-500 mt-1">Recommended: 30 days</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">
+                                    <i class="fas fa-info-circle text-yellow-600 mr-1"></i> Medium Severity
+                                </label>
+                                <input type="number" id="setup-sla-medium" value="90" min="1" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <p class="text-xs text-slate-500 mt-1">Recommended: 90 days</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">
+                                    <i class="fas fa-check-circle text-emerald-600 mr-1"></i> Low Severity
+                                </label>
+                                <input type="number" id="setup-sla-low" value="180" min="1" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <p class="text-xs text-slate-500 mt-1">Recommended: 180 days</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: POAM ID Configuration -->
+                    <div id="setup-step-2" class="space-y-6 hidden">
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-900 mb-4">Step 2: POAM ID Format</h3>
+                            <p class="text-sm text-slate-600 mb-6">Define how POAM IDs will be numbered</p>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">ID Prefix</label>
+                                <input type="text" id="setup-poam-prefix" value="POAM-" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" oninput="updateSetupPreview()">
+                                <p class="text-xs text-slate-500 mt-1">Examples: POAM-, FND-, VUL-</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Starting Number</label>
+                                <input type="number" id="setup-poam-start" value="1" min="1" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" oninput="updateSetupPreview()">
+                                <p class="text-xs text-slate-500 mt-1">First POAM will start here</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                            <p class="text-sm font-medium text-indigo-900 mb-2">Preview:</p>
+                            <div class="flex items-center gap-2">
+                                <code id="setup-preview-1" class="px-3 py-1 bg-white border border-indigo-300 rounded text-indigo-700 font-mono text-sm">POAM-001</code>
+                                <code id="setup-preview-2" class="px-3 py-1 bg-white border border-indigo-300 rounded text-indigo-700 font-mono text-sm">POAM-002</code>
+                                <code id="setup-preview-3" class="px-3 py-1 bg-white border border-indigo-300 rounded text-indigo-700 font-mono text-sm">POAM-003</code>
+                                <span class="text-indigo-600">...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="mt-8 flex justify-between items-center">
+                        <button onclick="cancelFirstRunSetup()" class="px-6 py-2 text-slate-600 hover:text-slate-800 font-medium">
+                            Use Defaults
+                        </button>
+                        <div class="flex gap-3">
+                            <button id="setup-back-btn" onclick="firstRunSetupBack()" class="px-6 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 font-medium hidden">
+                                <i class="fas fa-arrow-left mr-2"></i>Back
+                            </button>
+                            <button id="setup-next-btn" onclick="firstRunSetupNext()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium">
+                                Next<i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                            <button id="setup-finish-btn" onclick="finishFirstRunSetup()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium hidden">
+                                <i class="fas fa-check mr-2"></i>Complete Setup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Top Header Bar -->
     <header class="bg-white border-b-2 px-6 py-3 flex justify-between items-center sticky top-0 z-50" style="border-bottom-color: #1E3A8A;">
         <div class="flex items-center gap-4">

@@ -1607,68 +1607,102 @@ async function isFirstRunBaselineImport() {
 }
 
 async function showFirstRunSetup() {
-    const proceed = confirm(
-        '🎯 First-Time Baseline Import Setup\n\n' +
-        'Before importing your first scan, let\'s configure:\n' +
-        '  • SLA thresholds (days by severity)\n' +
-        '  • POAM ID naming convention\n\n' +
-        'Click OK to configure now, or Cancel to use defaults.'
-    );
+    return new Promise((resolve) => {
+        window.firstRunSetupResolve = resolve;
+        const modal = document.getElementById('first-run-setup-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+    });
+}
+
+function cancelFirstRunSetup() {
+    // Apply defaults
+    const defaultPoamIdConfig = {
+        prefix: 'POAM-',
+        currentNumber: 1,
+        setupCompleted: true,
+        createdAt: new Date().toISOString()
+    };
+    localStorage.setItem('poamIdConfig', JSON.stringify(defaultPoamIdConfig));
     
-    if (!proceed) {
-        // User canceled - apply defaults
-        const defaultPoamIdConfig = {
-            prefix: 'POAM-',
-            currentNumber: 1,
-            setupCompleted: true,
-            createdAt: new Date().toISOString()
-        };
-        localStorage.setItem('poamIdConfig', JSON.stringify(defaultPoamIdConfig));
-        
-        const defaultSlaConfig = {
-            critical: 15,
-            high: 30,
-            medium: 90,
-            low: 180
-        };
-        localStorage.setItem('slaConfig', JSON.stringify(defaultSlaConfig));
-        
-        alert('✅ Default settings applied:\n\nSLA: Critical=15d, High=30d, Medium=90d, Low=180d\nPOAM ID: POAM-001, POAM-002, ...');
-        return true;
+    const defaultSlaConfig = {
+        critical: 15,
+        high: 30,
+        medium: 90,
+        low: 180
+    };
+    localStorage.setItem('slaConfig', JSON.stringify(defaultSlaConfig));
+    
+    closeFirstRunSetupModal();
+    if (window.firstRunSetupResolve) {
+        window.firstRunSetupResolve(true);
     }
+}
+
+function firstRunSetupNext() {
+    // Move from step 1 to step 2
+    document.getElementById('setup-step-1').classList.add('hidden');
+    document.getElementById('setup-step-2').classList.remove('hidden');
     
-    // Step 1: Configure SLA thresholds
-    alert('Step 1 of 2: SLA Configuration\n\nSet remediation deadlines (in days) by severity level.');
+    // Update indicators
+    document.getElementById('setup-step-1-indicator').classList.remove('bg-indigo-600', 'text-white');
+    document.getElementById('setup-step-1-indicator').classList.add('bg-green-500', 'text-white');
+    document.getElementById('setup-step-1-line').classList.remove('bg-slate-200');
+    document.getElementById('setup-step-1-line').classList.add('bg-green-500');
+    document.getElementById('setup-step-2-indicator').classList.remove('bg-slate-200', 'text-slate-600');
+    document.getElementById('setup-step-2-indicator').classList.add('bg-indigo-600', 'text-white');
     
-    const criticalSLA = prompt('Critical severity SLA (days):', '15');
-    if (criticalSLA === null) return false;
-    const critical = Math.max(1, parseInt(criticalSLA, 10) || 15);
+    // Update buttons
+    document.getElementById('setup-back-btn').classList.remove('hidden');
+    document.getElementById('setup-next-btn').classList.add('hidden');
+    document.getElementById('setup-finish-btn').classList.remove('hidden');
     
-    const highSLA = prompt('High severity SLA (days):', '30');
-    if (highSLA === null) return false;
-    const high = Math.max(1, parseInt(highSLA, 10) || 30);
+    updateSetupPreview();
+}
+
+function firstRunSetupBack() {
+    // Move from step 2 to step 1
+    document.getElementById('setup-step-2').classList.add('hidden');
+    document.getElementById('setup-step-1').classList.remove('hidden');
     
-    const mediumSLA = prompt('Medium severity SLA (days):', '90');
-    if (mediumSLA === null) return false;
-    const medium = Math.max(1, parseInt(mediumSLA, 10) || 90);
+    // Update indicators
+    document.getElementById('setup-step-1-indicator').classList.remove('bg-green-500');
+    document.getElementById('setup-step-1-indicator').classList.add('bg-indigo-600');
+    document.getElementById('setup-step-1-line').classList.remove('bg-green-500');
+    document.getElementById('setup-step-1-line').classList.add('bg-slate-200');
+    document.getElementById('setup-step-2-indicator').classList.remove('bg-indigo-600', 'text-white');
+    document.getElementById('setup-step-2-indicator').classList.add('bg-slate-200', 'text-slate-600');
     
-    const lowSLA = prompt('Low severity SLA (days):', '180');
-    if (lowSLA === null) return false;
-    const low = Math.max(1, parseInt(lowSLA, 10) || 180);
+    // Update buttons
+    document.getElementById('setup-back-btn').classList.add('hidden');
+    document.getElementById('setup-next-btn').classList.remove('hidden');
+    document.getElementById('setup-finish-btn').classList.add('hidden');
+}
+
+function updateSetupPreview() {
+    const prefix = document.getElementById('setup-poam-prefix').value || 'POAM-';
+    const startNum = parseInt(document.getElementById('setup-poam-start').value) || 1;
+    
+    document.getElementById('setup-preview-1').textContent = prefix + String(startNum).padStart(3, '0');
+    document.getElementById('setup-preview-2').textContent = prefix + String(startNum + 1).padStart(3, '0');
+    document.getElementById('setup-preview-3').textContent = prefix + String(startNum + 2).padStart(3, '0');
+}
+
+function finishFirstRunSetup() {
+    // Collect SLA values
+    const critical = Math.max(1, parseInt(document.getElementById('setup-sla-critical').value) || 15);
+    const high = Math.max(1, parseInt(document.getElementById('setup-sla-high').value) || 30);
+    const medium = Math.max(1, parseInt(document.getElementById('setup-sla-medium').value) || 90);
+    const low = Math.max(1, parseInt(document.getElementById('setup-sla-low').value) || 180);
     
     const slaConfig = { critical, high, medium, low };
     localStorage.setItem('slaConfig', JSON.stringify(slaConfig));
     
-    // Step 2: Configure POAM ID format
-    alert('Step 2 of 2: POAM ID Format\n\nDefine how POAM IDs will be numbered.');
-    
-    const prefixInput = prompt('POAM ID prefix (e.g., POAM-, FND-, VUL-):', 'POAM-');
-    if (prefixInput === null) return false;
-    const prefix = prefixInput.trim() || 'POAM-';
-    
-    const startInput = prompt('Starting number:', '1');
-    if (startInput === null) return false;
-    const startNum = Math.max(1, parseInt(startInput, 10) || 1);
+    // Collect POAM ID values
+    const prefix = document.getElementById('setup-poam-prefix').value.trim() || 'POAM-';
+    const startNum = Math.max(1, parseInt(document.getElementById('setup-poam-start').value) || 1);
     
     const poamIdConfig = {
         prefix,
@@ -1678,19 +1712,24 @@ async function showFirstRunSetup() {
     };
     localStorage.setItem('poamIdConfig', JSON.stringify(poamIdConfig));
     
-    // Show confirmation
-    const exampleId = prefix + String(startNum).padStart(3, '0');
-    alert(
-        '✅ Configuration Complete!\n\n' +
-        `SLA Thresholds:\n` +
-        `  Critical: ${critical} days\n` +
-        `  High: ${high} days\n` +
-        `  Medium: ${medium} days\n` +
-        `  Low: ${low} days\n\n` +
-        `POAM ID Format: ${exampleId}, ${prefix + String(startNum + 1).padStart(3, '0')}, ...`
-    );
-    
-    return true;
+    closeFirstRunSetupModal();
+    if (window.firstRunSetupResolve) {
+        window.firstRunSetupResolve(true);
+    }
+}
+
+function closeFirstRunSetupModal() {
+    const modal = document.getElementById('first-run-setup-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+    // Reset to step 1 for next time
+    document.getElementById('setup-step-2').classList.add('hidden');
+    document.getElementById('setup-step-1').classList.remove('hidden');
+    document.getElementById('setup-back-btn').classList.add('hidden');
+    document.getElementById('setup-next-btn').classList.remove('hidden');
+    document.getElementById('setup-finish-btn').classList.add('hidden');
 }
 
 async function renumberAllPOAMIds(prefix, startNum) {
