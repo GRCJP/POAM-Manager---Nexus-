@@ -272,69 +272,51 @@ class POAMDatabase {
     }
 
     transformToFormalPOAM(poam) {
-        // CRITICAL: Only store essential fields explicitly to prevent QuotaExceededError
-        // DO NOT use spread operator as it copies all fields including large arrays
+        // ULTRA-MINIMAL: Store absolute minimum to avoid QuotaExceededError
+        // Asset details stored separately in poamScanSummaries store
         return {
             // Core identification
             id: poam.id,
-            findingIdentifier: poam.findingIdentifier || poam.id,
-
+            
             // Classification
             controlFamily: poam.controlFamily || this.inferControlFamily(poam),
-            vulnerabilityName: poam.vulnerabilityName || poam.title || poam.vulnerability,
-            findingDescription: this.truncateField(poam.findingDescription || poam.description || poam.vulnerability, 2000),
-            findingSource: poam.findingSource || 'Vulnerability Scan',
-
+            vulnerabilityName: this.truncateField(poam.vulnerabilityName || poam.title || poam.vulnerability, 200),
+            findingDescription: this.truncateField(poam.findingDescription || poam.description || poam.vulnerability, 500),
+            
             // Responsibility
             poc: poam.poc || poam.pocTeam || '',
             pocTeam: poam.pocTeam || poam.poc || '',
-            resourcesRequired: poam.resourcesRequired || '',
 
             // Scheduling
             dueDate: poam.dueDate || poam.initialScheduledCompletionDate || this.calculateDueDate(poam),
-            initialScheduledCompletionDate: poam.initialScheduledCompletionDate || poam.dueDate || this.calculateDueDate(poam),
-            updatedScheduledCompletionDate: poam.updatedScheduledCompletionDate || poam.dueDate || this.calculateDueDate(poam),
-            actualCompletionDate: poam.actualCompletionDate || null,
+            scheduledCompletionDate: poam.updatedScheduledCompletionDate || poam.dueDate || this.calculateDueDate(poam),
 
             // Status and risk
-            findingStatus: poam.findingStatus || poam.status || 'Open',
             status: poam.status || poam.findingStatus || 'Open',
-            riskLevel: poam.riskLevel || poam.risk || 'medium',
             risk: poam.risk || poam.riskLevel || 'medium',
 
-            // Mitigation (truncate to prevent bloat)
-            mitigation: this.truncateField(poam.mitigation || '', 2000),
+            // Mitigation (heavily truncated)
+            mitigation: this.truncateField(poam.mitigation || '', 500),
 
             // Metadata
             createdDate: poam.createdDate || new Date().toISOString(),
             lastModifiedDate: poam.lastModifiedDate || new Date().toISOString(),
             scanId: poam.scanId || null,
-            needsReview: poam.needsReview || false,
-            notes: this.truncateField(poam.notes || '', 1000),
-
-            // Lightweight assets only (limit to 100 assets max)
-            affectedAssets: poam.affectedAssets ? this.transformAssetsLightweight(poam.affectedAssets.slice(0, 100)) : [],
+            
+            // Asset count only - full details in scan summaries
             totalAffectedAssets: poam.totalAffectedAssets || poam.affectedAssets?.length || 0,
             
-            // Store metadata about raw findings without the actual data
-            rawFindingsCount: poam.rawFindings?.length || 0,
-
-            // Milestones (limit to 20 max)
-            milestones: Array.isArray(poam.milestones) ? poam.milestones.slice(0, 20) : [],
-
-            // Status history (limit to last 50 entries)
-            statusHistory: Array.isArray(poam.statusHistory) ? poam.statusHistory.slice(-50) : [],
+            // Minimal milestone data - just dates
+            milestones: Array.isArray(poam.milestones) ? poam.milestones.slice(0, 4).map(m => ({
+                name: this.truncateField(m.name || m.milestoneName, 50),
+                targetDate: m.targetDate || m.scheduledCompletionDate,
+                status: m.status || 'Scheduled'
+            })) : [],
             
-            // Essential fields for UI/reporting
-            title: poam.title || poam.vulnerabilityName,
-            vulnerability: poam.vulnerability || poam.vulnerabilityName,
-            description: this.truncateField(poam.description || poam.findingDescription, 2000),
-            cves: Array.isArray(poam.cves) ? poam.cves.slice(0, 20) : [],
-            qids: Array.isArray(poam.qids) ? poam.qids.slice(0, 20) : [],
-            remediationSignature: poam.remediationSignature || '',
-            patchable: poam.patchable || false,
-            confidenceScore: poam.confidenceScore || 0,
-            isPriority: poam.isPriority || false
+            // Minimal identifiers
+            cves: Array.isArray(poam.cves) ? poam.cves.slice(0, 5).map(c => String(c).substring(0, 20)) : [],
+            remediationSignature: this.truncateField(poam.remediationSignature || '', 100),
+            patchable: poam.patchable || false
         };
     }
 
