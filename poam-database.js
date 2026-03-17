@@ -264,16 +264,9 @@ class POAMDatabase {
     }
 
     transformToFormalPOAM(poam) {
-        // Strip heavy payload fields to prevent QuotaExceededError
-        const lightPoam = { ...poam };
-        delete lightPoam.rawFindings; // Can be hundreds of objects per POAM
-        delete lightPoam.evidenceSamples;
-        delete lightPoam.raw;
-        delete lightPoam.rawData;
-        
+        // CRITICAL: Only store essential fields explicitly to prevent QuotaExceededError
+        // DO NOT use spread operator as it copies all fields including large arrays
         return {
-            ...lightPoam,
-
             // Core identification
             id: poam.id,
             findingIdentifier: poam.findingIdentifier || poam.id,
@@ -281,7 +274,7 @@ class POAMDatabase {
             // Classification
             controlFamily: poam.controlFamily || this.inferControlFamily(poam),
             vulnerabilityName: poam.vulnerabilityName || poam.title || poam.vulnerability,
-            findingDescription: poam.findingDescription || poam.description || poam.vulnerability,
+            findingDescription: this.truncateField(poam.findingDescription || poam.description || poam.vulnerability, 2000),
             findingSource: poam.findingSource || 'Vulnerability Scan',
 
             // Responsibility
@@ -297,31 +290,43 @@ class POAMDatabase {
 
             // Status and risk
             findingStatus: poam.findingStatus || poam.status || 'Open',
+            status: poam.status || poam.findingStatus || 'Open',
             riskLevel: poam.riskLevel || poam.risk || 'medium',
             risk: poam.risk || poam.riskLevel || 'medium',
 
-            // Mitigation
-            mitigation: poam.mitigation || '',
+            // Mitigation (truncate to prevent bloat)
+            mitigation: this.truncateField(poam.mitigation || '', 2000),
 
             // Metadata
             createdDate: poam.createdDate || new Date().toISOString(),
             lastModifiedDate: poam.lastModifiedDate || new Date().toISOString(),
             scanId: poam.scanId || null,
             needsReview: poam.needsReview || false,
-            notes: poam.notes || '',
+            notes: this.truncateField(poam.notes || '', 1000),
 
-            // Data preservation - lightweight assets only
-            affectedAssets: poam.affectedAssets ? this.transformAssetsLightweight(poam.affectedAssets) : [],
+            // Lightweight assets only (limit to 100 assets max)
+            affectedAssets: poam.affectedAssets ? this.transformAssetsLightweight(poam.affectedAssets.slice(0, 100)) : [],
             totalAffectedAssets: poam.totalAffectedAssets || poam.affectedAssets?.length || 0,
             
             // Store metadata about raw findings without the actual data
             rawFindingsCount: poam.rawFindings?.length || 0,
 
-            // Milestones (embedded on POAM for POAM Detail view)
-            milestones: Array.isArray(poam.milestones) ? poam.milestones : [],
+            // Milestones (limit to 20 max)
+            milestones: Array.isArray(poam.milestones) ? poam.milestones.slice(0, 20) : [],
 
-            // Status history MUST be preserved — do NOT lose it on re-save
-            statusHistory: Array.isArray(poam.statusHistory) ? poam.statusHistory : []
+            // Status history (limit to last 50 entries)
+            statusHistory: Array.isArray(poam.statusHistory) ? poam.statusHistory.slice(-50) : [],
+            
+            // Essential fields for UI/reporting
+            title: poam.title || poam.vulnerabilityName,
+            vulnerability: poam.vulnerability || poam.vulnerabilityName,
+            description: this.truncateField(poam.description || poam.findingDescription, 2000),
+            cves: Array.isArray(poam.cves) ? poam.cves.slice(0, 20) : [],
+            qids: Array.isArray(poam.qids) ? poam.qids.slice(0, 20) : [],
+            remediationSignature: poam.remediationSignature || '',
+            patchable: poam.patchable || false,
+            confidenceScore: poam.confidenceScore || 0,
+            isPriority: poam.isPriority || false
         };
     }
 
