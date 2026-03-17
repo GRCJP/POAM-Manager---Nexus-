@@ -183,7 +183,7 @@ class POAMDatabase {
         }
 
         // CHUNKED PROCESSING: Split into smaller transactions to avoid QuotaExceededError
-        const CHUNK_SIZE = 50; // 50 POAMs × 11.52KB = ~576KB per transaction
+        const CHUNK_SIZE = 10; // 10 POAMs × 11.52KB = ~115KB per transaction
         const chunks = [];
         for (let i = 0; i < formalPOAMs.length; i += CHUNK_SIZE) {
             chunks.push(formalPOAMs.slice(i, i + CHUNK_SIZE));
