@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skills Pipeline Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+            border-radius: 4px;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+        .output {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 600px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 10px;
+        }
+        .success { color: #2ecc71; }
+        .error { color: #e74c3c; }
+        .warning { color: #f39c12; }
+        .info { color: #3498db; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #3498db;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Skills Pipeline Test</h1>
+        
+        <div class="test-section">
+            <h2>Test Configuration</h2>
+            <p><strong>Sample File:</strong> Sample Scan/VM_vulns_fecfe3hp_20260316 (1)_SCRUBBED_20260316_222744.csv</p>
+            <p><strong>Skills Architecture:</strong> <span id="skills-status">Checking...</span></p>
+            <p><strong>Pipeline:</strong> Phase 1 (Eligibility) → CSVParser → SLA → Classification → Grouping → POAMBuilder</p>
+        </div>
+
+        <div class="test-section">
+            <h2>Run Test</h2>
+            <button onclick="runFullPipelineTest()" id="test-btn">▶️ Run Full Pipeline Test</button>
+            <button onclick="clearOutput()">🗑️ Clear Output</button>
+        </div>
+
+        <div class="stats" id="stats" style="display: none;"></div>
+
+        <div class="test-section">
+            <h2>Test Output</h2>
+            <div class="output" id="output">Ready to test. Click "Run Full Pipeline Test" to begin.</div>
+        </div>
+    </div>
+
+    <!-- Load PapaParse for proper CSV parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    
+    <!-- Load all required scripts -->
+    <script src="poam-database.js?v=20260317b"></script>
+    <script src="skills/base-skill.js?v=20260317b"></script>
+    <script src="skills/csv-parser-skill.js?v=20260317b"></script>
+    <script src="skills/sla-calculator-skill.js?v=20260317b"></script>
+    <script src="skills/classification-skill.js?v=20260317b"></script>
+    <script src="skills/grouping-skill.js?v=20260317b"></script>
+    <script src="skills/poam-builder-skill.js?v=20260317b"></script>
+    <script src="skills/skill-orchestrator.js?v=20260317b"></script>
+    <script src="skills-integration.js?v=20260317b"></script>
+
+    <script>
+        const output = document.getElementById('output');
+        const statsDiv = document.getElementById('stats');
+        const testBtn = document.getElementById('test-btn');
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type;
+            output.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearOutput() {
+            output.innerHTML = 'Output cleared.\n';
+            statsDiv.style.display = 'none';
+        }
+
+        function showStats(data) {
+            const stats = [
+                { label: 'Total Findings', value: data.totalFindings || 0 },
+                { label: 'Eligible (>30 days)', value: data.eligible || 0 },
+                { label: 'Excluded (<30 days)', value: data.excluded || 0 },
+                { label: 'Groups Created', value: data.groups || 0 },
+                { label: 'POAMs Created', value: data.poams || 0 },
+                { label: 'POAMs Skipped', value: data.skipped || 0 }
+            ];
+
+            statsDiv.innerHTML = stats.map(s => `
+                <div class="stat-card">
+                    <div class="stat-value">${s.value}</div>
+                    <div class="stat-label">${s.label}</div>
+                </div>
+            `).join('');
+            statsDiv.style.display = 'grid';
+        }
+
+        // Check skills architecture status
+        document.getElementById('skills-status').innerHTML = 
+            window.USE_SKILLS_ARCHITECTURE 
+                ? '<span class="success">✅ ENABLED</span>' 
+                : '<span class="error">❌ DISABLED</span>';
+
+        async function runFullPipelineTest() {
+            testBtn.disabled = true;
+            clearOutput();
+            log('🚀 Starting Full Pipeline Test', 'info');
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'info');
+
+            try {
+                // Step 1: Load CSV file
+                log('\n📂 Step 1: Loading CSV file...', 'info');
+                const response = await fetch('Sample Scan/VM_vulns_fecfe3hp_20260316 (1)_SCRUBBED_20260316_222744.csv');
+                if (!response.ok) {
+                    throw new Error(`Failed to load CSV: ${response.statusText}`);
+                }
+                const csvText = await response.text();
+                
+                // Use PapaParse for proper CSV parsing (same as original engine)
+                const papaResult = Papa.parse(csvText, {
+                    header: false,
+                    skipEmptyLines: true
+                });
+                
+                const csvLines = papaResult.data;
+                log(`✅ Loaded CSV: ${csvLines.length} rows`, 'success');
+
+                // Step 2: Parse CSV with CSVParserSkill
+                log('\n📄 Step 2: Parsing CSV with CSVParserSkill...', 'info');
+                const parser = new CSVParserSkill();
+                const parseResult = await parser.execute({
+                    csvData: csvLines,
+                    format: 'qualys',
+                    filename: 'test-scan.csv'
+                });
+
+                if (!parseResult.success) {
+                    throw new Error('CSV parsing failed: ' + parseResult.errors.join(', '));
+                }
+
+                const findings = parseResult.data.findings;
+                log(`✅ Parsed ${findings.length} findings`, 'success');
+                log(`   Parse rate: ${parseResult.data.quality.parseRate}`, 'info');
+                
+                // Show first 3 findings' status values
+                log(`\n   Sample status values from parsed findings:`, 'info');
+                findings.slice(0, 3).forEach((f, i) => {
+                    log(`      Finding ${i + 1}: status="${f.status}", title="${f.title?.substring(0, 40)}..."`, 'info');
+                });
+
+                // Step 3: Phase 1 Eligibility Gate (severity-based SLA filter)
+                log('\n🚪 Step 3: Phase 1 Eligibility Gate (severity-based SLA filter)...', 'info');
+                const now = new Date();
+                const SLA_CONFIG = {
+                    critical: 15,
+                    high: 30,
+                    medium: 90,
+                    low: 180
+                };
+                log(`   SLA Thresholds: Critical=${SLA_CONFIG.critical}d, High=${SLA_CONFIG.high}d, Medium=${SLA_CONFIG.medium}d, Low=${SLA_CONFIG.low}d`, 'info');
+                
+                const INACTIVE_STATUSES = ['fixed', 'closed', 'resolved', 'ignored', 'disabled'];
+                
+                const eligibleFindings = [];
+                const excludedFindings = [];
+
+                const normalizeSeverity = (severity) => {
+                    if (!severity) return 'medium';
+                    const sev = severity.toString().toLowerCase().trim();
+                    if (/^[1-5]$/.test(sev)) {
+                        const num = parseInt(sev);
+                        if (num <= 2) return 'low';
+                        if (num === 3) return 'medium';
+                        if (num === 4) return 'high';
+                        if (num === 5) return 'critical';
+                    }
+                    if (sev.includes('crit')) return 'critical';
+                    if (sev.includes('high')) return 'high';
+                    if (sev.includes('med') || sev.includes('mod')) return 'medium';
+                    if (sev.includes('low')) return 'low';
+                    return 'medium';
+                };
+
+                findings.forEach(finding => {
+                    // Gate 1: Exclude inactive statuses
+                    const status = (finding.status || '').toLowerCase();
+                    if (INACTIVE_STATUSES.includes(status)) {
+                        excludedFindings.push({ finding, reason: `Inactive status: ${finding.status}` });
+                        return;
+                    }
+
+                    // Gate 2: Exclude findings that haven't reached their severity-based SLA threshold
+                    const firstDetected = finding.firstDetected || finding.first_detected || finding.firstFound;
+                    if (firstDetected) {
+                        const detectedDate = new Date(firstDetected);
+                        if (!isNaN(detectedDate.getTime())) {
+                            const ageInDays = Math.floor((now - detectedDate) / (1000 * 60 * 60 * 24));
+                            const severity = normalizeSeverity(finding.severity);
+                            const slaThreshold = SLA_CONFIG[severity] || SLA_CONFIG.medium;
+                            
+                            if (ageInDays < slaThreshold) {
+                                excludedFindings.push({ finding, reason: `Too recent: ${ageInDays} days old (${severity} threshold: ${slaThreshold} days)` });
+                                return;
+                            }
+                        }
+                    }
+
+                    eligibleFindings.push(finding);
+                });
+
+                log(`✅ Eligible findings: ${eligibleFindings.length}`, 'success');
+                log(`⏭️  Excluded findings: ${excludedFindings.length}`, 'warning');
+                
+                const exclusionReasons = {};
+                excludedFindings.forEach(e => {
+                    exclusionReasons[e.reason] = (exclusionReasons[e.reason] || 0) + 1;
+                });
+                if (Object.keys(exclusionReasons).length > 0) {
+                    log(`   Exclusion breakdown:`, 'info');
+                    Object.entries(exclusionReasons).forEach(([reason, count]) => {
+                        log(`      - ${reason}: ${count}`, 'info');
+                    });
+                }
+
+                // Step 4: SLA Calculation
+                log('\n📅 Step 4: Calculating SLA status...', 'info');
+                const slaSkill = new SLACalculatorSkill();
+                const slaResult = await slaSkill.execute({ findings: eligibleFindings });
+
+                if (!slaResult.success) {
+                    throw new Error('SLA calculation failed: ' + slaResult.errors.join(', '));
+                }
+
+                const withSLA = slaResult.data.findings;
+                log(`✅ SLA calculated for ${withSLA.length} findings`, 'success');
+                log(`   Breached: ${slaResult.data.summary.breached}`, 'error');
+                log(`   Within SLA: ${slaResult.data.summary.withinSLA}`, 'success');
+                log(`   Breach rate: ${slaResult.data.summary.breachRate}`, 'warning');
+                
+                // Show first 3 findings' SLA status values
+                log(`\n   Sample SLA status values:`, 'info');
+                withSLA.slice(0, 3).forEach((f, i) => {
+                    log(`      Finding ${i + 1}: sla.status="${f.sla?.status}", breached=${f.sla?.breached}`, 'info');
+                });
+
+                // Step 5: Classification
+                log('\n🏷️  Step 5: Classifying remediation strategies...', 'info');
+                const classificationSkill = new ClassificationSkill();
+                const classResult = await classificationSkill.execute({ findings: withSLA });
+
+                if (!classResult.success) {
+                    throw new Error('Classification failed: ' + classResult.errors.join(', '));
+                }
+
+                const classified = classResult.data.findings;
+                log(`✅ Classified ${classified.length} findings`, 'success');
+
+                // Step 6: Grouping
+                log('\n🔧 Step 6: Grouping by remediation signature...', 'info');
+                const groupingSkill = new GroupingSkill();
+                const groupResult = await groupingSkill.execute({ findings: classified });
+                
+                // Debug: Check severity values in first group
+                if (groupResult.data.groups.length > 0) {
+                    const firstGroup = groupResult.data.groups[0];
+                    log(`\n   Debug - First group findings severities:`, 'info');
+                    firstGroup.findings.slice(0, 3).forEach((f, i) => {
+                        log(`      Finding ${i+1}: sla.severity="${f.sla?.severity}", severity="${f.severity}"`, 'info');
+                    });
+                }
+
+                if (!groupResult.success) {
+                    throw new Error('Grouping failed: ' + groupResult.errors.join(', '));
+                }
+
+                const groups = groupResult.data.groups;
+                log(`✅ Created ${groups.length} remediation groups`, 'success');
+                log(`   Avg findings/group: ${groupResult.data.summary.avgFindingsPerGroup}`, 'info');
+                log(`   Largest group: ${groupResult.data.summary.largestGroup} findings`, 'info');
+
+                // Show top 5 groups
+                const sortedGroups = [...groups].sort((a, b) => b.findings.length - a.findings.length);
+                log(`\n   Top 5 groups by finding count:`, 'info');
+                sortedGroups.slice(0, 5).forEach((g, i) => {
+                    log(`      ${i + 1}. ${g.signature.substring(0, 60)}... (${g.findings.length} findings, ${g.assets.length} assets)`, 'info');
+                });
+
+                // Step 7: POAM Building
+                log('\n🏗️  Step 7: Building POAMs...', 'info');
+                const poamBuilderSkill = new POAMBuilderSkill();
+                const poamResult = await poamBuilderSkill.execute({
+                    groups: groups,
+                    config: {
+                        isBaselineMode: true,
+                        autoPrioritizeTop: 8
+                    }
+                });
+
+                if (!poamResult.success) {
+                    throw new Error('POAM building failed: ' + poamResult.errors.join(', '));
+                }
+
+                const poams = poamResult.data.poams;
+                log(`✅ Created ${poams.length} POAMs`, 'success');
+                log(`⏭️  Skipped ${poamResult.data.summary.skipped} groups`, 'warning');
+                
+                if (Object.keys(poamResult.data.summary.skipReasons).length > 0) {
+                    log(`   Skip reasons:`, 'info');
+                    Object.entries(poamResult.data.summary.skipReasons).forEach(([reason, count]) => {
+                        log(`      - ${reason}: ${count}`, 'info');
+                    });
+                }
+
+                // Show sample POAMs
+                log(`\n   Sample POAMs created:`, 'info');
+                poams.slice(0, 5).forEach(p => {
+                    log(`      ${p.id}: ${p.title.substring(0, 60)}...`, 'info');
+                    log(`         Risk: ${p.risk}, Assets: ${p.totalAffectedAssets}, Due: ${p.dueDate}`, 'info');
+                });
+
+                // Final Summary
+                log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'success');
+                log('✅ PIPELINE TEST COMPLETED SUCCESSFULLY', 'success');
+                log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'success');
+
+                // Show stats
+                showStats({
+                    totalFindings: findings.length,
+                    eligible: eligibleFindings.length,
+                    excluded: excludedFindings.length,
+                    groups: groups.length,
+                    poams: poams.length,
+                    skipped: poamResult.data.summary.skipped
+                });
+
+                log('\n📊 Key Metrics:', 'info');
+                log(`   Findings → Eligible: ${((eligibleFindings.length / findings.length) * 100).toFixed(1)}%`, 'info');
+                log(`   Groups → POAMs: ${((poams.length / groups.length) * 100).toFixed(1)}%`, 'info');
+                log(`   Avg findings per POAM: ${(eligibleFindings.length / poams.length).toFixed(1)}`, 'info');
+
+            } catch (error) {
+                log('\n❌ TEST FAILED', 'error');
+                log(`Error: ${error.message}`, 'error');
+                console.error('Full error:', error);
+            } finally {
+                testBtn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
