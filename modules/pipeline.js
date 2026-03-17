@@ -470,6 +470,12 @@ class PipelineOrchestrator {
         await this.db.saveScanRun(this.currentRun);
         this.updateProgress();
         
+        // Defensive check: ensure groups is a Map
+        if (!groups || !(groups instanceof Map)) {
+            this.logger.error('Phase 3 received invalid groups parameter:', groups);
+            throw new Error(`Phase 3 expected Map, got ${typeof groups}. Groups is ${groups ? 'defined' : 'undefined'}.`);
+        }
+        
         const enrichedGroups = new Map();
         const groupsArray = Array.from(groups.entries());
         
