@@ -343,37 +343,81 @@ class PipelineOrchestrator {
         await this.db.saveScanRun(this.currentRun);
         this.updateProgress();
         
-        // Use existing analysis engine for grouping
-        // Create a temporary engine instance
-        const engine = new VulnerabilityAnalysisEngineV3();
+        let groups;
         
-        // Normalize findings
-        this.logger.info('Normalizing findings...');
-        const normalized = engine.normalizeFindings(eligibleFindings);
-        this.currentRun.phaseProgress = 0.2;
-        await this.db.saveScanRun(this.currentRun);
-        this.updateProgress();
-        
-        // Calculate SLA status
-        this.logger.info('Calculating SLA status...');
-        const withSLA = engine.calculateSLAStatus(normalized);
-        this.currentRun.phaseProgress = 0.4;
-        await this.db.saveScanRun(this.currentRun);
-        this.updateProgress();
-        
-        // Classify remediation
-        this.logger.info('Classifying remediation strategies...');
-        const classified = engine.classifyRemediation(withSLA);
-        this.currentRun.phaseProgress = 0.6;
-        await this.db.saveScanRun(this.currentRun);
-        this.updateProgress();
-        
-        // Group by remediation signature
-        this.logger.info('Grouping by remediation signatures...');
-        const groups = engine.groupByRemediationSignature(classified);
-        this.currentRun.phaseProgress = 0.8;
-        await this.db.saveScanRun(this.currentRun);
-        this.updateProgress();
+        // Check if skills architecture is enabled
+        if (window.USE_SKILLS_ARCHITECTURE && window.skillsIntegration) {
+            this.logger.info('🎯 Using Skills Architecture for processing...');
+            
+            // Initialize skills if needed
+            await window.skillsIntegration.init();
+            
+            // Use SLA skill
+            this.logger.info('Calculating SLA status with SLACalculatorSkill...');
+            const slaSkill = window.skillsIntegration.orchestrator.skills.get('sla');
+            const slaResult = await slaSkill.execute({ findings: eligibleFindings });
+            
+            if (!slaResult.success) {
+                throw new Error('SLA calculation failed: ' + slaResult.errors.join(', '));
+            }
+            
+            const withSLA = slaResult.data.findings;
+            this.currentRun.phaseProgress = 0.5;
+            await this.db.saveScanRun(this.currentRun);
+            this.updateProgress();
+            
+            // Use Grouping skill
+            this.logger.info('Grouping with GroupingSkill...');
+            const groupingSkill = window.skillsIntegration.orchestrator.skills.get('grouping');
+            const groupResult = await groupingSkill.execute({ findings: withSLA });
+            
+            if (!groupResult.success) {
+                throw new Error('Grouping failed: ' + groupResult.errors.join(', '));
+            }
+            
+            // Convert groups array to Map for compatibility
+            groups = new Map();
+            groupResult.data.groups.forEach(group => {
+                groups.set(group.signature, group);
+            });
+            
+            this.currentRun.phaseProgress = 0.8;
+            await this.db.saveScanRun(this.currentRun);
+            this.updateProgress();
+            
+        } else {
+            // Use existing analysis engine for grouping
+            this.logger.info('Using legacy analysis engine...');
+            const engine = new VulnerabilityAnalysisEngineV3();
+            
+            // Normalize findings
+            this.logger.info('Normalizing findings...');
+            const normalized = engine.normalizeFindings(eligibleFindings);
+            this.currentRun.phaseProgress = 0.2;
+            await this.db.saveScanRun(this.currentRun);
+            this.updateProgress();
+            
+            // Calculate SLA status
+            this.logger.info('Calculating SLA status...');
+            const withSLA = engine.calculateSLAStatus(normalized);
+            this.currentRun.phaseProgress = 0.4;
+            await this.db.saveScanRun(this.currentRun);
+            this.updateProgress();
+            
+            // Classify remediation
+            this.logger.info('Classifying remediation strategies...');
+            const classified = engine.classifyRemediation(withSLA);
+            this.currentRun.phaseProgress = 0.6;
+            await this.db.saveScanRun(this.currentRun);
+            this.updateProgress();
+            
+            // Group by remediation signature
+            this.logger.info('Grouping by remediation signatures...');
+            groups = engine.groupByRemediationSignature(classified);
+            this.currentRun.phaseProgress = 0.8;
+            await this.db.saveScanRun(this.currentRun);
+            this.updateProgress();
+        }
         
         // Update counts
         this.currentRun.counts.groupCount = groups.size;
