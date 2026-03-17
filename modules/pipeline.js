@@ -256,28 +256,48 @@ class PipelineOrchestrator {
         const eligibleFindings = [];
         const excludedFindings = [];
         const INACTIVE_STATUSES = ['fixed', 'closed', 'resolved', 'ignored', 'disabled'];
+        const SLA_THRESHOLD_DAYS = 30;
+        const now = new Date();
 
         console.log(`🔍 PHASE 1: Processing ${rawVulnerabilities.length} raw findings`);
+        console.log(`🔍 PHASE 1: SLA threshold = ${SLA_THRESHOLD_DAYS} days from first detected`);
         if (rawVulnerabilities.length > 0) {
             const sample = rawVulnerabilities[0];
             console.log('🔍 PHASE 1: Sample finding fields:', Object.keys(sample).join(', '));
             console.log('🔍 PHASE 1: Sample finding status:', sample.status, '| severity:', sample.severity, '| title:', sample.title?.substring(0, 60));
+            console.log('🔍 PHASE 1: Sample firstDetected:', sample.firstDetected);
         }
         
         for (let i = 0; i < rawVulnerabilities.length; i++) {
             const finding = rawVulnerabilities[i];
             
-            // Gate: exclude only Fixed/Closed/Resolved findings
-            // Active findings of ANY age are eligible — age and SLA are tracked as metadata
+            // Gate 1: Exclude inactive statuses
             const status = (finding.status || '').toLowerCase();
             if (INACTIVE_STATUSES.includes(status)) {
                 excludedFindings.push({
                     finding,
                     reason: `Inactive status: ${finding.status}`
                 });
-            } else {
-                eligibleFindings.push(finding);
+                continue;
             }
+            
+            // Gate 2: Exclude findings < 30 days old (not yet SLA-eligible)
+            const firstDetected = finding.firstDetected || finding.first_detected || finding.firstFound;
+            if (firstDetected) {
+                const detectedDate = new Date(firstDetected);
+                if (!isNaN(detectedDate.getTime())) {
+                    const ageInDays = Math.floor((now - detectedDate) / (1000 * 60 * 60 * 24));
+                    if (ageInDays < SLA_THRESHOLD_DAYS) {
+                        excludedFindings.push({
+                            finding,
+                            reason: `Too recent: ${ageInDays} days old (threshold: ${SLA_THRESHOLD_DAYS} days)`
+                        });
+                        continue;
+                    }
+                }
+            }
+            
+            eligibleFindings.push(finding);
             
             // Update progress every 100 findings
             if (i % 100 === 0 || i === rawVulnerabilities.length - 1) {
