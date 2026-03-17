@@ -560,7 +560,7 @@ class POAMBuilderSkill extends BaseSkill {
     }
 
     riskToNumber(risk) {
-        const map = { 'Critical': 5, 'High': 4, 'Medium': 3, 'Low': 2 };
+        const map = { 'critical': 5, 'Critical': 5, 'high': 4, 'High': 4, 'medium': 3, 'Medium': 3, 'low': 2, 'Low': 2 };
         return map[risk] || 3;
     }
 
