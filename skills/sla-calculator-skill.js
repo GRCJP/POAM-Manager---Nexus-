@@ -35,7 +35,6 @@ class SLACalculatorSkill extends BaseSkill {
         const enrichedFindings = findings.map((finding, idx) => {
             const firstDetected = this.parseDate(finding.firstDetected);
             const lastDetected = this.parseDate(finding.lastDetected);
-            const status = finding.status || 'ACTIVE';
             const severity = this.normalizeSeverity(finding.severity);
             
             if (!firstDetected) nullFirstDetected++;
@@ -47,8 +46,10 @@ class SLACalculatorSkill extends BaseSkill {
             // Get SLA days for this severity
             const slaDays = this.slaConfig[severity] || this.slaConfig.medium;
             
-            // Normalize status
-            const statusUpper = (status || 'ACTIVE').toUpperCase();
+            // Normalize status - if no status field, default to 'ACTIVE' for eligible findings
+            // (Phase 1 already filtered out inactive statuses)
+            const rawStatus = finding.status || finding.Status || '';
+            const statusUpper = rawStatus ? rawStatus.toUpperCase() : 'ACTIVE';
             const INACTIVE_STATUSES = ['FIXED', 'CLOSED', 'RESOLVED', 'IGNORED', 'DISABLED', 'NOT_APPLICABLE'];
             const isActiveStatus = !INACTIVE_STATUSES.includes(statusUpper);
             
