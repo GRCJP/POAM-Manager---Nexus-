@@ -179,23 +179,41 @@ class POAMDatabase {
             const sampleJSON = JSON.stringify(sample);
             const sampleSize = sampleJSON.length;
             console.log('📦 DEBUG: Sample POAM size:', (sampleSize / 1024).toFixed(2), 'KB');
-            console.log('📦 DEBUG: Sample POAM keys:', Object.keys(sample));
             console.log('📦 DEBUG: Estimated total:', ((sampleSize * formalPOAMs.length) / (1024 * 1024)).toFixed(2), 'MB');
-            
-            // Check individual field sizes - show ALL fields
-            const fieldSizes = {};
-            for (const key of Object.keys(sample)) {
-                try {
-                    const value = sample[key];
-                    const fieldSize = JSON.stringify(value !== undefined ? value : null).length;
-                    fieldSizes[key] = (fieldSize / 1024).toFixed(2) + 'KB';
-                } catch (e) {
-                    fieldSizes[key] = 'ERROR';
-                }
-            }
-            console.log('📦 DEBUG: All field sizes:', fieldSizes);
         }
 
+        // CHUNKED PROCESSING: Split into smaller transactions to avoid QuotaExceededError
+        const CHUNK_SIZE = 50; // 50 POAMs × 11.52KB = ~576KB per transaction
+        const chunks = [];
+        for (let i = 0; i < formalPOAMs.length; i += CHUNK_SIZE) {
+            chunks.push(formalPOAMs.slice(i, i + CHUNK_SIZE));
+        }
+        
+        console.log(`📦 addPOAMsBatch: Processing ${chunks.length} chunks of ${CHUNK_SIZE} POAMs each`);
+        
+        let totalSaved = 0;
+        let totalErrors = [];
+        
+        for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
+            const chunk = chunks[chunkIndex];
+            console.log(`📦 addPOAMsBatch: Processing chunk ${chunkIndex + 1}/${chunks.length} (${chunk.length} POAMs)`);
+            
+            try {
+                const result = await this.addPOAMsChunk(chunk);
+                totalSaved += result.saved;
+                totalErrors = totalErrors.concat(result.errors);
+                console.log(`📦 addPOAMsBatch: Chunk ${chunkIndex + 1} complete - saved ${result.saved}, errors ${result.errors.length}`);
+            } catch (err) {
+                console.error(`📦 addPOAMsBatch: Chunk ${chunkIndex + 1} failed:`, err);
+                throw err;
+            }
+        }
+        
+        console.log(`✅ addPOAMsBatch: Complete - saved ${totalSaved} POAMs, ${totalErrors.length} errors`);
+        return { saved: totalSaved, errors: totalErrors };
+    }
+
+    async addPOAMsChunk(poams) {
         return new Promise((resolve, reject) => {
             const BATCH_TIMEOUT = 30000; // 30 second timeout
             let timeoutId;
@@ -203,28 +221,25 @@ class POAMDatabase {
             let errors = [];
             let transactionComplete = false;
 
-            // Create transaction
-            console.log('📦 addPOAMsBatch: Creating transaction...');
+            // Create transaction for this chunk
             const transaction = this.db.transaction(['poams'], 'readwrite');
             const store = transaction.objectStore('poams');
 
             // Handle transaction completion
             transaction.oncomplete = () => {
-                console.log('📦 addPOAMsBatch: Transaction completed');
                 transactionComplete = true;
                 clearTimeout(timeoutId);
-                console.log(`✅ Saved ${completed - errors.length} POAMs to database`);
                 resolve({ saved: completed - errors.length, errors });
             };
 
             transaction.onerror = (e) => {
-                console.error('📦 addPOAMsBatch: Transaction error:', e.target.error);
+                console.error('📦 addPOAMsChunk: Transaction error:', e.target.error);
                 clearTimeout(timeoutId);
                 reject(new Error('Transaction failed: ' + e.target.error?.message));
             };
 
             transaction.onabort = (e) => {
-                console.error('📦 addPOAMsBatch: Transaction aborted:', e.target.error);
+                console.error('📦 addPOAMsChunk: Transaction aborted:', e.target.error);
                 clearTimeout(timeoutId);
                 reject(new Error('Transaction aborted: ' + e.target.error?.message));
             };
@@ -232,41 +247,36 @@ class POAMDatabase {
             // Timeout protection
             timeoutId = setTimeout(() => {
                 if (!transactionComplete) {
-                    console.error('📦 addPOAMsBatch: TIMEOUT after', BATCH_TIMEOUT, 'ms');
+                    console.error('📦 addPOAMsChunk: TIMEOUT after', BATCH_TIMEOUT, 'ms');
                     try {
                         transaction.abort();
                     } catch (e) {
                         // ignore abort errors
                     }
-                    reject(new Error(`Batch save timeout - only ${completed} of ${formalPOAMs.length} completed`));
+                    reject(new Error(`Chunk save timeout - only ${completed} of ${poams.length} completed`));
                 }
             }, BATCH_TIMEOUT);
 
-            // Process each POAM
-            formalPOAMs.forEach((poam, index) => {
+            // Process each POAM in this chunk
+            poams.forEach((poam) => {
                 try {
                     const request = store.put(poam);
                     
                     request.onsuccess = () => {
                         completed++;
-                        if (completed % 50 === 0) {
-                            console.log(`📦 addPOAMsBatch: Progress ${completed}/${formalPOAMs.length}`);
-                        }
                     };
                     
                     request.onerror = (e) => {
-                        console.error(`📦 addPOAMsBatch: Error saving POAM ${poam.id}:`, e.target.error);
+                        console.error(`📦 addPOAMsChunk: Error saving POAM ${poam.id}:`, e.target.error);
                         errors.push({ poam: poam.id, error: e.target.error?.message });
                         completed++;
                     };
                 } catch (err) {
-                    console.error(`📦 addPOAMsBatch: Exception for POAM ${poam.id}:`, err);
+                    console.error(`📦 addPOAMsChunk: Exception for POAM ${poam.id}:`, err);
                     errors.push({ poam: poam.id, error: err.message });
                     completed++;
                 }
             });
-
-            console.log('📦 addPOAMsBatch: All', formalPOAMs.length, 'requests queued');
         });
     }
 
