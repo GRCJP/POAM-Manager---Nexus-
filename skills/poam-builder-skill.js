@@ -231,8 +231,11 @@ class POAMBuilderSkill extends BaseSkill {
         let oldestDetectionDate = null;
         let oldestBreachDate = null;
         let oldestAge = 0;
-        let highestRisk = 'low';
         let slaDays = 90;
+        
+        // Track severity distribution for weighted calculation
+        const severityCounts = { critical: 0, high: 0, medium: 0, low: 0 };
+        let totalFindings = 0;
         
         group.findings.forEach(finding => {
             const asset = finding.asset?.hostname || finding.host || finding.ip || finding.asset?.assetId || 'unknown';
@@ -259,13 +262,18 @@ class POAMBuilderSkill extends BaseSkill {
                 } else {
                     withinSlaAssets.add(asset);
                 }
-            }
-            
-            // Track highest risk (using isHigherRisk logic)
-            if (this.isHigherRisk(sla.severity, highestRisk)) {
-                highestRisk = sla.severity;
+                
+                // Count severity distribution
+                const severity = (sla.severity || 'medium').toLowerCase();
+                if (severityCounts.hasOwnProperty(severity)) {
+                    severityCounts[severity]++;
+                    totalFindings++;
+                }
             }
         });
+        
+        // Calculate weighted risk based on severity distribution
+        const weightedRisk = this.calculateWeightedRisk(severityCounts, totalFindings);
         
         // Determine if group is breached
         const groupBreached = breachedAssets.size > 0;
@@ -290,10 +298,53 @@ class POAMBuilderSkill extends BaseSkill {
             oldestDetectionDate: oldestDetectionDate ? oldestDetectionDate.toISOString().split('T')[0] : null,
             oldestBreachDate,
             oldestAge,
-            highestRisk: this.normalizeSeverity(highestRisk),
+            highestRisk: this.normalizeSeverity(weightedRisk),
             slaDays,
-            skipReason
+            skipReason,
+            severityDistribution: severityCounts
         };
+    }
+
+    calculateWeightedRisk(severityCounts, totalFindings) {
+        if (totalFindings === 0) return 'medium';
+        
+        // Calculate percentages
+        const percentages = {
+            critical: (severityCounts.critical / totalFindings) * 100,
+            high: (severityCounts.high / totalFindings) * 100,
+            medium: (severityCounts.medium / totalFindings) * 100,
+            low: (severityCounts.low / totalFindings) * 100
+        };
+        
+        // Weighted logic: if critical+high combined >= 50%, use the higher of the two
+        const criticalHighCombined = percentages.critical + percentages.high;
+        
+        if (criticalHighCombined >= 50) {
+            // Use whichever has more findings between critical and high
+            return severityCounts.critical >= severityCounts.high ? 'critical' : 'high';
+        }
+        
+        // If critical alone >= 10%, elevate to critical
+        if (percentages.critical >= 10) {
+            return 'critical';
+        }
+        
+        // If high alone >= 30%, use high
+        if (percentages.high >= 30) {
+            return 'high';
+        }
+        
+        // If medium+high+critical >= 70%, use medium
+        if (percentages.medium + percentages.high + percentages.critical >= 70) {
+            return 'medium';
+        }
+        
+        // Default to the severity with the highest count
+        const maxSeverity = Object.entries(severityCounts)
+            .reduce((max, [sev, count]) => count > max.count ? { severity: sev, count } : max, 
+                    { severity: 'medium', count: 0 });
+        
+        return maxSeverity.severity;
     }
 
     isHigherRisk(severity1, severity2) {
