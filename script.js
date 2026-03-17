@@ -3,7 +3,7 @@
 // Cache-busting mechanism: Force reload when storage is cleared
 (function initCacheBuster() {
     const CACHE_VERSION_KEY = 'poamNexusCacheVersion';
-    const CURRENT_VERSION = '20260317-chunk10'; // Update this when code changes
+    const CURRENT_VERSION = '20260317-clearfix'; // Update this when code changes
     
     const storedVersion = localStorage.getItem(CACHE_VERSION_KEY);
     

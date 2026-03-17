@@ -169,6 +169,46 @@ class POAMDatabase {
 
         console.log('📦 addPOAMsBatch: Starting with', poams.length, 'POAMs');
 
+        // Check storage quota
+        if (navigator.storage && navigator.storage.estimate) {
+            const estimate = await navigator.storage.estimate();
+            const usedMB = (estimate.usage / (1024 * 1024)).toFixed(2);
+            const quotaMB = (estimate.quota / (1024 * 1024)).toFixed(2);
+            const availMB = ((estimate.quota - estimate.usage) / (1024 * 1024)).toFixed(2);
+            console.log(`📦 STORAGE: Used ${usedMB}MB / ${quotaMB}MB (${availMB}MB available)`);
+        }
+
+        // Clear ALL stores before import to free storage from previous failed imports
+        console.log('📦 addPOAMsBatch: Clearing ALL stores to free storage...');
+        const storesToClear = ['poams', 'poamScanSummaries', 'scans', 'scanRuns', 'phaseArtifacts'];
+        for (const storeName of storesToClear) {
+            if (this.db.objectStoreNames.contains(storeName)) {
+                try {
+                    await new Promise((resolve, reject) => {
+                        const tx = this.db.transaction([storeName], 'readwrite');
+                        const req = tx.objectStore(storeName).clear();
+                        req.onsuccess = () => {
+                            console.log(`📦 Cleared store: ${storeName}`);
+                            resolve();
+                        };
+                        req.onerror = () => {
+                            console.warn(`📦 Failed to clear store: ${storeName}`);
+                            resolve(); // continue anyway
+                        };
+                    });
+                } catch (e) {
+                    console.warn(`📦 Skipped store: ${storeName}`, e.message);
+                }
+            }
+        }
+        
+        // Check storage after clearing
+        if (navigator.storage && navigator.storage.estimate) {
+            const est2 = await navigator.storage.estimate();
+            console.log(`📦 STORAGE AFTER CLEAR: Used ${(est2.usage / (1024 * 1024)).toFixed(2)}MB / ${(est2.quota / (1024 * 1024)).toFixed(2)}MB`);
+        }
+        console.log('📦 addPOAMsBatch: All stores cleared');
+
         // Transform each POAM to formal structure
         const formalPOAMs = poams.map(poam => this.transformToFormalPOAM(poam));
         console.log('📦 addPOAMsBatch: Transformed', formalPOAMs.length, 'POAMs');
@@ -183,7 +223,7 @@ class POAMDatabase {
         }
 
         // CHUNKED PROCESSING: Split into smaller transactions to avoid QuotaExceededError
-        const CHUNK_SIZE = 10; // 10 POAMs × 11.52KB = ~115KB per transaction
+        const CHUNK_SIZE = 25;
         const chunks = [];
         for (let i = 0; i < formalPOAMs.length; i += CHUNK_SIZE) {
             chunks.push(formalPOAMs.slice(i, i + CHUNK_SIZE));
