@@ -3299,14 +3299,8 @@
     <!-- AI Assistant Agent - Feature Flags & Configuration (Load First) -->
     <script src="config/feature-flags.js?v=20260225-1"></script>
     <script src="config/notification-config.js?v=20260225-1"></script>
-    <script src="vulnerability-intelligence.js?v=20260225-1"></script>
     
-    <!-- AI Assistant Agent - Notification System -->
-    <script src="notification-queue.js?v=20260225-1"></script>
-    <script src="email-delivery.js?v=20260225-1"></script>
-    <script src="jira-integration.js?v=20260225-1"></script>
-    <script src="feedback-collector.js?v=20260225-1"></script>
-    
+    <!-- Core Database -->
     <script src="poam-database.js?v=20260225-1"></script>
     
     <!-- Skills Architecture -->
@@ -3317,30 +3311,19 @@
     <script src="skills/skill-orchestrator.js"></script>
     <script src="skills-integration.js"></script>
     
-    <!-- Pipeline -->
-    <script src="pipeline-logger.js?v=20260116-1"></script>
-    <script src="pipeline-orchestrator.js?v=20260225-1"></script>
-    <script src="pipeline-progress-ui.js?v=20260224-1"></script>
+    <!-- Consolidated Modules (v2.0.0) -->
+    <script src="modules/data-processing.js"></script>
+    <script src="modules/pipeline.js"></script>
     <script src="vulnerability-analysis-engine.js?v=20260224-1"></script>
-    <script src="csv-format-processors.js?v=20260210-1"></script>
-    <script src="evidence-functions.js"></script>
-    <script src="sidebar-navigation.js"></script>
-    <script src="column-filters.js"></script>
-    <script src="bulk-operations.js"></script>
-    <script src="poam-detail-redesign.js?v=20260224-2"></script>
-    <script src="poam-lifecycle.js?v=20260224-1"></script>
+    <script src="modules/poam-ui.js"></script>
+    <script src="modules/workbook.js"></script>
+    <script src="modules/integrations.js"></script>
+    <script src="modules/reporting.js"></script>
+    
+    <!-- Core Modules -->
     <script src="vulnerability-tracking.js?v=20260210-2"></script>
-    <script src="milestone-pipeline-orchestrator-v2.js?v=20260120-1"></script>
     <script src="vulnerability-tracking-milestones.js?v=20260120-1"></script>
-    <script src="poam-workbook-constants.js?v=20260120-1"></script>
-    <script src="poam-workbook-db.js?v=20260120-8"></script>
-    <script src="poam-workbook-import.js?v=20260120-8"></script>
-    <script src="poam-workbook-export.js?v=20260120-1"></script>
-    <script src="poam-workbook-ui.js?v=20260120-15"></script>
-    <!-- security-controls-manager.js removed -->
-    <script src="dashboard-metrics.js?v=20260224-1"></script>
-    <script src="executive-reports.js?v=20260209-1"></script>
-    <script src="oscal-export.js?v=20260209-1"></script>
+    <script src="sidebar-navigation.js"></script>
     <script src="script.js?v=20260120-3"></script>
 
 </body>
