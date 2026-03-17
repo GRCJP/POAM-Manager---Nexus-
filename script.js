@@ -1564,8 +1564,14 @@ function getNextPOAMId() {
 }
 
 async function ensurePOAMIdConfigForBaselineImport() {
-    const existingConfig = localStorage.getItem('poamIdConfig');
-    if (existingConfig) return true;
+    let existingConfig = null;
+    try {
+        existingConfig = JSON.parse(localStorage.getItem('poamIdConfig') || 'null');
+    } catch (e) {
+        existingConfig = null;
+    }
+    const hasCompletedSetup = !!(existingConfig && existingConfig.setupCompleted && existingConfig.prefix && existingConfig.currentNumber);
+    if (hasCompletedSetup) return true;
     
     try {
         if (typeof poamDB !== 'undefined' && typeof poamDB.countPOAMs === 'function') {
