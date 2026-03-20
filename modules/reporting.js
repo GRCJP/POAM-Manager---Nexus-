@@ -54,6 +54,15 @@ async function loadDashboardMetrics() {
         try { renderControlFamilyHeatmap(poams); } catch (e) { console.warn('⚠️ renderControlFamilyHeatmap:', e.message); }
         try { renderTeamTable(poams); } catch (e) { console.warn('⚠️ renderTeamTable:', e.message); }
         try { renderModuleBadges(poams); } catch (e) { console.warn('⚠️ renderModuleBadges:', e.message); }
+        
+        // Load POAM Activity Monitor widget
+        try { 
+            if (typeof renderPOAMActivityWidget === 'function') {
+                await renderPOAMActivityWidget('poam-activity-widget'); 
+            }
+        } catch (e) { 
+            console.warn('⚠️ renderPOAMActivityWidget:', e.message); 
+        }
 
         const ts = new Date().toLocaleTimeString();
         const el = document.getElementById('dash-last-updated');
