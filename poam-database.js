@@ -7,7 +7,7 @@ console.log('📦 poam-database.js loading...');
 class POAMDatabase {
     constructor() {
         this.dbName = 'POAMDatabase';
-        this.version = 11;
+        this.version = 12;
         this.db = null;
     }
 
@@ -155,6 +155,15 @@ class POAMDatabase {
                     console.log('📦 Creating cveCache object store');
                     const cveStore = db.createObjectStore('cveCache', { keyPath: 'cveId' });
                     cveStore.createIndex('timestamp', 'timestamp', { unique: false });
+                }
+                
+                // Create apiConnections object store for API integrations
+                if (!db.objectStoreNames.contains('apiConnections')) {
+                    console.log('📦 Creating apiConnections object store');
+                    const apiStore = db.createObjectStore('apiConnections', { keyPath: 'id' });
+                    apiStore.createIndex('type', 'type', { unique: false });
+                    apiStore.createIndex('enabled', 'enabled', { unique: false });
+                    apiStore.createIndex('lastSync', 'lastSync', { unique: false });
                 }
                 
                 console.log('✅ Database upgrade complete');

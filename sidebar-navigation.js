@@ -94,6 +94,8 @@ function showSettingsTab(tabName) {
         }
     } else if (finalTabName === 'critical-assets') {
         if (typeof loadCriticalAssetsRegistry === 'function') loadCriticalAssetsRegistry();
+    } else if (finalTabName === 'api-config') {
+        if (typeof renderAPISettingsTab === 'function') renderAPISettingsTab();
     }
     
     // Close mobile sidebar after selection
