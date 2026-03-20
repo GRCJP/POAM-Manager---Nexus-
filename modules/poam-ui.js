@@ -1365,6 +1365,10 @@ async function mergePOAMsFromScan(newPOAMs) {
         if (existing) {
             // MERGE: Preserve user edits, update scan-derived fields
             const merged = { ...existing };
+            
+            // Track previous values for comparison
+            const previousAssetCount = existing.totalAffectedAssets || 0;
+            const previousRisk = (existing.risk || existing.riskLevel || '').toLowerCase();
 
             // Update scan-derived fields
             for (const field of SCAN_UPDATED_FIELDS) {
@@ -1380,33 +1384,72 @@ async function mergePOAMsFromScan(newPOAMs) {
             merged.lastModifiedDate = new Date().toISOString();
             merged.lastScanDate = new Date().toISOString();
 
+            // Calculate asset count change
+            const newAssetCount = newPoam.totalAffectedAssets || 0;
+            const assetCountChange = newAssetCount - previousAssetCount;
+            const assetChangePercent = previousAssetCount > 0 
+                ? Math.round((assetCountChange / previousAssetCount) * 100) 
+                : 0;
+
             // Append to status history
             merged.statusHistory = existing.statusHistory || [];
+            
+            // Build detailed scan update message
+            let scanUpdateDetails = `Re-import updated scan data. Assets: ${newAssetCount}`;
+            if (assetCountChange !== 0) {
+                scanUpdateDetails += ` (${assetCountChange > 0 ? '+' : ''}${assetCountChange}, ${assetChangePercent > 0 ? '+' : ''}${assetChangePercent}%)`;
+            }
+            scanUpdateDetails += `, Risk: ${newPoam.risk || 'unknown'}`;
+            
             merged.statusHistory.push({
                 date: new Date().toISOString(),
                 action: 'scan_update',
-                details: `Re-import updated scan data. Assets: ${newPoam.totalAffectedAssets || 0}, Risk: ${newPoam.risk || 'unknown'}`,
-                previousRisk: existing.risk || existing.riskLevel,
+                details: scanUpdateDetails,
+                previousAssetCount: previousAssetCount,
+                newAssetCount: newAssetCount,
+                assetCountChange: assetCountChange,
+                previousRisk: previousRisk,
                 newRisk: newPoam.risk || newPoam.riskLevel,
                 scanId: newPoam.scanId
             });
 
+            // Track partial remediation (asset count decreased significantly)
+            if (assetCountChange < 0 && Math.abs(assetChangePercent) >= 25) {
+                merged.statusHistory.push({
+                    date: new Date().toISOString(),
+                    action: 'partial_remediation',
+                    details: `Partial remediation detected: ${Math.abs(assetCountChange)} fewer assets affected (${Math.abs(assetChangePercent)}% reduction)`,
+                    previousAssetCount: previousAssetCount,
+                    newAssetCount: newAssetCount,
+                    remediationPercent: Math.abs(assetChangePercent)
+                });
+                
+                // Mark for review if significant progress
+                if (!merged.needsReview && Math.abs(assetChangePercent) >= 50) {
+                    merged.needsReview = true;
+                    merged.statusHistory.push({
+                        date: new Date().toISOString(),
+                        action: 'flagged_for_review',
+                        details: `Flagged for review: ${Math.abs(assetChangePercent)}% asset reduction suggests significant remediation progress`
+                    });
+                }
+            }
+
             // If risk changed, log it
-            const oldRisk = (existing.risk || existing.riskLevel || '').toLowerCase();
             const newRisk = (newPoam.risk || newPoam.riskLevel || '').toLowerCase();
-            if (oldRisk && newRisk && oldRisk !== newRisk) {
+            if (previousRisk && newRisk && previousRisk !== newRisk) {
                 merged.statusHistory.push({
                     date: new Date().toISOString(),
                     action: 'risk_change',
-                    details: `Risk changed from ${oldRisk} to ${newRisk}`,
-                    previousRisk: oldRisk,
+                    details: `Risk changed from ${previousRisk} to ${newRisk}`,
+                    previousRisk: previousRisk,
                     newRisk: newRisk
                 });
             }
 
             // Update due date only if risk escalated (shorter SLA)
             const riskOrder = { critical: 4, high: 3, medium: 2, low: 1 };
-            if ((riskOrder[newRisk] || 0) > (riskOrder[oldRisk] || 0)) {
+            if ((riskOrder[newRisk] || 0) > (riskOrder[previousRisk] || 0)) {
                 merged.dueDate = newPoam.dueDate;
                 merged.updatedScheduledCompletionDate = newPoam.dueDate;
             }
@@ -1489,6 +1532,26 @@ async function mergePOAMsFromScan(newPOAMs) {
         autoClosedIds.push(candidate.id);
     }
     
+    // Track POAMs with significant asset count changes
+    const partialRemediationPOAMs = mergedPOAMs.filter(p => 
+        p.statusHistory && p.statusHistory.some(h => h.action === 'partial_remediation')
+    ).map(p => ({
+        id: p.id,
+        title: p.title || p.vulnerabilityName || 'Unknown',
+        previousAssetCount: p.statusHistory.find(h => h.action === 'partial_remediation')?.previousAssetCount || 0,
+        newAssetCount: p.statusHistory.find(h => h.action === 'partial_remediation')?.newAssetCount || 0,
+        remediationPercent: p.statusHistory.find(h => h.action === 'partial_remediation')?.remediationPercent || 0
+    }));
+
+    const riskChangedPOAMs = mergedPOAMs.filter(p =>
+        p.statusHistory && p.statusHistory.some(h => h.action === 'risk_change')
+    ).map(p => ({
+        id: p.id,
+        title: p.title || p.vulnerabilityName || 'Unknown',
+        previousRisk: p.statusHistory.find(h => h.action === 'risk_change')?.previousRisk || 'unknown',
+        newRisk: p.statusHistory.find(h => h.action === 'risk_change')?.newRisk || 'unknown'
+    }));
+
     // Store scan analysis for UI display
     window.lastScanAnalysis = {
         timestamp: new Date().toISOString(),
@@ -1496,7 +1559,9 @@ async function mergePOAMsFromScan(newPOAMs) {
         updatedPOAMs: updated,
         autoClosedPOAMs: closureCandidates.length,
         autoClosedIds: autoClosedIds,
-        previouslyOpenPOAMs: previouslyOpenPOAMs
+        previouslyOpenPOAMs: previouslyOpenPOAMs,
+        partialRemediationPOAMs: partialRemediationPOAMs,
+        riskChangedPOAMs: riskChangedPOAMs
     };
 
     console.log(`🔄 Merge results: ${created} new, ${updated} updated, ${closureCandidates.length} auto-resolved`);
