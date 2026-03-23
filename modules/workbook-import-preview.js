@@ -37,7 +37,7 @@ async function showWorkbookImportPreview(file, systemId) {
                         <h2 class="text-xl font-bold text-slate-900">Import Preview</h2>
                         <p class="text-sm text-slate-500 mt-1">File: ${escapeHtml(file.name)} → System: ${escapeHtml(systemId)}</p>
                     </div>
-                    <button onclick="this.closest('.modal').remove()" class="text-slate-400 hover:text-slate-600">
+                    <button id="close-preview-btn" class="text-slate-400 hover:text-slate-600">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -96,7 +96,7 @@ async function showWorkbookImportPreview(file, systemId) {
                         Ready to import <strong>${matrix.length - 1}</strong> rows into system <strong>${escapeHtml(systemId)}</strong>
                     </div>
                     <div class="flex gap-3">
-                        <button onclick="this.closest('.modal').remove()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">
+                        <button id="cancel-import-btn" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">
                             Cancel
                         </button>
                         <button id="proceed-import-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
@@ -108,6 +108,23 @@ async function showWorkbookImportPreview(file, systemId) {
         `;
 
         document.body.appendChild(modal);
+
+        // Handle close button
+        modal.querySelector('#close-preview-btn').onclick = () => {
+            modal.remove();
+        };
+
+        // Handle cancel button
+        modal.querySelector('#cancel-import-btn').onclick = () => {
+            modal.remove();
+        };
+
+        // Handle clicking outside modal
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        };
 
         // Handle proceed button
         modal.querySelector('#proceed-import-btn').onclick = async () => {
