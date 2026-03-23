@@ -218,20 +218,20 @@ async function poamWorkbookImportXlsxSimple(file, systemId) {
   for (const row of parsedRows) {
     const data = pickColumns(row);
     
+    // Use item number from Excel if present, otherwise auto-generate
+    const excelItemNumber = String(row['Item number'] || '').trim();
+    const itemNumber = excelItemNumber || (typeof window.poamWorkbookDB.getNextItemNumber === 'function'
+      ? String(await window.poamWorkbookDB.getNextItemNumber(systemId))
+      : String(saved + 1));
+    
     const item = {
       id: `WB-${systemId}-${Date.now()}-${saved}`,
       systemId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      ...data
+      ...data,
+      'Item number': itemNumber
     };
-
-    // Assign item number
-    const nextNum = typeof window.poamWorkbookDB.getNextItemNumber === 'function'
-      ? await window.poamWorkbookDB.getNextItemNumber(systemId)
-      : saved + 1;
-    
-    item['Item number'] = String(nextNum);
 
     console.log(`📊 Saving item ${saved + 1}:`, { 
       itemNumber: item['Item number'], 
