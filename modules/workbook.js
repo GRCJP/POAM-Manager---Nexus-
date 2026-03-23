@@ -2380,21 +2380,23 @@ async function poamWorkbookImportXlsx(file, systemId) {
     ['completion date', 'Scheduled Completion Date'],
     ['detection date', 'Detection Date'],
     
-    // User's specific Excel format aliases
+    // User's specific Excel format aliases - exact matches from their file
     ['finding identifier', 'Item number'],
     ['control family', 'Impacted Security Controls'],
+    ['vulnerability name', 'Vulnerability Name'],
     ['finding description', 'Vulnerability Description'],
     ['finding source', 'Identifying Detecting Source'],
+    ['poc', 'POC Name'],
+    ['resources required', 'Resources Required'],
     ['initial scheduled completion date', 'Scheduled Completion Date'],
+    ['milestones with completion dates', 'Milestone with Completion Dates'],
+    ['changes to milestones with completion dates', 'Milestone Changes'],
     ['updated scheduled completion date', 'Scheduled Completion Date'],
     ['actual completion date', 'Detection Date'],
     ['finding status', 'Status'],
     ['risk level', 'Severity Value'],
     ['mitigation', 'Mitigations'],
-    ['milestones with completion dates', 'Milestone with Completion Dates'],
-    ['changes to milestones with completion dates', 'Milestone Changes'],
-    ['milestones w completion dates', 'Milestone with Completion Dates'],
-    ['changes to milestones w completion dates', 'Milestone Changes']
+    ['comments', 'Comments']
   ]);
 
   const requiredHeaders = window.POAM_WORKBOOK_COLUMNS || [];
