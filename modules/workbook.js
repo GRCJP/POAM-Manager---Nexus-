@@ -2617,7 +2617,9 @@ async function poamWorkbookImportXlsx(file, systemId) {
 
     if (Number.isFinite(n) && n > 0 && typeof window.poamWorkbookDB.upsertItemBySystemAndItemNumber === 'function') {
       data['Item number'] = String(itemNumberRaw || n);
+      console.log('📊 Excel Import - Upserting item:', { systemId, itemNumber: n, data });
       const result = await window.poamWorkbookDB.upsertItemBySystemAndItemNumber(systemId, n, data);
+      console.log('📊 Excel Import - Upsert result:', result);
       if (result.created) saved++; else updated++;
       continue;
     }
@@ -2634,7 +2636,9 @@ async function poamWorkbookImportXlsx(file, systemId) {
       ...data
     };
     item['Item number'] = await formatItemNumber(nextNum);
+    console.log('📊 Excel Import - Saving new item:', item);
     await window.poamWorkbookDB.saveItem(item);
+    console.log('📊 Excel Import - Item saved successfully');
     saved++;
   }
 
