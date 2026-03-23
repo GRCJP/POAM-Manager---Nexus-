@@ -2518,11 +2518,21 @@ async function poamWorkbookImportXlsx(file, systemId) {
     const itemNumberRaw = r['Item number'];
     const n = parseItemNumberNumeric(itemNumberRaw);
 
+    console.log('📊 Excel Import - Processing row:', {
+      itemNumber: itemNumberRaw,
+      vulnName: r['Vulnerability Name'],
+      poc: r['POC Name'],
+      severity: r['Severity Value'],
+      rawRow: r
+    });
+
     const data = {
       ...pickWorkbookColumns(r),
       [window.POAM_WORKBOOK_INTERNAL_FIELDS.assetsImpacted]: entry.assets.assetsImpacted
     };
     data['Affected Components/URLs'] = entry.assets.affectedComponents;
+
+    console.log('📊 Excel Import - Data after pickWorkbookColumns:', data);
 
     if (Number.isFinite(n) && n > 0 && typeof window.poamWorkbookDB.upsertItemBySystemAndItemNumber === 'function') {
       data['Item number'] = String(itemNumberRaw || n);
