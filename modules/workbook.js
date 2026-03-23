@@ -2465,13 +2465,18 @@ async function poamWorkbookImportXlsx(file, systemId) {
 
   let bestHeaderRowIndex = -1;
   let bestHeaderScore = 0;
+  const rowScores = [];
   for (let i = 0; i < headerSearchRows.length; i++) {
     const score = scoreHeaderRow(headerSearchRows[i]);
+    const firstCells = headerSearchRows[i].slice(0, 10).map(c => String(c || '').substring(0, 20));
+    rowScores.push({ row: i, score, preview: firstCells.join(' | ') });
     if (score > bestHeaderScore) {
       bestHeaderScore = score;
       bestHeaderRowIndex = i;
     }
   }
+  
+  console.log('📊 Excel Import - Scanned rows:', rowScores.filter(r => r.score > 0));
 
   // Require at least 5 recognizable columns to avoid selecting metadata/banner rows.
   // POAM tables should have many columns (Finding Identifier, Control Family, Vulnerability Name, etc.)
