@@ -1940,7 +1940,7 @@
                         <div id="scm-poam-workbook-systems" class="flex items-center gap-2"></div>
                         <label class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 cursor-pointer text-sm font-semibold">
                             <i class="fas fa-file-import mr-2"></i>Import XLSX
-                            <input type="file" accept=".xlsx" class="hidden" onchange="poamWorkbookHandleImportInput(event)">
+                            <input type="file" accept=".xlsx" class="hidden" onchange="poamWorkbookHandleImportInputWithPreview(event)">
                         </label>
                         <button onclick="poamWorkbookOpenPasteModal()" class="px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-lg hover:bg-slate-50 text-sm font-semibold">
                             <i class="fas fa-paste mr-2 text-indigo-600"></i>Paste POAMs
@@ -3323,6 +3323,7 @@
     <script src="modules/api-settings-ui.js"></script>
     <script src="modules/workbook.js"></script>
     <script src="modules/workbook-enhancements.js"></script>
+    <script src="modules/workbook-import-preview.js"></script>
     <script src="modules/integrations.js"></script>
     <script src="modules/reporting.js"></script>
     
