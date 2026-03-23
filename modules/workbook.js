@@ -2473,14 +2473,15 @@ async function poamWorkbookImportXlsx(file, systemId) {
     }
   }
 
-  // Require at least a few recognizable columns to avoid selecting banner rows.
-  if (bestHeaderRowIndex === -1 || bestHeaderScore < 3) {
+  // Require at least 5 recognizable columns to avoid selecting metadata/banner rows.
+  // POAM tables should have many columns (Finding Identifier, Control Family, Vulnerability Name, etc.)
+  if (bestHeaderRowIndex === -1 || bestHeaderScore < 5) {
     const firstRow = Array.isArray(matrix[0]) ? matrix[0] : [];
     const rawHeaders = firstRow
       .map(h => String(h || '').replace(/\s+/g, ' ').trim())
       .filter(Boolean)
       .slice(0, 30);
-    throw new Error(`No recognizable columns found in workbook header row. First headers: ${rawHeaders.join(' | ')}`);
+    throw new Error(`No recognizable POAM table found. Need at least 5 matching columns. Best score: ${bestHeaderScore} at row ${bestHeaderRowIndex}. First headers: ${rawHeaders.join(' | ')}`);
   }
 
   const headerRow = (matrix[bestHeaderRowIndex] || []).map(v => String(v || ''));
