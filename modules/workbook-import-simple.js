@@ -178,19 +178,67 @@ async function poamWorkbookImportXlsxSimple(file, systemId) {
     throw new Error('No columns could be mapped');
   }
 
-  // Helper: normalize date values from Excel
+  // Helper: normalize date values from Excel (handles multiple formats)
   const normalizeDate = (val) => {
     if (!val) return '';
+    
+    // Already a Date object
     if (val instanceof Date) {
       return val.toISOString().split('T')[0];
     }
+    
+    // Excel serial number (days since 1900-01-01)
+    if (typeof val === 'number' && val > 0 && val < 100000) {
+      const excelEpoch = new Date(1900, 0, 1);
+      const days = val - 2; // Excel incorrectly treats 1900 as a leap year
+      const d = new Date(excelEpoch.getTime() + days * 24 * 60 * 60 * 1000);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().split('T')[0];
+      }
+    }
+    
     const str = String(val).trim();
     if (!str) return '';
-    const d = new Date(str);
+    
+    // Try standard Date parsing first
+    let d = new Date(str);
     if (!isNaN(d.getTime())) {
       return d.toISOString().split('T')[0];
     }
-    return str;
+    
+    // Try MM/DD/YYYY format
+    const mmddyyyy = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (mmddyyyy) {
+      const [, month, day, year] = mmddyyyy;
+      d = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().split('T')[0];
+      }
+    }
+    
+    // Try DD-MM-YYYY format
+    const ddmmyyyy = str.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+    if (ddmmyyyy) {
+      const [, day, month, year] = ddmmyyyy;
+      d = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().split('T')[0];
+      }
+    }
+    
+    // Try YYYY-MM-DD format (ISO)
+    const yyyymmdd = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (yyyymmdd) {
+      const [, year, month, day] = yyyymmdd;
+      d = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().split('T')[0];
+      }
+    }
+    
+    // Return original if no format matched
+    console.warn('Could not parse date:', str);
+    return '';
   };
 
   // Helper: normalize text values

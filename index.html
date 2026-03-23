@@ -1937,6 +1937,9 @@
                         <button onclick="poamWorkbookShowOverview()" class="px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-lg hover:bg-slate-50 text-sm font-semibold">
                             <i class="fas fa-chart-pie mr-2 text-indigo-600"></i>Overview
                         </button>
+                        <button onclick="poamWorkbookShowAllSystems()" class="px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-lg hover:bg-slate-50 text-sm font-semibold">
+                            <i class="fas fa-th-list mr-2 text-indigo-600"></i>All Systems
+                        </button>
                         <div id="scm-poam-workbook-systems" class="flex items-center gap-2"></div>
                         <label class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 cursor-pointer text-sm font-semibold">
                             <i class="fas fa-file-import mr-2"></i>Import XLSX
@@ -2033,6 +2036,7 @@
                         </div>
 
                         <div id="poam-workbook-view-system" class="poam-workbook-view hidden space-y-4">
+                            <!-- System Header -->
                             <div class="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between gap-3 flex-wrap">
                                 <div class="flex items-center gap-2">
                                     <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Active System</div>
@@ -2047,6 +2051,43 @@
                                     </button>
                                     <button onclick="poamWorkbookCreateItem()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-semibold">
                                         <i class="fas fa-plus mr-2"></i>Create POAM
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Quick Status Panel -->
+                            <div id="poam-workbook-quick-status"></div>
+
+                            <!-- Filters -->
+                            <div class="bg-white border border-slate-200 rounded-xl p-4">
+                                <div class="flex items-center gap-3 flex-wrap">
+                                    <div class="flex-1 min-w-[200px]">
+                                        <input type="text" id="poam-workbook-search" placeholder="Search POAMs..." class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm" oninput="window.poamWorkbookState.filters.searchText=this.value; poamWorkbookApplyFilters()">
+                                    </div>
+                                    <select id="poam-workbook-filter-status" class="px-3 py-2 border border-slate-200 rounded-lg text-sm" onchange="window.poamWorkbookState.filters.status=this.value; poamWorkbookApplyFilters()">
+                                        <option value="all">All Status</option>
+                                        <option value="Open">Open</option>
+                                        <option value="In Progress">In Progress</option>
+                                        <option value="Completed">Completed</option>
+                                        <option value="Closed">Closed</option>
+                                        <option value="Delayed">Delayed</option>
+                                        <option value="Risk Accepted">Risk Accepted</option>
+                                    </select>
+                                    <select id="poam-workbook-filter-severity" class="px-3 py-2 border border-slate-200 rounded-lg text-sm" onchange="window.poamWorkbookState.filters.severity=this.value; poamWorkbookApplyFilters()">
+                                        <option value="all">All Severity</option>
+                                        <option value="Critical">Critical</option>
+                                        <option value="High">High</option>
+                                        <option value="Moderate">Moderate</option>
+                                        <option value="Medium">Medium</option>
+                                        <option value="Low">Low</option>
+                                    </select>
+                                    <select id="poam-workbook-filter-date" class="px-3 py-2 border border-slate-200 rounded-lg text-sm" onchange="window.poamWorkbookState.filters.dateRange=this.value; poamWorkbookApplyFilters()">
+                                        <option value="all">All Dates</option>
+                                        <option value="overdue">Overdue</option>
+                                        <option value="coming-due">Coming Due (30 days)</option>
+                                    </select>
+                                    <button onclick="window.poamWorkbookState.filters={searchText:'',status:'all',severity:'all',poc:'all',dateRange:'all'}; document.getElementById('poam-workbook-search').value=''; document.getElementById('poam-workbook-filter-status').value='all'; document.getElementById('poam-workbook-filter-severity').value='all'; document.getElementById('poam-workbook-filter-date').value='all'; poamWorkbookApplyFilters()" class="px-3 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 text-sm font-medium">
+                                        <i class="fas fa-redo mr-1"></i>Reset
                                     </button>
                                 </div>
                             </div>
@@ -2089,6 +2130,10 @@
                                     </table>
                                 </div>
                             </div>
+                        </div>
+
+                        <div id="poam-workbook-view-all-systems" class="poam-workbook-view hidden">
+                            <!-- All systems view will be rendered here -->
                         </div>
                     </div>
                 </div>
@@ -3354,6 +3399,7 @@
     <script src="modules/api-settings-ui.js"></script>
     <script src="modules/workbook.js"></script>
     <script src="modules/workbook-enhancements.js"></script>
+    <script src="modules/workbook-enhancements-v2.js"></script>
     <script src="modules/workbook-import-preview.js"></script>
     <script src="modules/workbook-import-simple.js"></script>
     <script src="modules/integrations.js"></script>

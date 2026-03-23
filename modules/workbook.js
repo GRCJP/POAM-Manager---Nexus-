@@ -176,9 +176,28 @@ function poamWorkbookShowOverview() {
   window.poamWorkbookState.activeTab = 'overview';
   const overview = document.getElementById('poam-workbook-view-overview');
   const system = document.getElementById('poam-workbook-view-system');
+  const allSystems = document.getElementById('poam-workbook-view-all-systems');
   if (overview) overview.classList.remove('hidden');
   if (system) system.classList.add('hidden');
+  if (allSystems) allSystems.classList.add('hidden');
 }
+
+async function poamWorkbookShowAllSystems() {
+  window.poamWorkbookState.activeTab = 'all-systems';
+  const overview = document.getElementById('poam-workbook-view-overview');
+  const system = document.getElementById('poam-workbook-view-system');
+  const allSystems = document.getElementById('poam-workbook-view-all-systems');
+  
+  if (overview) overview.classList.add('hidden');
+  if (system) system.classList.add('hidden');
+  if (allSystems) {
+    allSystems.classList.remove('hidden');
+    if (window.poamWorkbookRenderAllSystemsView) {
+      allSystems.innerHTML = await window.poamWorkbookRenderAllSystemsView();
+    }
+  }
+}
+window.poamWorkbookShowAllSystems = poamWorkbookShowAllSystems;
 
 async function renderWorkbookSidebarSystems() {
   if (!window.poamWorkbookDB || !window.poamWorkbookDB.db) return;
@@ -894,19 +913,22 @@ async function renderWorkbookOverview() {
   if (controlsDist) controlsDist.innerHTML = renderTopList(analytics.controlsDist);
 }
 
-// Filter workbook by metric (for clickable dashboard tiles)
-window.poamWorkbookFilterByMetric = function(metric) {
-  // For now, just show a message - will implement filtering in next iteration
-  console.log('Filter by metric:', metric);
-  showUpdateFeedback(`Filtering by ${metric} - feature coming soon`, 'info');
-};
-
 async function renderWorkbookSystemTable(systemId) {
-  const items = await window.poamWorkbookDB.getItemsBySystem(systemId);
-  const analytics = computeWorkbookAnalytics(items, `system:${systemId}`);
+  const allItems = await window.poamWorkbookDB.getItemsBySystem(systemId);
+  
+  // Apply filters if filtering is enabled
+  const items = window.poamWorkbookFilterItems ? window.poamWorkbookFilterItems(allItems) : allItems;
+  
+  const analytics = computeWorkbookAnalytics(allItems, `system:${systemId}`);
 
   const sysTotal = document.getElementById('poam-workbook-system-total');
-  if (sysTotal) sysTotal.textContent = analytics.total;
+  if (sysTotal) sysTotal.textContent = allItems.length;
+  
+  // Render quick status panel
+  const quickStatus = document.getElementById('poam-workbook-quick-status');
+  if (quickStatus && window.poamWorkbookRenderQuickStatusPanel) {
+    quickStatus.innerHTML = window.poamWorkbookRenderQuickStatusPanel(allItems);
+  }
 
   const tableBody = document.getElementById('poam-workbook-table-body');
   if (!tableBody) return;
