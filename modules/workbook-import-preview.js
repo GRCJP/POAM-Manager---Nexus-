@@ -130,13 +130,10 @@ async function showWorkbookImportPreview(file, systemId) {
         modal.querySelector('#proceed-import-btn').onclick = async () => {
             modal.remove();
             
-            // Now do the actual import
+            // Now do the actual import using the simple direct importer
             try {
-                const result = await poamWorkbookImportXlsx(file, systemId);
-                const updated = result.updated || 0;
-                const msg = updated > 0
-                    ? `Imported ${result.saved} new workbook POAMs, updated ${updated}`
-                    : `Imported ${result.saved} workbook POAMs`;
+                const result = await window.poamWorkbookImportXlsxSimple(file, systemId);
+                const msg = `Imported ${result.saved} workbook POAMs`;
                 showUpdateFeedback(msg, 'success');
                 await renderWorkbookSidebarSystems();
                 await renderWorkbookOverview();
