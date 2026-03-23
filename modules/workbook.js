@@ -924,12 +924,21 @@ async function renderWorkbookSystemTable(systemId) {
       const id = item.id;
       const checked = window.poamWorkbookState.selectedItemIds.has(id);
       return `
-      <tr class="border-b border-slate-100 hover:bg-indigo-50 transition-colors cursor-pointer" onclick="poamWorkbookOpenItemDetails('${id}')">
+      <tr class="border-b border-slate-100 hover:bg-indigo-50 transition-colors group">
         <td class="px-3 py-2" onclick="event.stopPropagation()">
           <input type="checkbox" ${checked ? 'checked' : ''} onchange="poamWorkbookToggleRowSelection('${id}', this.checked)" />
         </td>
-        <td class="px-3 py-2 text-xs text-slate-700 font-mono">${escapeHtml(item['Item number'] || '')}</td>
-        <td class="px-3 py-2 text-sm text-slate-900">${escapeHtml(item['Vulnerability Name'] || '')}</td>
+        <td class="px-3 py-2 text-xs text-slate-700 font-mono">
+          <div class="flex items-center gap-2">
+            ${escapeHtml(item['Item number'] || '')}
+            <button onclick="event.stopPropagation(); showQuickEditPOAMModal('${id}', '${systemId}')" 
+                    class="opacity-0 group-hover:opacity-100 transition-opacity text-indigo-600 hover:text-indigo-800"
+                    title="Quick Edit">
+              <i class="fas fa-edit text-xs"></i>
+            </button>
+          </div>
+        </td>
+        <td class="px-3 py-2 text-sm text-slate-900 cursor-pointer" onclick="poamWorkbookOpenItemDetails('${id}')">${escapeHtml(item['Vulnerability Name'] || '')}</td>
         <td class="px-3 py-2" onclick="event.stopPropagation()">
           ${renderInlineSelect(id, 'POC Name', item['POC Name'], pocs)}
         </td>
