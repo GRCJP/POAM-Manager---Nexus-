@@ -2478,9 +2478,9 @@ async function poamWorkbookImportXlsx(file, systemId) {
   
   console.log('📊 Excel Import - Scanned rows:', rowScores.filter(r => r.score > 0));
 
-  // Require at least 5 recognizable columns to avoid selecting metadata/banner rows.
-  // POAM tables should have many columns (Finding Identifier, Control Family, Vulnerability Name, etc.)
-  if (bestHeaderRowIndex === -1 || bestHeaderScore < 5) {
+  // Require at least 4 recognizable columns to find the POAM table
+  // (Finding Identifier, Control Family, Vulnerability Name, Finding Description, etc.)
+  if (bestHeaderRowIndex === -1 || bestHeaderScore < 4) {
     const firstRow = Array.isArray(matrix[0]) ? matrix[0] : [];
     const rawHeaders = firstRow
       .map(h => String(h || '').replace(/\s+/g, ' ').trim())
