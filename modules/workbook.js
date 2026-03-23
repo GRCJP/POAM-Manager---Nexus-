@@ -1020,6 +1020,45 @@ async function poamWorkbookBulkDeleteSelected() {
   }
 }
 
+async function poamWorkbookClearSystemPOAMs() {
+  const systemId = window.poamWorkbookState.activeSystemId;
+  if (!systemId) {
+    showUpdateFeedback('No system selected', 'error');
+    return;
+  }
+
+  try {
+    const items = await window.poamWorkbookDB.getItemsBySystem(systemId);
+    const count = items.length;
+
+    if (count === 0) {
+      showUpdateFeedback('No POAMs to clear for this system', 'info');
+      return;
+    }
+
+    const systemName = (await window.poamWorkbookDB.getSystemById(systemId))?.name || systemId;
+    
+    if (!confirm(`⚠️ Clear all ${count} POAM(s) for system "${systemName}"?\n\nThis will delete all POAMs for this system only. Other systems will not be affected.\n\nThis action cannot be undone. Continue?`)) {
+      return;
+    }
+
+    // Delete all items for this system
+    for (const item of items) {
+      await window.poamWorkbookDB.deleteItem(item.id);
+    }
+
+    window.poamWorkbookNotifyMutation();
+    poamWorkbookClearSelection();
+    await renderWorkbookSystemTable(systemId);
+    await renderWorkbookOverview();
+    
+    showUpdateFeedback(`Cleared ${count} POAM(s) from system "${systemName}"`, 'success');
+  } catch (e) {
+    console.error('Failed to clear system POAMs:', e);
+    showUpdateFeedback(`Failed to clear system POAMs: ${e.message}`, 'error');
+  }
+}
+
 function poamWorkbookBulkUpdateStatus() {
   poamWorkbookOpenBulkEditModal({ mode: 'status' });
 }
