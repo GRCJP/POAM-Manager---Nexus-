@@ -1955,52 +1955,80 @@
             <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                 <div class="grid grid-cols-12">
                     <div class="col-span-12 p-6" id="poam-workbook-main">
-                        <div id="poam-workbook-view-overview" class="poam-workbook-view space-y-6">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <div class="bg-white rounded-xl p-5 border border-slate-200">
+                        <div id="poam-workbook-view-overview" class="poam-workbook-view space-y-4">
+                            <!-- Key Metrics Row -->
+                            <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                                <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg p-4 border border-indigo-200 cursor-pointer hover:shadow-md transition-shadow" onclick="window.poamWorkbookFilterByMetric('all')">
                                     <div class="flex items-center justify-between mb-1">
-                                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total POAMs</div>
+                                        <div class="text-xs font-semibold text-indigo-700 uppercase">Total</div>
                                         <i class="fas fa-list text-indigo-600"></i>
                                     </div>
-                                    <div class="text-3xl font-extrabold text-slate-900" id="poam-workbook-metric-total">0</div>
+                                    <div class="text-2xl font-bold text-indigo-900" id="poam-workbook-metric-total">0</div>
                                 </div>
-                                <div class="bg-white rounded-xl p-5 border border-slate-200">
+                                <div class="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4 border border-red-200 cursor-pointer hover:shadow-md transition-shadow" onclick="window.poamWorkbookFilterByMetric('overdue')">
                                     <div class="flex items-center justify-between mb-1">
-                                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Overdue</div>
-                                        <i class="fas fa-clock text-red-600"></i>
+                                        <div class="text-xs font-semibold text-red-700 uppercase">Overdue</div>
+                                        <i class="fas fa-exclamation-triangle text-red-600"></i>
                                     </div>
-                                    <div class="text-3xl font-extrabold text-slate-900" id="poam-workbook-metric-overdue">0</div>
+                                    <div class="text-2xl font-bold text-red-900" id="poam-workbook-metric-overdue">0</div>
                                 </div>
-                                <div class="bg-white rounded-xl p-5 border border-slate-200">
+                                <div class="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-4 border border-amber-200 cursor-pointer hover:shadow-md transition-shadow" onclick="window.poamWorkbookFilterByMetric('coming-due')">
                                     <div class="flex items-center justify-between mb-1">
-                                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Missing POC</div>
-                                        <i class="fas fa-user-slash text-amber-600"></i>
+                                        <div class="text-xs font-semibold text-amber-700 uppercase">Coming Due</div>
+                                        <i class="fas fa-clock text-amber-600"></i>
                                     </div>
-                                    <div class="text-3xl font-extrabold text-slate-900" id="poam-workbook-metric-missing-poc">0</div>
+                                    <div class="text-2xl font-bold text-amber-900" id="poam-workbook-metric-coming-due">0</div>
                                 </div>
-                                <div class="bg-white rounded-xl p-5 border border-slate-200">
+                                <div class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200 cursor-pointer hover:shadow-md transition-shadow" onclick="window.poamWorkbookFilterByMetric('missing-poc')">
                                     <div class="flex items-center justify-between mb-1">
-                                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Breakdown</div>
-                                        <i class="fas fa-chart-bar text-slate-600"></i>
+                                        <div class="text-xs font-semibold text-orange-700 uppercase">No POC</div>
+                                        <i class="fas fa-user-slash text-orange-600"></i>
+                                    </div>
+                                    <div class="text-2xl font-bold text-orange-900" id="poam-workbook-metric-missing-poc">0</div>
+                                </div>
+                                <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200 cursor-pointer hover:shadow-md transition-shadow" onclick="window.poamWorkbookFilterByMetric('completed')">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="text-xs font-semibold text-green-700 uppercase">Completed</div>
+                                        <i class="fas fa-check-circle text-green-600"></i>
+                                    </div>
+                                    <div class="text-2xl font-bold text-green-900" id="poam-workbook-metric-completed">0</div>
+                                </div>
+                            </div>
+
+                            <!-- Status & Severity Row -->
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                                <div class="bg-white rounded-lg p-4 border border-slate-200">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="text-xs font-bold text-slate-700 uppercase tracking-wider">Status Breakdown</div>
+                                        <i class="fas fa-chart-pie text-slate-500 text-sm"></i>
                                     </div>
                                     <div class="space-y-1" id="poam-workbook-metric-status"></div>
                                 </div>
-                            </div>
-
-                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                <div class="bg-white rounded-xl p-5 border border-slate-200">
-                                    <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Severity</div>
+                                <div class="bg-white rounded-lg p-4 border border-slate-200">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="text-xs font-bold text-slate-700 uppercase tracking-wider">Severity Distribution</div>
+                                        <i class="fas fa-exclamation-circle text-slate-500 text-sm"></i>
+                                    </div>
                                     <div class="space-y-1" id="poam-workbook-metric-severity"></div>
                                 </div>
-                                <div class="bg-white rounded-xl p-5 border border-slate-200">
-                                    <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Top Recurring Vulnerability Names</div>
-                                    <div class="space-y-1" id="poam-workbook-top-vulns"></div>
-                                </div>
                             </div>
 
-                            <div class="bg-white rounded-xl p-5 border border-slate-200">
-                                <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Impacted Security Controls Distribution</div>
-                                <div class="space-y-1" id="poam-workbook-controls-dist"></div>
+                            <!-- Controls & Vulnerabilities Row -->
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                                <div class="bg-white rounded-lg p-4 border border-slate-200">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="text-xs font-bold text-slate-700 uppercase tracking-wider">Top Security Controls</div>
+                                        <i class="fas fa-shield-alt text-slate-500 text-sm"></i>
+                                    </div>
+                                    <div class="space-y-1 max-h-48 overflow-y-auto" id="poam-workbook-controls-dist"></div>
+                                </div>
+                                <div class="bg-white rounded-lg p-4 border border-slate-200">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="text-xs font-bold text-slate-700 uppercase tracking-wider">Top Vulnerabilities</div>
+                                        <i class="fas fa-bug text-slate-500 text-sm"></i>
+                                    </div>
+                                    <div class="space-y-1 max-h-48 overflow-y-auto" id="poam-workbook-top-vulns"></div>
+                                </div>
                             </div>
                         </div>
 

@@ -872,8 +872,14 @@ async function renderWorkbookOverview() {
   const overdue = document.getElementById('poam-workbook-metric-overdue');
   if (overdue) overdue.textContent = analytics.overdue;
 
+  const comingDue = document.getElementById('poam-workbook-metric-coming-due');
+  if (comingDue) comingDue.textContent = analytics.comingDue || 0;
+
   const missingPoc = document.getElementById('poam-workbook-metric-missing-poc');
   if (missingPoc) missingPoc.textContent = analytics.missingPoc;
+
+  const completed = document.getElementById('poam-workbook-metric-completed');
+  if (completed) completed.textContent = analytics.completed || 0;
 
   const byStatus = document.getElementById('poam-workbook-metric-status');
   if (byStatus) byStatus.innerHTML = renderMiniBreakdown(analytics.byStatus);
@@ -887,6 +893,13 @@ async function renderWorkbookOverview() {
   const controlsDist = document.getElementById('poam-workbook-controls-dist');
   if (controlsDist) controlsDist.innerHTML = renderTopList(analytics.controlsDist);
 }
+
+// Filter workbook by metric (for clickable dashboard tiles)
+window.poamWorkbookFilterByMetric = function(metric) {
+  // For now, just show a message - will implement filtering in next iteration
+  console.log('Filter by metric:', metric);
+  showUpdateFeedback(`Filtering by ${metric} - feature coming soon`, 'info');
+};
 
 async function renderWorkbookSystemTable(systemId) {
   const items = await window.poamWorkbookDB.getItemsBySystem(systemId);
@@ -1625,13 +1638,19 @@ function computeWorkbookAnalytics(items, scopeKey) {
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const thirtyDaysOut = new Date(today);
+  thirtyDaysOut.setDate(thirtyDaysOut.getDate() + 30);
 
   let overdue = 0;
+  let comingDue = 0;
+  let completed = 0;
   let missingPoc = 0;
 
   for (const item of items) {
     const st = String(item['Status'] || '').trim() || 'Open';
     byStatus[st] = (byStatus[st] || 0) + 1;
+
+    if (st === 'Completed' || st === 'Closed') completed++;
 
     const sev = String(item['Severity Value'] || '').trim() || 'Medium';
     bySeverity[sev] = (bySeverity[sev] || 0) + 1;
@@ -1644,7 +1663,13 @@ function computeWorkbookAnalytics(items, scopeKey) {
       const d = new Date(due);
       if (!isNaN(d.getTime())) {
         d.setHours(0, 0, 0, 0);
-        if (d < today && st !== 'Completed' && st !== 'Closed') overdue++;
+        if (st !== 'Completed' && st !== 'Closed') {
+          if (d < today) {
+            overdue++;
+          } else if (d <= thirtyDaysOut) {
+            comingDue++;
+          }
+        }
       }
     }
 
@@ -1664,6 +1689,8 @@ function computeWorkbookAnalytics(items, scopeKey) {
   const result = {
     total: items.length,
     overdue,
+    comingDue,
+    completed,
     missingPoc,
     byStatus,
     bySeverity,
