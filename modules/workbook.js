@@ -2322,7 +2322,8 @@ async function poamWorkbookImportXlsx(file, systemId) {
   const ws = wb.Sheets[sheetName];
 
   // Read as matrix so we can normalize headers rather than requiring exact matches.
-  const matrix = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
+  // Use raw: true to preserve actual cell values, then convert to strings as needed
+  const matrix = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: true });
   if (!Array.isArray(matrix) || matrix.length < 2) {
     throw new Error('No rows found in workbook');
   }
