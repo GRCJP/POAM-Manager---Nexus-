@@ -2411,11 +2411,21 @@ async function poamWorkbookImportXlsx(file, systemId) {
   const headerRow = (matrix[bestHeaderRowIndex] || []).map(v => String(v || ''));
   const dataRows = matrix.slice(bestHeaderRowIndex + 1);
 
+  console.log('📊 Excel Import - Header row detected at index:', bestHeaderRowIndex);
+  console.log('📊 Excel Import - Raw headers:', headerRow);
+
   const headerIndexToCanonical = new Map();
   for (let i = 0; i < headerRow.length; i++) {
     const canonical = fuzzyMatchCanonical(headerRow[i]);
-    if (canonical) headerIndexToCanonical.set(i, canonical);
+    if (canonical) {
+      headerIndexToCanonical.set(i, canonical);
+      console.log(`📊 Excel Import - Column ${i}: "${headerRow[i]}" → "${canonical}"`);
+    } else {
+      console.log(`📊 Excel Import - Column ${i}: "${headerRow[i]}" → NOT MAPPED`);
+    }
   }
+
+  console.log('📊 Excel Import - Total mapped columns:', headerIndexToCanonical.size);
 
   // Do not require exact headers; proceed best-effort.
   if (headerIndexToCanonical.size === 0) {
