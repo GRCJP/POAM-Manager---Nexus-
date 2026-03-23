@@ -178,6 +178,26 @@ async function poamWorkbookImportXlsxSimple(file, systemId) {
     throw new Error('No columns could be mapped');
   }
 
+  // Helper: normalize date values from Excel
+  const normalizeDate = (val) => {
+    if (!val) return '';
+    if (val instanceof Date) {
+      return val.toISOString().split('T')[0];
+    }
+    const str = String(val).trim();
+    if (!str) return '';
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      return d.toISOString().split('T')[0];
+    }
+    return str;
+  };
+
+  // Helper: normalize text values
+  const normalizeText = (val) => {
+    return String(val || '').trim();
+  };
+
   // Parse data rows
   const dataRows = bestCandidate.allRows.slice(bestCandidate.rowIndex + 1);
   const parsedRows = [];
@@ -189,7 +209,16 @@ async function poamWorkbookImportXlsxSimple(file, systemId) {
     for (let c = 0; c < rowArr.length; c++) {
       const canonical = columnMap.get(c);
       if (canonical) {
-        rowData[canonical] = rowArr[c];
+        let value = rowArr[c];
+        
+        // Normalize dates
+        if (canonical === 'Scheduled Completion Date' || canonical === 'Detection Date') {
+          value = normalizeDate(value);
+        } else {
+          value = normalizeText(value);
+        }
+        
+        rowData[canonical] = value;
       }
     }
 
@@ -206,31 +235,36 @@ async function poamWorkbookImportXlsxSimple(file, systemId) {
   let saved = 0;
   let updated = 0;
 
-  const pickColumns = (row) => {
-    const out = {};
-    const cols = window.POAM_WORKBOOK_COLUMNS || [];
-    for (const c of cols) {
-      out[c] = row[c] ?? '';
-    }
-    return out;
-  };
-
   for (const row of parsedRows) {
-    const data = pickColumns(row);
-    
     // Use item number from Excel if present, otherwise auto-generate
-    const excelItemNumber = String(row['Item number'] || '').trim();
+    const excelItemNumber = normalizeText(row['Item number']);
     const itemNumber = excelItemNumber || (typeof window.poamWorkbookDB.getNextItemNumber === 'function'
       ? String(await window.poamWorkbookDB.getNextItemNumber(systemId))
       : String(saved + 1));
     
+    // Build item with all fields from row
     const item = {
       id: `WB-${systemId}-${Date.now()}-${saved}`,
       systemId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      ...data,
-      'Item number': itemNumber
+      'Item number': itemNumber,
+      'Vulnerability Name': row['Vulnerability Name'] || '',
+      'Vulnerability Description': row['Vulnerability Description'] || '',
+      'Detection Date': row['Detection Date'] || '',
+      'Impacted Security Controls': row['Impacted Security Controls'] || '',
+      'Office/Org': row['Office/Org'] || '',
+      'POC Name': row['POC Name'] || '',
+      'Identifying Detecting Source': row['Identifying Detecting Source'] || '',
+      'Mitigations': row['Mitigations'] || '',
+      'Severity Value': row['Severity Value'] || '',
+      'Resources Required': row['Resources Required'] || '',
+      'Scheduled Completion Date': row['Scheduled Completion Date'] || '',
+      'Milestone with Completion Dates': row['Milestone with Completion Dates'] || '',
+      'Milestone Changes': row['Milestone Changes'] || '',
+      'Affected Components/URLs': row['Affected Components/URLs'] || '',
+      'Status': row['Status'] || '',
+      'Comments': row['Comments'] || ''
     };
 
     console.log(`📊 Saving item ${saved + 1}:`, { 
@@ -240,9 +274,11 @@ async function poamWorkbookImportXlsxSimple(file, systemId) {
       scheduledDate: item['Scheduled Completion Date'],
       detectionDate: item['Detection Date'],
       status: item['Status'],
-      severity: item['Severity Value']
+      severity: item['Severity Value'],
+      detectingSource: item['Identifying Detecting Source']
     });
-    console.log(`📊 Full item data:`, item);
+    console.log(`📊 Raw row data:`, row);
+    console.log(`📊 Full item being saved:`, item);
 
     await window.poamWorkbookDB.saveItem(item);
     saved++;
