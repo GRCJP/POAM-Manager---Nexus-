@@ -2301,6 +2301,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 async function poamWorkbookImportXlsx(file, systemId) {
+  console.log('🚀 Excel Import STARTED:', { fileName: file?.name, systemId, fileSize: file?.size });
+  
   if (!file) throw new Error('No file provided');
   if (!systemId) throw new Error('No system selected');
 
@@ -2312,6 +2314,7 @@ async function poamWorkbookImportXlsx(file, systemId) {
     throw new Error('Workbook DB not available');
   }
 
+  console.log('📖 Reading Excel file...');
   const wb = await file.arrayBuffer().then(buf => XLSX.read(buf, { type: 'array', cellDates: true }));
   const sheetName = wb.SheetNames[0];
   if (!sheetName) throw new Error('Workbook has no sheets');
