@@ -2304,6 +2304,7 @@ async function poamWorkbookImportXlsx(file, systemId) {
     .trim();
 
   const headerAliases = new Map([
+    // Standard aliases
     ['poam id', 'Item number'],
     ['poam number', 'Item number'],
     ['id', 'Item number'],
@@ -2334,7 +2335,23 @@ async function poamWorkbookImportXlsx(file, systemId) {
     ['scheduled completion', 'Scheduled Completion Date'],
     ['scheduled completion date', 'Scheduled Completion Date'],
     ['completion date', 'Scheduled Completion Date'],
-    ['detection date', 'Detection Date']
+    ['detection date', 'Detection Date'],
+    
+    // User's specific Excel format aliases
+    ['finding identifier', 'Item number'],
+    ['control family', 'Impacted Security Controls'],
+    ['finding description', 'Vulnerability Description'],
+    ['finding source', 'Identifying Detecting Source'],
+    ['initial scheduled completion date', 'Scheduled Completion Date'],
+    ['updated scheduled completion date', 'Scheduled Completion Date'],
+    ['actual completion date', 'Detection Date'],
+    ['finding status', 'Status'],
+    ['risk level', 'Severity Value'],
+    ['mitigation', 'Mitigations'],
+    ['milestones with completion dates', 'Milestone with Completion Dates'],
+    ['changes to milestones with completion dates', 'Milestone Changes'],
+    ['milestones w completion dates', 'Milestone with Completion Dates'],
+    ['changes to milestones w completion dates', 'Milestone Changes']
   ]);
 
   const requiredHeaders = window.POAM_WORKBOOK_COLUMNS || [];
@@ -2358,6 +2375,21 @@ async function poamWorkbookImportXlsx(file, systemId) {
 
     // token-based heuristics for common tricky cases
     const has = (tok) => norm.includes(tok);
+    
+    // User's specific format patterns
+    if (has('finding') && has('identifier')) return 'Item number';
+    if (has('control') && has('family')) return 'Impacted Security Controls';
+    if (has('finding') && has('description')) return 'Vulnerability Description';
+    if (has('finding') && has('source')) return 'Identifying Detecting Source';
+    if (has('finding') && has('status')) return 'Status';
+    if (has('risk') && has('level')) return 'Severity Value';
+    if (has('initial') && has('scheduled') && has('completion')) return 'Scheduled Completion Date';
+    if (has('updated') && has('scheduled') && has('completion')) return 'Scheduled Completion Date';
+    if (has('actual') && has('completion')) return 'Detection Date';
+    if (has('milestones') && has('completion') && has('dates')) return 'Milestone with Completion Dates';
+    if (has('changes') && has('milestones')) return 'Milestone Changes';
+    
+    // Standard patterns
     if ((has('detect') || has('identifying')) && has('source')) return 'Identifying Detecting Source';
     if (has('affected') && (has('url') || has('urls') || has('component'))) return 'Affected Components/URLs';
     if (has('item') && (has('number') || has('no') || has('#') || has('id') || has('poam'))) return 'Item number';
@@ -2686,9 +2718,9 @@ window.POAM_WORKBOOK_COLUMNS = [
 ];
 
 window.POAM_WORKBOOK_ENUMS = {
-  detectingSources: ['Continuous Monitoring', 'Assessment', 'HVA Assessment', 'Pen Test'],
-  severityValues: ['Critical', 'High', 'Medium', 'Low'],
-  statusValues: ['Open', 'In Progress', 'Completed', 'Risk Accepted', 'Extended', 'Closed']
+  detectingSources: ['Continuous Monitoring', 'Assessment', 'HVA Assessment', 'Pen Test', 'Audit', 'Self-Assessment'],
+  severityValues: ['Critical', 'High', 'Moderate', 'Medium', 'Low', 'Informational'],
+  statusValues: ['Open', 'In Progress', 'Completed', 'Risk Accepted', 'Extended', 'Closed', 'Ongoing', 'Delayed']
 };
 
 window.POAM_WORKBOOK_INTERNAL_FIELDS = {
