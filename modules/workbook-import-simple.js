@@ -233,7 +233,16 @@ async function poamWorkbookImportXlsxSimple(file, systemId) {
     
     item['Item number'] = String(nextNum);
 
-    console.log(`📊 Saving item ${saved + 1}:`, { itemNumber: item['Item number'], vulnName: item['Vulnerability Name'] });
+    console.log(`📊 Saving item ${saved + 1}:`, { 
+      itemNumber: item['Item number'], 
+      vulnName: item['Vulnerability Name'],
+      poc: item['POC Name'],
+      scheduledDate: item['Scheduled Completion Date'],
+      detectionDate: item['Detection Date'],
+      status: item['Status'],
+      severity: item['Severity Value']
+    });
+    console.log(`📊 Full item data:`, item);
 
     await window.poamWorkbookDB.saveItem(item);
     saved++;
