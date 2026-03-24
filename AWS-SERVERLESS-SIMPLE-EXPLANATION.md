@@ -1,45 +1,54 @@
-# AWS Serverless Infrastructure - Simple Explanation
+# AWS Hybrid Infrastructure - Simple Explanation
 
 ## What You Requested (In Simple Terms)
 
-You requested an **AWS serverless architecture** to keep costs low and scale automatically. Here's what each component does:
+You requested an **AWS infrastructure** to keep costs low and scale automatically. Since your POAM app will be used **daily**, we're using a **hybrid approach** that combines EC2 and Lambda for the best cost and performance. Here's what each component does:
 
 ---
 
-## The 7 AWS Services Explained
+## The 8 AWS Services Explained
 
-### 1. **S3 Buckets** 📦
+### 1. **EC2 Instance** 🖥️
+**What it is:** Virtual server in the cloud  
+**What we use it for:** Running the main API server for daily traffic (login, CRUD operations, dashboards)  
+**Why:** Always warm (no cold starts), fast response for daily users, handles predictable workload  
+**Cost:** ~$15/month for t3.small (2 vCPU, 2GB RAM)  
+**Runs:** 24/7 to handle your daily POAM operations
+
+### 2. **S3 Buckets** 📦
 **What it is:** Cloud storage for files  
 **What we use it for:** Hosting the POAM Nexus website (HTML, JavaScript, CSS files)  
 **Why:** Cheap storage ($0.023 per GB/month), no servers to manage  
 **Cost:** ~$1-5/month for typical usage
 
-### 2. **CloudFront Distribution** 🌐
+### 3. **CloudFront Distribution** 🌐
 **What it is:** Content Delivery Network (CDN)  
 **What we use it for:** Makes the website load fast worldwide by caching files in edge locations  
 **Why:** Users in California and Virginia both get fast load times  
 **Cost:** ~$1-10/month depending on traffic
 
-### 3. **API Gateway** 🚪
+### 4. **API Gateway** 🚪
 **What it is:** The "front door" for your API  
-**What we use it for:** Routes requests like `/api/poams` or `/api/login` to the right Lambda function  
-**Why:** Handles authentication, rate limiting, and CORS automatically  
+**What we use it for:** Routes requests to either EC2 (for daily traffic) or Lambda (for burst/scheduled tasks)  
+**Why:** Handles authentication, rate limiting, and smart routing automatically  
 **Cost:** $3.50 per million requests (first million free)
 
-### 4. **Lambda Functions** ⚡
+### 5. **Lambda Functions** ⚡
 **What it is:** Code that runs only when needed (no servers running 24/7)  
-**What we use it for:** All backend logic (login, get POAMs, create POAMs, etc.)  
-**Why:** You only pay when code runs - if no one uses the app, you pay $0  
+**What we use it for:** **Burst traffic and scheduled tasks only** (bulk imports, exports, backups, notifications)  
+**Why:** You only pay when code runs - perfect for occasional heavy tasks  
 **Cost:** First 1 million requests free, then $0.20 per million  
 **Examples:**
-- `auth-login` - Handles user login
-- `get-poams` - Retrieves POAMs from database
-- `create-poam` - Creates new POAM
-- `update-poam` - Updates existing POAM
+- `bulk-import` - Handles large CSV uploads (occasional)
+- `export-xlsx` - Generates Excel exports (occasional)
+- `daily-backup` - Automated nightly backups (scheduled)
+- `send-notifications` - Email alerts (event-driven)
 
-### 5. **DynamoDB Tables** 🗄️
+**Note:** Daily operations (login, viewing POAMs, editing) run on EC2 for fast response
+
+### 6. **DynamoDB Tables** 🗄️
 **What it is:** NoSQL database (like MongoDB but managed by AWS)  
-**What we use it for:** Storing all POAM data, users, systems, scans  
+**What we use it for:** Storing all POAM data, users, systems, scans (shared by both EC2 and Lambda)  
 **Why:** Scales automatically, pay-per-request pricing, no server management  
 **Cost:** $1.25 per million writes, $0.25 per million reads  
 **Tables we created:**
@@ -49,19 +58,19 @@ You requested an **AWS serverless architecture** to keep costs low and scale aut
 - `scans` - Vulnerability scan data
 - `workbook` - Security control monitoring
 
-### 6. **Cognito (Authentication)** 🔐
+### 7. **Cognito (Authentication)** 🔐
 **What it is:** User authentication service  
 **What we use it for:** User login, password management, multi-factor authentication  
 **Why:** Handles all security best practices automatically  
 **Cost:** First 50,000 users free, then $0.0055 per user/month
 
-### 7. **EventBridge** ⏰
+### 8. **EventBridge** ⏰
 **What it is:** Scheduled task runner (like cron jobs)  
-**What we use it for:** Automated daily reports, overdue POAM notifications  
+**What we use it for:** Automated daily reports, overdue POAM notifications (triggers Lambda functions)  
 **Why:** Runs tasks on schedule without a server  
 **Cost:** First 1 million events free
 
-### 8. **CloudWatch** 📊
+### 9. **CloudWatch** 📊
 **What it is:** Monitoring and logging service  
 **What we use it for:** Track errors, performance metrics, debug issues  
 **Why:** See what's happening in your application  
@@ -69,85 +78,129 @@ You requested an **AWS serverless architecture** to keep costs low and scale aut
 
 ---
 
-## How It All Works Together
+## How It All Works Together (Hybrid Architecture)
 
 ```
 User opens website
     ↓
 CloudFront serves website from S3 bucket
     ↓
-User clicks "Login"
+User clicks "Login" (DAILY OPERATION)
     ↓
 JavaScript sends request to API Gateway
     ↓
-API Gateway routes to "auth-login" Lambda function
+API Gateway routes to EC2 Instance (not Lambda - faster!)
     ↓
-Lambda checks password against DynamoDB Users table
+EC2 checks password against DynamoDB Users table
     ↓
-Lambda returns JWT token via API Gateway
+EC2 returns JWT token via API Gateway
     ↓
 User is logged in!
 
-User clicks "View POAMs"
+User clicks "View POAMs" (DAILY OPERATION)
     ↓
 JavaScript sends request with JWT token to API Gateway
     ↓
 API Gateway validates token with Cognito
     ↓
-API Gateway routes to "get-poams" Lambda function
+API Gateway routes to EC2 Instance (handles daily traffic)
     ↓
-Lambda queries DynamoDB POAMs table
+EC2 queries DynamoDB POAMs table
     ↓
-Lambda returns POAM data
+EC2 returns POAM data
     ↓
 Website displays POAMs
+
+User uploads large CSV file (OCCASIONAL BURST)
+    ↓
+JavaScript sends file to API Gateway
+    ↓
+API Gateway routes to Lambda Function (handles heavy processing)
+    ↓
+Lambda processes CSV and saves to DynamoDB
+    ↓
+Lambda returns success
+
+EventBridge triggers at 8am (SCHEDULED TASK)
+    ↓
+EventBridge invokes Lambda Function
+    ↓
+Lambda generates daily report from DynamoDB
+    ↓
+Lambda sends email notification
 ```
 
 ---
 
-## Cost Breakdown (Monthly Estimates)
+## Cost Breakdown (Monthly Estimates - Hybrid Architecture)
 
 | Service | Usage | Monthly Cost |
 |---------|-------|--------------|
-| **S3** | 5GB storage, 10K requests | $1 |
-| **CloudFront** | 10GB data transfer | $1 |
-| **API Gateway** | 100K requests | $0.35 |
-| **Lambda** | 100K invocations, 512MB RAM | $0.20 |
+| **EC2 Instance** | t3.small (2 vCPU, 2GB RAM) 24/7 | $15.00 |
+| **S3** | 5GB storage, 10K requests | $1.00 |
+| **CloudFront** | 10GB data transfer | $1.00 |
+| **API Gateway** | 300K requests | $1.05 |
+| **Lambda** | 50K invocations (burst/scheduled only) | $0.10 |
 | **DynamoDB** | 100K reads, 50K writes | $0.88 |
 | **Cognito** | 50 users | $0 (free tier) |
 | **EventBridge** | 100 scheduled events | $0 (free tier) |
-| **CloudWatch** | 2GB logs | $0 (free tier) |
-| **TOTAL** | | **~$3.43/month** |
+| **CloudWatch** | 3GB logs (EC2 + Lambda) | $0 (free tier) |
+| **Elastic IP** | 1 static IP for EC2 | $0 (free when attached) |
+| **TOTAL** | | **~$19.03/month** |
 
-**At scale (1,000 users, 1M requests/month):** ~$50-100/month
+**At scale (100 users, 1M requests/month):** ~$30-35/month  
+**At scale (1,000 users, 10M requests/month):** ~$50-60/month
+
+### Cost Comparison:
+- **Pure Serverless (all Lambda):** $30/month but has cold starts
+- **Pure EC2 (traditional):** $63/month (EC2 + RDS + Load Balancer)
+- **Hybrid (EC2 + Lambda):** **$19-35/month** ✅ Best value for daily usage
 
 ---
 
-## Why Serverless vs Traditional Servers?
+## Why Hybrid vs Pure Serverless or Traditional Servers?
 
-### Traditional Servers (What We Built First)
+### Traditional Servers (Docker/Kubernetes)
 - **Cost:** $182/month even if no one uses it
 - **Scaling:** Manual - need to add more servers
 - **Management:** You manage OS updates, security patches
 - **Downtime:** If server crashes, app goes down
+- **Performance:** Fast (no cold starts)
 
-### Serverless (What You Requested)
-- **Cost:** $3-5/month for low usage, scales with demand
+### Pure Serverless (All Lambda)
+- **Cost:** $30/month for daily usage
 - **Scaling:** Automatic - AWS handles it
 - **Management:** Zero - AWS manages everything
 - **Downtime:** 99.99% uptime guaranteed by AWS
+- **Performance:** Cold starts slow down daily users (500ms-2s delay)
+
+### Hybrid (EC2 + Lambda) ✅ **RECOMMENDED FOR DAILY USE**
+- **Cost:** $19-35/month for daily usage (best value!)
+- **Scaling:** EC2 handles baseline, Lambda handles bursts
+- **Management:** Minimal - EC2 auto-updates, Lambda is managed
+- **Downtime:** High availability with EC2 + Lambda redundancy
+- **Performance:** Fast for daily users (EC2 always warm) + burst capacity (Lambda)
+
+**Why Hybrid Wins:**
+- ✅ No cold starts for daily operations (EC2 is always running)
+- ✅ Handles burst traffic automatically (Lambda scales)
+- ✅ 70% cheaper than traditional servers
+- ✅ More reliable than pure serverless for daily users
+- ✅ Best cost-to-performance ratio
 
 ---
 
 ## Security Features
 
+✅ **EC2 Security Groups** - Firewall rules for EC2 instance  
 ✅ **Cognito Authentication** - Industry-standard user management  
 ✅ **JWT Tokens** - Secure API access  
 ✅ **API Gateway Rate Limiting** - Prevents DDoS attacks  
 ✅ **DynamoDB Encryption** - Data encrypted at rest  
 ✅ **CloudFront HTTPS** - All traffic encrypted in transit  
-✅ **IAM Roles** - Least-privilege access for Lambda functions  
-✅ **CloudWatch Logging** - Audit trail for compliance
+✅ **IAM Roles** - Least-privilege access for EC2 and Lambda functions  
+✅ **CloudWatch Logging** - Audit trail for compliance (EC2 + Lambda logs)  
+✅ **VPC Isolation** - EC2 runs in private subnet with NAT gateway
 
 ---
 
