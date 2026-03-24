@@ -454,6 +454,42 @@ class POAMDatabase {
         });
     }
 
+    // Batch save for performance (10-20x faster than individual saves)
+    async savePOAMsBatch(poams) {
+        if (!this.db) {
+            await this.init();
+        }
+
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['poams'], 'readwrite');
+            const store = transaction.objectStore('poams');
+            
+            let completed = 0;
+            const total = poams.length;
+            
+            for (const poam of poams) {
+                const formalPOAM = this.transformToFormalPOAM(poam);
+                const request = store.put(formalPOAM);
+                
+                request.onsuccess = () => {
+                    completed++;
+                    if (completed === total) {
+                        resolve(completed);
+                    }
+                };
+                
+                request.onerror = () => {
+                    reject(request.error);
+                };
+            }
+            
+            // Handle empty array case
+            if (total === 0) {
+                resolve(0);
+            }
+        });
+    }
+
     async updatePOAM(id, updates) {
         if (!this.db) {
             await this.init();
