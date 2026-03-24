@@ -624,6 +624,7 @@ class PipelineOrchestrator {
         // Use existing engine for POAM building with SLA gating
         const engine = new VulnerabilityAnalysisEngineV3();
         engine.scanId = this.currentRun.scanId;
+        engine.scanMetadata = this.currentRun.scanMetadata; // Pass metadata for source field
         
         // Load user-configured SLA thresholds if available
         try {
