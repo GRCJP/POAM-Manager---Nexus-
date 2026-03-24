@@ -8,8 +8,8 @@
 console.log('🔌 skills-integration.js loading...');
 
 // Feature flag - set to true to use skills architecture
-// ENABLED: ClassificationSkill grouping logic fixed (targetKey now uses title/component)
-window.USE_SKILLS_ARCHITECTURE = true;
+// DISABLED: Skills not properly populating group.remediation - use legacy engine
+window.USE_SKILLS_ARCHITECTURE = false;
 
 class SkillsIntegration {
     constructor() {
