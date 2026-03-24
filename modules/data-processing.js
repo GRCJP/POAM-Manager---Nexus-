@@ -467,14 +467,43 @@ class QualysProcessor {
     parseQualysDate(dateField) {
         if (!dateField) return null;
         
-        // Qualys format: "1/13/2026 22:51" or "1/7/2025 15:27"
-        const dateRegex = /(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})/;
-        const match = dateField.match(dateRegex);
+        const dateStr = String(dateField).trim();
+        if (!dateStr) return null;
         
+        // Try multiple date formats (OR logic for flexibility)
+        
+        // Format 1: M/D/YYYY HH:MM or MM/DD/YYYY HH:MM (with timestamp)
+        const withTimeRegex = /(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})/;
+        let match = dateStr.match(withTimeRegex);
         if (match) {
             const [, month, day, year, hour, minute] = match;
-            // Return ISO string for compatibility with analysis engine's parseDate
             return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${hour.padStart(2, '0')}:${minute.padStart(2, '0')}:00Z`;
+        }
+        
+        // Format 2: M/D/YYYY or MM/DD/YYYY (date only, no timestamp)
+        const dateOnlyRegex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+        match = dateStr.match(dateOnlyRegex);
+        if (match) {
+            const [, month, day, year] = match;
+            return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00Z`;
+        }
+        
+        // Format 3: YYYY-MM-DD (ISO format)
+        const isoRegex = /^(\d{4})-(\d{1,2})-(\d{1,2})/;
+        match = dateStr.match(isoRegex);
+        if (match) {
+            const [, year, month, day] = match;
+            return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00Z`;
+        }
+        
+        // Format 4: Try JavaScript Date parser as last resort
+        try {
+            const parsed = new Date(dateStr);
+            if (!isNaN(parsed.getTime())) {
+                return parsed.toISOString();
+            }
+        } catch (e) {
+            // Parsing failed, continue to return null
         }
         
         return null;
