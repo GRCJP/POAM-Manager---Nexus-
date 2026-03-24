@@ -430,7 +430,7 @@ class PipelineOrchestrator {
                 throw new Error('GroupingSkill must return groups as an array');
             }
             
-            groupsArray.forEach(group => {
+            groupsArray.forEach((group, idx) => {
                 if (group && group.signature) {
                     // Convert assets/cves/qids back to Sets for compatibility with Phase 3
                     const groupWithSets = {
@@ -440,6 +440,16 @@ class PipelineOrchestrator {
                         qids: new Set(group.qids || []),
                         advisoryIds: new Set() // Initialize empty advisoryIds Set
                     };
+                    
+                    // Debug: Verify remediation is preserved
+                    if (idx < 3) {
+                        console.log(`🔍 Group ${idx} remediation:`, groupWithSets.remediation ? 'PRESENT' : 'MISSING');
+                        if (groupWithSets.remediation) {
+                            console.log(`   Component: ${groupWithSets.remediation.component}`);
+                            console.log(`   Type: ${groupWithSets.remediation.remediationType}`);
+                        }
+                    }
+                    
                     groups.set(group.signature, groupWithSets);
                 }
             });

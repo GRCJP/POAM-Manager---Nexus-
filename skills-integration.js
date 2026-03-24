@@ -8,8 +8,8 @@
 console.log('🔌 skills-integration.js loading...');
 
 // Feature flag - set to true to use skills architecture
-// DISABLED: Skills not properly populating group.remediation - use legacy engine
-window.USE_SKILLS_ARCHITECTURE = false;
+// ENABLED: Fix ClassificationSkill to properly populate group.remediation
+window.USE_SKILLS_ARCHITECTURE = true;
 
 class SkillsIntegration {
     constructor() {
