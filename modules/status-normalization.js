@@ -40,10 +40,15 @@ const STATUS_MAPPINGS = {
     'accepted': 'risk-accepted',
     'ignored': 'risk-accepted',
     
-    // Extended/Delayed variations
+    // Extended variations
     'extended': 'extended',
-    'delayed': 'extended',
-    'postponed': 'extended'
+    'postponed': 'extended',
+    
+    // Delayed/Overdue variations
+    'delayed': 'delayed',
+    'overdue': 'delayed',
+    'past due': 'delayed',
+    'past-due': 'delayed'
 };
 
 /**
@@ -117,7 +122,8 @@ function getStatusLabel(status) {
         'in-progress': 'In Progress',
         'completed': 'Completed',
         'risk-accepted': 'Risk Accepted',
-        'extended': 'Extended'
+        'extended': 'Extended',
+        'delayed': 'Delayed'
     };
     
     return labels[status] || 'Open';
@@ -134,7 +140,8 @@ function getStatusColorClass(status) {
         'in-progress': 'bg-yellow-100 text-yellow-700',
         'completed': 'bg-green-100 text-green-700',
         'risk-accepted': 'bg-gray-100 text-gray-700',
-        'extended': 'bg-orange-100 text-orange-700'
+        'extended': 'bg-orange-100 text-orange-700',
+        'delayed': 'bg-red-100 text-red-700'
     };
     
     return colors[status] || 'bg-slate-100 text-slate-700';
