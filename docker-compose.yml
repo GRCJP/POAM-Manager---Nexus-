@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: poam-nexus-db
+    environment:
+      POSTGRES_DB: poam_nexus
+      POSTGRES_USER: poam_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme123}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U poam_user -d poam_nexus"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - poam-network
+
+  # Express.js API Server
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: poam-nexus-api
+    environment:
+      DATABASE_URL: postgresql://poam_user:${DB_PASSWORD:-changeme123}@db:5432/poam_nexus?schema=public
+      JWT_SECRET: ${JWT_SECRET:-super-secret-jwt-key-change-in-production}
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+      PORT: 3000
+      NODE_ENV: ${NODE_ENV:-development}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./server/src:/app/src
+      - ./server/prisma:/app/prisma
+    command: sh -c "npx prisma migrate deploy && node src/index.js"
+    networks:
+      - poam-network
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: poam-nexus-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./POAM-Manager---Nexus-:/usr/share/nginx/html:ro
+    depends_on:
+      - api
+    networks:
+      - poam-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  poam-network:
+    driver: bridge

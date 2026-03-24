@@ -1,0 +1,352 @@
+// Prisma Schema for POAM Nexus
+// PostgreSQL database schema with full RBAC and audit logging
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// USER MANAGEMENT & AUTHENTICATION
+// ============================================================================
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String
+  firstName     String?
+  lastName      String?
+  role          Role     @default(ENGINEER)
+  organizationId String
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  isActive      Boolean  @default(true)
+  lastLoginAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  systemAssignments SystemOwner[]
+  auditLogs         AuditLog[]
+  createdPOAMs      POAM[]       @relation("CreatedBy")
+  
+  @@index([email])
+  @@index([organizationId])
+  @@map("users")
+}
+
+enum Role {
+  ADMIN
+  SYSTEM_OWNER
+  ENGINEER
+  EXECUTIVE
+}
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  users     User[]
+  systems   System[]
+  
+  @@map("organizations")
+}
+
+// ============================================================================
+// SYSTEM MANAGEMENT
+// ============================================================================
+
+model System {
+  id             String   @id @default(uuid())
+  name           String
+  description    String?  @db.Text
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  // Relations
+  poams          POAM[]
+  scanRuns       ScanRun[]
+  owners         SystemOwner[]
+  workbookItems  WorkbookItem[]
+  criticalAssets CriticalAsset[]
+  
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("systems")
+}
+
+model SystemOwner {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  systemId  String
+  system    System   @relation(fields: [systemId], references: [id])
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, systemId])
+  @@index([userId])
+  @@index([systemId])
+  @@map("system_owners")
+}
+
+// ============================================================================
+// POAM CORE DATA
+// ============================================================================
+
+model POAM {
+  id                    String   @id @default(uuid())
+  systemId              String
+  system                System   @relation(fields: [systemId], references: [id])
+  
+  // Finding Information
+  vulnerabilityName     String
+  findingDescription    String   @db.Text
+  findingStatus         String   @default("Open")
+  
+  // Risk & Severity
+  riskLevel             String
+  risk                  String?
+  severityValue         String?
+  
+  // Assignment & Ownership
+  poc                   String?
+  pocTeam               String?
+  
+  // Control & Compliance
+  controlFamily         String?
+  impactedControls      String?  @db.Text
+  
+  // Remediation
+  mitigation            String?  @db.Text
+  resourcesRequired     String?  @db.Text
+  
+  // Dates
+  detectionDate         DateTime?
+  scheduledCompletionDate DateTime?
+  updatedScheduledCompletionDate DateTime?
+  actualCompletionDate  DateTime?
+  
+  // Tracking
+  remediationSignature  String   @unique
+  scanId                String?
+  status                String   @default("Open")
+  
+  // Metadata
+  createdById           String
+  createdBy             User     @relation("CreatedBy", fields: [createdById], references: [id])
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  // Relations
+  assets                POAMAsset[]
+  milestones            POAMMilestone[]
+  statusHistory         POAMStatusHistory[]
+  comments              POAMComment[]
+  
+  @@index([systemId])
+  @@index([findingStatus])
+  @@index([riskLevel])
+  @@index([status])
+  @@index([remediationSignature])
+  @@map("poams")
+}
+
+model POAMAsset {
+  id        String @id @default(uuid())
+  poamId    String
+  poam      POAM   @relation(fields: [poamId], references: [id], onDelete: Cascade)
+  
+  assetName String
+  ipv4      String?
+  os        String?
+  results   Json?
+  
+  @@index([poamId])
+  @@map("poam_assets")
+}
+
+model POAMMilestone {
+  id              String    @id @default(uuid())
+  poamId          String
+  poam            POAM      @relation(fields: [poamId], references: [id], onDelete: Cascade)
+  
+  title           String
+  description     String?   @db.Text
+  dueDate         DateTime?
+  completed       Boolean   @default(false)
+  completedDate   DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([poamId])
+  @@map("poam_milestones")
+}
+
+model POAMStatusHistory {
+  id        String   @id @default(uuid())
+  poamId    String
+  poam      POAM     @relation(fields: [poamId], references: [id], onDelete: Cascade)
+  
+  action    String
+  details   Json?
+  changedBy String
+  createdAt DateTime @default(now())
+  
+  @@index([poamId])
+  @@index([createdAt])
+  @@map("poam_status_history")
+}
+
+model POAMComment {
+  id        String   @id @default(uuid())
+  poamId    String
+  poam      POAM     @relation(fields: [poamId], references: [id], onDelete: Cascade)
+  
+  content   String   @db.Text
+  author    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([poamId])
+  @@map("poam_comments")
+}
+
+// ============================================================================
+// SCAN MANAGEMENT
+// ============================================================================
+
+model ScanRun {
+  id            String   @id @default(uuid())
+  systemId      String
+  system        System   @relation(fields: [systemId], references: [id])
+  
+  fileName      String
+  scanType      String
+  source        String?
+  totalFindings Int      @default(0)
+  importedAt    DateTime @default(now())
+  
+  findings      ScanFinding[]
+  
+  @@index([systemId])
+  @@index([importedAt])
+  @@map("scan_runs")
+}
+
+model ScanFinding {
+  id        String   @id @default(uuid())
+  scanRunId String
+  scanRun   ScanRun  @relation(fields: [scanRunId], references: [id], onDelete: Cascade)
+  
+  qid       String?
+  cve       String?
+  title     String
+  severity  String
+  assetName String?
+  ipv4      String?
+  rawData   Json?
+  
+  @@index([scanRunId])
+  @@map("scan_findings")
+}
+
+// ============================================================================
+// WORKBOOK (SECURITY CONTROL MONITORING)
+// ============================================================================
+
+model WorkbookItem {
+  id                    String   @id @default(uuid())
+  systemId              String
+  system                System   @relation(fields: [systemId], references: [id])
+  
+  itemNumber            String
+  vulnerabilityName     String
+  vulnerabilityDescription String? @db.Text
+  detectionDate         DateTime?
+  impactedSecurityControls String? @db.Text
+  officeOrg             String?
+  pocName               String?
+  detectingSource       String?
+  mitigations           String?  @db.Text
+  severityValue         String?
+  resourcesRequired     String?  @db.Text
+  scheduledCompletionDate DateTime?
+  milestoneWithDates    String?  @db.Text
+  milestoneChanges      String?  @db.Text
+  affectedComponents    String?  @db.Text
+  status                String   @default("Open")
+  comments              String?  @db.Text
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  @@unique([systemId, itemNumber])
+  @@index([systemId])
+  @@map("workbook_items")
+}
+
+// ============================================================================
+// REPORTS & CRITICAL ASSETS
+// ============================================================================
+
+model Report {
+  id            String   @id @default(uuid())
+  reportType    String
+  title         String
+  generatedBy   String
+  generatedAt   DateTime @default(now())
+  parameters    Json?
+  data          Json
+  
+  @@index([reportType])
+  @@index([generatedAt])
+  @@map("reports")
+}
+
+model CriticalAsset {
+  id        String   @id @default(uuid())
+  systemId  String
+  system    System   @relation(fields: [systemId], references: [id])
+  
+  assetName String
+  ipv4      String?
+  tags      String[] @default([])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([systemId, assetName])
+  @@index([systemId])
+  @@map("critical_assets")
+}
+
+// ============================================================================
+// AUDIT LOGGING
+// ============================================================================
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  
+  action     String
+  resourceType String
+  resourceId String?
+  changes    Json?
+  ipAddress  String?
+  userAgent  String?
+  timestamp  DateTime @default(now())
+  
+  @@index([userId])
+  @@index([action])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
