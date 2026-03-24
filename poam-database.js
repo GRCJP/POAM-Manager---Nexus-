@@ -340,7 +340,8 @@ class POAMDatabase {
             controlFamily: poam.controlFamily || this.inferControlFamily(poam),
             vulnerabilityName: poam.vulnerabilityName || poam.title || poam.vulnerability,
             findingDescription: poam.findingDescription || poam.description || poam.vulnerability,
-            findingSource: poam.findingSource || 'Vulnerability Scan',
+            findingSource: poam.source || poam.findingSource || 'Vulnerability Scan',
+            source: poam.source || poam.findingSource || 'Vulnerability Scan',
 
             // Responsibility
             poc: poam.poc || poam.pocTeam || '',
