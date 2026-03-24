@@ -124,7 +124,12 @@ class QualysProcessor {
             truRiskScore: ['turisk score', 'trurisk'],
             timesDetected: ['times detected', 'detection count'],
             assetTags: ['asset tags', 'tags'],
-            kbSeverity: ['kb severity', 'kb']
+            kbSeverity: ['kb severity', 'kb'],
+            poc: ['poc', 'point of contact', 'owner', 'assigned to', 'assignee'],
+            pocName: ['poc name', 'contact name', 'owner name'],
+            pocEmail: ['poc email', 'contact email', 'owner email'],
+            scheduledCompletionDate: ['scheduled completion date', 'completion date', 'due date', 'target date'],
+            poamStatus: ['poam status', 'finding status', 'remediation status']
         };
         
         // Build reverse lookup: header name -> standard field
@@ -351,11 +356,16 @@ class QualysProcessor {
                 port: (row.port || row['Port'] || '').trim() || '',
                 protocol: (row.protocol || row['Protocol'] || '').trim() || '',
                 
-                // Detection information
+                // Dates
                 firstDetected: firstDetected,
                 lastDetected: lastDetected,
-                publishedOn: publishedDate,
+                publishedDate: publishedDate,
                 patchReleased: patchReleased,
+                scheduledCompletionDate: this.parseQualysDate(row.scheduledCompletionDate || row['Scheduled Completion Date'] || row['Due Date']),
+                
+                // POC information (individual name if present)
+                poc: (row.poc || row['POC'] || row.pocName || row['POC Name'] || '').trim() || null,
+                pocEmail: (row.pocEmail || row['POC Email'] || '').trim() || null,
                 timesDetected: parseInt(row.timesDetected || row['Times Detected']) || 1,
                 
                 // Classification with flexible field access
