@@ -2329,16 +2329,32 @@ async function initializeModule(moduleName) {
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
-    // Restore last active module or default to dashboard
-    const savedModule = localStorage.getItem('currentModule') || 'dashboard';
+    console.log('🚀 Application initializing...');
+    
+    // Always start with dashboard for consistent user experience
+    // Hide all modules first
+    document.querySelectorAll('.module').forEach(module => {
+        module.classList.add('hidden');
+    });
+    
+    // Show dashboard
+    const dashboardModule = document.getElementById('dashboard-module');
+    if (dashboardModule) {
+        dashboardModule.classList.remove('hidden');
+        console.log('✅ Dashboard displayed');
+    } else {
+        console.error('❌ Dashboard module not found!');
+    }
+    
+    // Set dashboard as current module
+    localStorage.setItem('currentModule', 'dashboard');
+    
+    // Load dashboard metrics
     try {
-        initializeModule(savedModule);
-    } catch (e) {
-        console.error('❌ Startup initializeModule failed; falling back to dashboard:', e);
-        localStorage.removeItem('currentModule');
-        const dashboardModule = document.getElementById('dashboard-module');
-        if (dashboardModule) {
-            dashboardModule.classList.remove('hidden');
+        if (typeof loadDashboardMetrics === 'function') {
+            loadDashboardMetrics();
         }
+    } catch (e) {
+        console.error('❌ Error loading dashboard metrics:', e);
     }
 });
