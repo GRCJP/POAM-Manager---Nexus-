@@ -137,6 +137,7 @@ function loadEvidenceFiles() {
 function loadReportingData() {
     console.log('Loading reporting data...');
     if (typeof loadReportingModule === 'function') loadReportingModule();
+    if (typeof loadReportingPageMetrics === 'function') loadReportingPageMetrics();
 }
 
 // ═══════════════════════════════════════════════════════════════

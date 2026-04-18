@@ -310,7 +310,7 @@ function setTrendRange(days) {
     _dashTrendRange = days;
     document.querySelectorAll('.trend-range-btn').forEach(btn => {
         if (parseInt(btn.dataset.range) === days) {
-            btn.className = 'trend-range-btn text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-medium';
+            btn.className = 'trend-range-btn text-xs px-3 py-1 rounded-lg bg-teal-50 text-teal-700 font-medium';
         } else {
             btn.className = 'trend-range-btn text-xs px-3 py-1 rounded-lg bg-slate-100 text-slate-500 font-medium';
         }
@@ -490,7 +490,7 @@ function renderControlFamilyHeatmap(poams) {
         return `
             <div class="flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors" onclick="dashboardDrillDown('control-family-${family}')">
                 <div class="w-10 text-center">
-                    <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">${family}</span>
+                    <span class="text-xs font-bold text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded">${family}</span>
                 </div>
                 <div class="w-40 text-sm text-slate-600 truncate" title="${name}">${name}</div>
                 <div class="flex-1">
@@ -554,9 +554,9 @@ function renderTeamTable(poams) {
         const mttr = data.mttrDays.length > 0 ? Math.round(data.mttrDays.reduce((a, b) => a + b, 0) / data.mttrDays.length) + 'd' : '—';
 
         return `
-            <tr class="border-b border-slate-100 hover:bg-indigo-50 cursor-pointer transition-colors" onclick="dashboardDrillDown('poc-team-${encodeURIComponent(team)}')">
+            <tr class="border-b border-slate-100 hover:bg-teal-50 cursor-pointer transition-colors" onclick="dashboardDrillDown('poc-team-${encodeURIComponent(team)}')">
                 <td class="py-2.5 px-3 font-medium text-slate-800">${escapeHtmlDash(team)}</td>
-                <td class="py-2.5 px-3 text-center"><span class="font-bold ${data.open > 0 ? 'text-indigo-600' : 'text-slate-400'}">${data.open}</span></td>
+                <td class="py-2.5 px-3 text-center"><span class="font-bold ${data.open > 0 ? 'text-teal-700' : 'text-slate-400'}">${data.open}</span></td>
                 <td class="py-2.5 px-3 text-center"><span class="font-bold ${data.overdue > 0 ? 'text-red-600' : 'text-slate-400'}">${data.overdue}</span></td>
                 <td class="py-2.5 px-3 text-center text-slate-600">${avgAge}${typeof avgAge === 'number' ? 'd' : ''}</td>
                 <td class="py-2.5 px-3 text-center text-slate-600">${mttr}</td>
@@ -620,8 +620,8 @@ function dashboardGlobalSearch(query) {
         const color = riskColors[risk] || 'bg-slate-100 text-slate-700';
         const title = p.vulnerabilityName || p.title || p.findingDescription || 'Untitled';
         return `
-            <div class="flex items-center gap-3 p-2 hover:bg-indigo-50 rounded-lg cursor-pointer transition-colors" onclick="showPOAMDetails('${p.id}')">
-                <span class="font-mono text-xs font-bold text-indigo-600 w-28 truncate">${p.id}</span>
+            <div class="flex items-center gap-3 p-2 hover:bg-teal-50 rounded-lg cursor-pointer transition-colors" onclick="showPOAMDetails('${p.id}')">
+                <span class="font-mono text-xs font-bold text-teal-700 w-28 truncate">${p.id}</span>
                 <span class="text-sm text-slate-700 flex-1 truncate">${escapeHtmlDash(title)}</span>
                 <span class="text-[10px] font-bold px-2 py-0.5 rounded ${color} capitalize">${risk}</span>
                 <span class="text-xs text-slate-400">${p.controlFamily || '—'}</span>
@@ -693,7 +693,7 @@ function renderCriticalAssetSection(poams, criticalAssets) {
     if (criticalAssets.length === 0) {
         kpiEl.textContent = '—';
         if (subEl) subEl.textContent = 'No critical assets registered';
-        if (tableEl) tableEl.innerHTML = '<p class="text-sm text-slate-400 py-3">No critical assets registered. <a href="#" onclick="showModule(\'settings\'); setTimeout(() => showSettingsTab(\'critical-assets\'), 200)" class="text-indigo-600 hover:underline">Add critical assets in Settings</a></p>';
+        if (tableEl) tableEl.innerHTML = '<p class="text-sm text-slate-400 py-3">No critical assets registered. <a href="#" onclick="showModule(\'settings\'); setTimeout(() => showSettingsTab(\'critical-assets\'), 200)" class="text-teal-700 hover:underline">Add critical assets in Settings</a></p>';
         return;
     }
 
@@ -731,7 +731,7 @@ function renderCriticalAssetSection(poams, criticalAssets) {
     }).sort((a, b) => b.openCount - a.openCount);
 
     const sevColors = { critical: 'bg-red-100 text-red-700', high: 'bg-orange-100 text-orange-700', medium: 'bg-amber-100 text-amber-700', low: 'bg-green-100 text-green-700', none: 'bg-slate-100 text-slate-500' };
-    const tagColors = { 'publicly-exposed': 'bg-red-50 text-red-600', 'critical-infrastructure': 'bg-purple-50 text-purple-600', 'pii-phi': 'bg-blue-50 text-blue-600', 'high-value-target': 'bg-amber-50 text-amber-600' };
+    const tagColors = { 'publicly-exposed': 'bg-red-50 text-red-600', 'critical-infrastructure': 'bg-teal-50 text-teal-700', 'pii-phi': 'bg-blue-50 text-blue-600', 'high-value-target': 'bg-amber-50 text-amber-600' };
 
     tableEl.innerHTML = `
         <table class="w-full text-xs">
@@ -1266,12 +1266,12 @@ function renderReportHistory() {
         };
         return `
             <tr class="border-b border-slate-100 hover:bg-slate-50">
-                <td class="py-2 px-3 font-mono text-xs text-indigo-600">${r.id}</td>
+                <td class="py-2 px-3 font-mono text-xs text-teal-700">${r.id}</td>
                 <td class="py-2 px-3 text-sm font-medium text-slate-700">${typeLabels[r.type] || r.type}</td>
                 <td class="py-2 px-3 text-xs text-slate-500">${date}</td>
                 <td class="py-2 px-3 text-xs text-slate-500">${r.poamCount} POAMs</td>
                 <td class="py-2 px-3">
-                    <button onclick="viewHistoricReport('${r.id}')" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium mr-2"><i class="fas fa-eye mr-1"></i>View</button>
+                    <button onclick="viewHistoricReport('${r.id}')" class="text-xs text-teal-700 hover:text-teal-800 font-medium mr-2"><i class="fas fa-eye mr-1"></i>View</button>
                     <button onclick="deleteReport('${r.id}')" class="text-xs text-red-400 hover:text-red-600 font-medium"><i class="fas fa-trash mr-1"></i></button>
                 </td>
             </tr>`;
@@ -1621,4 +1621,153 @@ function downloadOSCALJSON(data, systemId) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EXECUTIVE REPORTING PAGE — KPIs & Tables
+// Populates the redesigned reporting module with live data.
+// ═══════════════════════════════════════════════════════════════
+
+async function loadReportingPageMetrics() {
+    try {
+        if (!poamDB) return;
+        if (!poamDB.db) await poamDB.init();
+        const poams = await poamDB.getAllPOAMs();
+        if (!poams || poams.length === 0) return;
+
+        const now = new Date();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const getStatus = p => dashNormalizeStatus(p.findingStatus || p.status || 'open');
+        const getRisk = p => (p.riskLevel || p.risk || 'medium').toLowerCase();
+        const isOpen = p => { const s = getStatus(p); return s !== 'completed' && s !== 'closed' && s !== 'risk-accepted' && s !== 'ignored'; };
+        const isClosed = p => { const s = getStatus(p); return s === 'completed' || s === 'closed'; };
+
+        const openPOAMs = poams.filter(isOpen);
+        const closedPOAMs = poams.filter(isClosed);
+        const overdue = openPOAMs.filter(p => { const d = new Date(p.updatedScheduledCompletionDate || p.dueDate); return d && d < now; });
+        const closedMTD = closedPOAMs.filter(p => { const d = new Date(p.actualCompletionDate || p.lastModifiedDate); return d >= monthStart; });
+        const riskAccepted = poams.filter(p => getStatus(p) === 'risk-accepted' || getStatus(p) === 'ignored');
+
+        // KPIs
+        setText('rpt-total-open', openPOAMs.length);
+        setText('rpt-total-open-sub', openPOAMs.length === 0 ? 'No open POAMs' : `${poams.length} total tracked`);
+        setText('rpt-overdue', overdue.length);
+        setText('rpt-overdue-sub', overdue.length === 0 ? 'All on track' : 'Requires attention');
+        setText('rpt-closed-mtd', closedMTD.length);
+        setText('rpt-closed-sub', `${closedPOAMs.length} total closed`);
+
+        const mttr = computeMTTR(closedPOAMs);
+        setText('rpt-mttr', mttr === null ? 'N/A' : `${mttr}d`);
+
+        const withinSLA = openPOAMs.filter(p => { const d = new Date(p.updatedScheduledCompletionDate || p.dueDate); return d >= now; });
+        const slaRate = openPOAMs.length > 0 ? Math.round(withinSLA.length / openPOAMs.length * 100) : 100;
+        setText('rpt-sla', `${slaRate}%`);
+        setText('rpt-sla-sub', slaRate === 100 ? 'All within SLA' : `${100 - slaRate}% breached`);
+        setText('rpt-risk-accepted', riskAccepted.length);
+
+        // Priority breakdown (from priorityScore if available, else derive from risk)
+        const tiers = { P1: 0, P2: 0, P3: 0, P4: 0 };
+        openPOAMs.forEach(p => {
+            const tier = p.priorityScore?.tier;
+            if (tier && tiers.hasOwnProperty(tier)) { tiers[tier]++; return; }
+            const r = getRisk(p);
+            if (r === 'critical') tiers.P1++;
+            else if (r === 'high') tiers.P2++;
+            else if (r === 'medium' || r === 'moderate') tiers.P3++;
+            else tiers.P4++;
+        });
+        const maxTier = Math.max(tiers.P1, tiers.P2, tiers.P3, tiers.P4, 1);
+        setText('rpt-p1-count', tiers.P1);
+        setText('rpt-p2-count', tiers.P2);
+        setText('rpt-p3-count', tiers.P3);
+        setText('rpt-p4-count', tiers.P4);
+        const p1Bar = document.getElementById('rpt-p1-bar');
+        const p2Bar = document.getElementById('rpt-p2-bar');
+        const p3Bar = document.getElementById('rpt-p3-bar');
+        const p4Bar = document.getElementById('rpt-p4-bar');
+        if (p1Bar) p1Bar.style.width = `${Math.round(tiers.P1 / maxTier * 100)}%`;
+        if (p2Bar) p2Bar.style.width = `${Math.round(tiers.P2 / maxTier * 100)}%`;
+        if (p3Bar) p3Bar.style.width = `${Math.round(tiers.P3 / maxTier * 100)}%`;
+        if (p4Bar) p4Bar.style.width = `${Math.round(tiers.P4 / maxTier * 100)}%`;
+
+        // POC Team table
+        const teamBody = document.getElementById('rpt-team-table');
+        if (teamBody) {
+            const teams = {};
+            poams.forEach(p => {
+                const team = p.poc || p.pocTeam || 'Unassigned';
+                if (!teams[team]) teams[team] = { open: 0, overdue: 0, mttrDays: [] };
+                if (isOpen(p)) {
+                    teams[team].open++;
+                    const d = new Date(p.updatedScheduledCompletionDate || p.dueDate);
+                    if (d < now) teams[team].overdue++;
+                }
+                if (isClosed(p) && p.createdDate) {
+                    const days = Math.round((new Date(p.actualCompletionDate || p.lastModifiedDate) - new Date(p.createdDate)) / 86400000);
+                    if (days > 0 && days < 3650) teams[team].mttrDays.push(days);
+                }
+            });
+            const sorted = Object.entries(teams).sort(([,a],[,b]) => b.open - a.open);
+            teamBody.innerHTML = sorted.slice(0, 8).map(([team, d]) => {
+                const mttrVal = d.mttrDays.length > 0 ? Math.round(d.mttrDays.reduce((a,b) => a+b, 0) / d.mttrDays.length) + 'd' : '--';
+                return `<tr class="border-b border-slate-100 hover:bg-slate-50">
+                    <td class="py-2 px-2 text-sm font-medium text-slate-800">${escapeHtmlDash(team)}</td>
+                    <td class="py-2 px-2 text-center"><span class="font-bold ${d.open > 0 ? 'text-teal-700' : 'text-slate-400'}">${d.open}</span></td>
+                    <td class="py-2 px-2 text-center"><span class="font-bold ${d.overdue > 0 ? 'text-red-600' : 'text-slate-400'}">${d.overdue}</span></td>
+                    <td class="py-2 px-2 text-center text-slate-600">${mttrVal}</td>
+                </tr>`;
+            }).join('') || '<tr><td colspan="4" class="py-4 text-center text-slate-400 text-xs">No data</td></tr>';
+        }
+
+        // Top Overdue POAMs table
+        const overdueBody = document.getElementById('rpt-overdue-table');
+        const overdueBadge = document.getElementById('rpt-overdue-badge');
+        if (overdueBadge) overdueBadge.textContent = `${overdue.length} overdue`;
+        if (overdueBody) {
+            const sevColors = { critical: 'bg-red-100 text-red-700', high: 'bg-amber-100 text-amber-800', medium: 'bg-teal-50 text-teal-700', low: 'bg-slate-100 text-slate-600' };
+            const sorted = overdue.sort((a, b) => {
+                const da = new Date(a.updatedScheduledCompletionDate || a.dueDate);
+                const db = new Date(b.updatedScheduledCompletionDate || b.dueDate);
+                return da - db;
+            });
+            overdueBody.innerHTML = sorted.slice(0, 15).map(p => {
+                const risk = getRisk(p);
+                const due = new Date(p.updatedScheduledCompletionDate || p.dueDate);
+                const daysOver = Math.max(0, Math.round((now - due) / 86400000));
+                const title = p.vulnerabilityName || p.title || p.findingDescription || 'Untitled';
+                const assets = p.totalAffectedAssets || (Array.isArray(p.affectedAssets) ? p.affectedAssets.length : '--');
+                return `<tr class="border-b border-slate-100 hover:bg-red-50 cursor-pointer" onclick="if(typeof showPOAMDetails==='function') showPOAMDetails('${p.id}')">
+                    <td class="py-2 px-2 text-sm text-slate-800 max-w-xs truncate" title="${escapeHtmlDash(title)}">${escapeHtmlDash(title.substring(0, 60))}${title.length > 60 ? '...' : ''}</td>
+                    <td class="py-2 px-2"><span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${sevColors[risk] || sevColors.medium} capitalize">${risk}</span></td>
+                    <td class="py-2 px-2 text-sm text-slate-600">${escapeHtmlDash(p.poc || p.pocTeam || '--')}</td>
+                    <td class="py-2 px-2 text-center text-sm font-medium text-slate-700">${assets}</td>
+                    <td class="py-2 px-2 text-center"><span class="text-sm font-bold text-red-600">${daysOver}d</span></td>
+                    <td class="py-2 px-2 text-xs text-slate-500">${p.controlFamily || '--'}</td>
+                </tr>`;
+            }).join('') || '<tr><td colspan="6" class="py-6 text-center text-slate-400 text-xs">No overdue POAMs</td></tr>';
+        }
+
+        // Scan history table
+        const scanBody = document.getElementById('rpt-scan-history');
+        if (scanBody) {
+            let scanRuns = [];
+            try { scanRuns = await poamDB.getAllScanRuns(); } catch (e) {}
+            if (scanRuns.length > 0) {
+                scanRuns.sort((a, b) => new Date(b.importedAt || b.timestamp) - new Date(a.importedAt || a.timestamp));
+                scanBody.innerHTML = scanRuns.slice(0, 10).map(s => {
+                    const date = new Date(s.importedAt || s.timestamp).toLocaleDateString();
+                    return `<tr class="border-b border-slate-100 hover:bg-slate-50">
+                        <td class="py-2 px-2 text-sm text-slate-700">${date}</td>
+                        <td class="py-2 px-2 text-xs text-slate-500">${s.source || s.scanType || 'CSV'}</td>
+                        <td class="py-2 px-2 text-center text-sm font-medium text-slate-700">${s.totalFindings || s.totalParsed || '--'}</td>
+                        <td class="py-2 px-2 text-center text-sm font-medium text-green-600">${s.newIdentities || s.newPOAMs || '--'}</td>
+                        <td class="py-2 px-2 text-center text-sm font-medium text-slate-500">${s.closedIdentities || s.closedPOAMs || '--'}</td>
+                    </tr>`;
+                }).join('');
+            }
+        }
+
+    } catch (err) {
+        console.warn('Reporting page metrics error:', err);
+    }
 }

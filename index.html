@@ -2594,76 +2594,239 @@
 
         <!-- Executive Reporting Module (Live) -->
         <div id="reporting-module" class="module hidden">
-            <div class="mb-8">
-                <button onclick="showModule('dashboard')" class="text-teal-700 hover:text-teal-800 mb-4">
-                    <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
-                </button>
-                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Executive Reporting</h1>
-                <p class="text-slate-500 mt-1">Generate compliance reports from live POAM data — Excel/CSV primary, OSCAL secondary</p>
+            <!-- Page Header -->
+            <div class="ph mb-6">
+                <div>
+                    <button onclick="showModule('dashboard')" class="text-sm text-teal-700 hover:text-teal-800 mb-3 inline-flex items-center gap-1">
+                        <i class="fas fa-arrow-left text-xs"></i> Dashboard
+                    </button>
+                    <h1 class="ph-title">Executive Reporting</h1>
+                    <p class="text-sm text-slate-500 mt-1">Compliance reports, remediation metrics, and scan analysis</p>
+                </div>
+                <div class="ph-actions flex gap-2">
+                    <button onclick="exportReportCSV()" class="btn-sec text-xs px-3 py-2 rounded-lg"><i class="fas fa-file-csv mr-1"></i> Export CSV</button>
+                    <button onclick="exportReportXLSX()" class="btn-sec text-xs px-3 py-2 rounded-lg"><i class="fas fa-file-excel mr-1"></i> Export XLSX</button>
+                    <button onclick="exportOSCALPOAM()" class="btn-sec text-xs px-3 py-2 rounded-lg" title="OSCAL JSON for tool interoperability"><i class="fas fa-code mr-1"></i> OSCAL</button>
+                </div>
             </div>
 
-            <!-- Report Generator -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
-                <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
-                    <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
-                    Generate Report
-                </h2>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Report Type</label>
-                        <select id="report-type-select" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 teal-focus focus:outline-none">
-                            <option value="status-summary">POAM Status Summary</option>
-                            <option value="quarterly-compliance">Quarterly Compliance</option>
-                            <option value="executive-summary">Executive Summary</option>
-                            <option value="risk-assessment">Risk Assessment</option>
-                            <option value="team-performance">POC Team Performance</option>
-                            <option value="control-family">Control Family Analysis</option>
-                        </select>
+            <!-- KPI Row -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+                <div class="kpi" style="border-top: 3px solid #0D7377;">
+                    <p class="kpi-lbl">Total Open</p>
+                    <h3 class="text-2xl font-black text-slate-900" id="rpt-total-open">--</h3>
+                    <p class="text-[10px] text-slate-400 mt-1" id="rpt-total-open-sub">Active POAMs</p>
+                </div>
+                <div class="kpi" style="border-top: 3px solid #DC2626;">
+                    <p class="kpi-lbl">Overdue</p>
+                    <h3 class="text-2xl font-black text-red-600" id="rpt-overdue">--</h3>
+                    <p class="text-[10px] text-slate-400 mt-1" id="rpt-overdue-sub">Past SLA</p>
+                </div>
+                <div class="kpi" style="border-top: 3px solid #22C55E;">
+                    <p class="kpi-lbl">Closed MTD</p>
+                    <h3 class="text-2xl font-black text-green-600" id="rpt-closed-mtd">--</h3>
+                    <p class="text-[10px] text-slate-400 mt-1" id="rpt-closed-sub">This month</p>
+                </div>
+                <div class="kpi" style="border-top: 3px solid #3B82F6;">
+                    <p class="kpi-lbl">MTTR</p>
+                    <h3 class="text-2xl font-black text-blue-600" id="rpt-mttr">--</h3>
+                    <p class="text-[10px] text-slate-400 mt-1">Avg days to close</p>
+                </div>
+                <div class="kpi" style="border-top: 3px solid #0D7377;">
+                    <p class="kpi-lbl">SLA Compliance</p>
+                    <h3 class="text-2xl font-black" style="color: #0D7377;" id="rpt-sla">--</h3>
+                    <p class="text-[10px] text-slate-400 mt-1" id="rpt-sla-sub">Within SLA window</p>
+                </div>
+                <div class="kpi" style="border-top: 3px solid #6B7280;">
+                    <p class="kpi-lbl">Risk Accepted</p>
+                    <h3 class="text-2xl font-black text-slate-600" id="rpt-risk-accepted">--</h3>
+                    <p class="text-[10px] text-slate-400 mt-1">Documented exceptions</p>
+                </div>
+            </div>
+
+            <!-- Row 2: Priority Breakdown + Severity Distribution -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Priority Tier Breakdown -->
+                <div class="card">
+                    <div class="card-head mb-4">
+                        <h2 class="card-title flex items-center gap-2">
+                            <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                            Priority Tier Breakdown
+                        </h2>
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Date From</label>
-                        <input type="date" id="report-date-from" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 teal-focus focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Date To</label>
-                        <input type="date" id="report-date-to" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 teal-focus focus:outline-none">
-                    </div>
-                    <div class="flex items-end">
-                        <button onclick="generateReport(document.getElementById('report-type-select').value)" class="w-full px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800 transition-colors">
-                            <i class="fas fa-file-alt mr-2"></i>Generate
-                        </button>
+                    <div class="px-5 pb-5" id="rpt-priority-breakdown">
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs font-bold text-red-700 w-8">P1</span>
+                                <div class="flex-1 bg-slate-100 rounded-full h-3"><div class="bg-red-500 h-3 rounded-full" id="rpt-p1-bar" style="width: 0%"></div></div>
+                                <span class="text-sm font-bold text-slate-700 w-10 text-right" id="rpt-p1-count">0</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs font-bold w-8" style="color: #B45309;">P2</span>
+                                <div class="flex-1 bg-slate-100 rounded-full h-3"><div class="h-3 rounded-full" id="rpt-p2-bar" style="width: 0%; background: #B45309;"></div></div>
+                                <span class="text-sm font-bold text-slate-700 w-10 text-right" id="rpt-p2-count">0</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs font-bold w-8" style="color: #0D7377;">P3</span>
+                                <div class="flex-1 bg-slate-100 rounded-full h-3"><div class="h-3 rounded-full" id="rpt-p3-bar" style="width: 0%; background: #0D7377;"></div></div>
+                                <span class="text-sm font-bold text-slate-700 w-10 text-right" id="rpt-p3-count">0</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs font-bold text-slate-500 w-8">P4</span>
+                                <div class="flex-1 bg-slate-100 rounded-full h-3"><div class="bg-slate-400 h-3 rounded-full" id="rpt-p4-bar" style="width: 0%"></div></div>
+                                <span class="text-sm font-bold text-slate-700 w-10 text-right" id="rpt-p4-count">0</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <p id="report-gen-status" class="text-sm text-teal-700 mt-2 hidden"></p>
+
+                <!-- POC Team Performance -->
+                <div class="card">
+                    <div class="card-head mb-4">
+                        <h2 class="card-title flex items-center gap-2">
+                            <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                            POC Team Performance
+                        </h2>
+                    </div>
+                    <div class="px-5 pb-5 overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-slate-200">
+                                    <th class="text-left py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Team</th>
+                                    <th class="text-center py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Open</th>
+                                    <th class="text-center py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Overdue</th>
+                                    <th class="text-center py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">MTTR</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rpt-team-table">
+                                <tr><td colspan="4" class="py-4 text-center text-slate-400 text-xs">No data</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
-            <!-- Report Viewer -->
-            <div id="report-viewer" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6 hidden"></div>
-
-            <!-- Report History -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
-                        <span class="w-2 h-5 bg-teal-500 rounded-full"></span>
-                        Report History
+            <!-- Row 3: Top Overdue POAMs -->
+            <div class="card mb-6">
+                <div class="card-head mb-4">
+                    <h2 class="card-title flex items-center gap-2">
+                        <span class="w-2 h-5 rounded-full" style="background: #DC2626;"></span>
+                        Top Overdue POAMs
                     </h2>
-                    <div class="flex items-center gap-2">
-                        <input type="text" placeholder="Search reports..." class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:ring-2 teal-focus focus:outline-none" oninput="searchReports(this.value)">
-                    </div>
+                    <span class="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-1 rounded border border-red-200" id="rpt-overdue-badge">0 overdue</span>
                 </div>
-                <div class="overflow-x-auto">
+                <div class="px-5 pb-5 overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="border-b border-slate-200">
-                                <th class="text-left py-2 px-3 font-semibold text-slate-600">ID</th>
-                                <th class="text-left py-2 px-3 font-semibold text-slate-600">Type</th>
-                                <th class="text-left py-2 px-3 font-semibold text-slate-600">Generated</th>
-                                <th class="text-left py-2 px-3 font-semibold text-slate-600">Scope</th>
-                                <th class="text-left py-2 px-3 font-semibold text-slate-600">Actions</th>
+                                <th class="text-left py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">POAM</th>
+                                <th class="text-left py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Severity</th>
+                                <th class="text-left py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">POC</th>
+                                <th class="text-center py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Assets</th>
+                                <th class="text-center py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Days Overdue</th>
+                                <th class="text-left py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Control</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rpt-overdue-table">
+                            <tr><td colspan="6" class="py-6 text-center text-slate-400 text-xs">No overdue POAMs</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Row 4: Report Generator + Scan Comparison History -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Report Generator -->
+                <div class="card">
+                    <div class="card-head mb-4">
+                        <h2 class="card-title flex items-center gap-2">
+                            <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                            Generate Report
+                        </h2>
+                    </div>
+                    <div class="px-5 pb-5">
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Report Type</label>
+                                <select id="report-type-select" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none">
+                                    <option value="status-summary">POAM Status Summary</option>
+                                    <option value="quarterly-compliance">Quarterly Compliance</option>
+                                    <option value="executive-summary">Executive Summary</option>
+                                    <option value="risk-assessment">Risk Assessment</option>
+                                    <option value="team-performance">POC Team Performance</option>
+                                    <option value="control-family">Control Family Analysis</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Date From</label>
+                                    <input type="date" id="report-date-from" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Date To</label>
+                                    <input type="date" id="report-date-to" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none">
+                                </div>
+                            </div>
+                            <button onclick="generateReport(document.getElementById('report-type-select').value)" class="w-full px-4 py-2.5 bg-teal-700 text-white rounded-lg text-sm font-semibold hover:bg-teal-800 transition-colors">
+                                <i class="fas fa-chart-bar mr-2"></i>Generate Report
+                            </button>
+                        </div>
+                        <p id="report-gen-status" class="text-sm text-teal-700 mt-3 hidden"></p>
+                    </div>
+                </div>
+
+                <!-- Scan Import History -->
+                <div class="card">
+                    <div class="card-head mb-4">
+                        <h2 class="card-title flex items-center gap-2">
+                            <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                            Scan Import History
+                        </h2>
+                    </div>
+                    <div class="px-5 pb-5 overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-slate-200">
+                                    <th class="text-left py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Date</th>
+                                    <th class="text-left py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Source</th>
+                                    <th class="text-center py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Findings</th>
+                                    <th class="text-center py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">New</th>
+                                    <th class="text-center py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Closed</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rpt-scan-history">
+                                <tr><td colspan="5" class="py-4 text-center text-slate-400 text-xs">No scans imported yet</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Viewer -->
+            <div id="report-viewer" class="card mb-6 hidden"></div>
+
+            <!-- Report History -->
+            <div class="card">
+                <div class="card-head mb-4">
+                    <h2 class="card-title flex items-center gap-2">
+                        <span class="w-2 h-5 bg-slate-400 rounded-full"></span>
+                        Generated Reports
+                    </h2>
+                    <input type="text" placeholder="Search reports..." class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs teal-focus focus:ring-2 focus:outline-none w-48" oninput="searchReports(this.value)">
+                </div>
+                <div class="px-5 pb-5 overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-slate-200">
+                                <th class="text-left py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">ID</th>
+                                <th class="text-left py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Type</th>
+                                <th class="text-left py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Generated</th>
+                                <th class="text-left py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Scope</th>
+                                <th class="text-left py-2 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="report-history-body">
-                            <tr><td colspan="5" class="py-6 text-center text-slate-400">No reports generated yet</td></tr>
+                            <tr><td colspan="5" class="py-6 text-center text-slate-400 text-xs">No reports generated yet</td></tr>
                         </tbody>
                     </table>
                 </div>
