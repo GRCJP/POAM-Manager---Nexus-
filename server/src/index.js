@@ -1,4 +1,4 @@
-// POAM Nexus API Server
+// TRACE API Server
 // Express.js REST API with JWT authentication and PostgreSQL
 
 require('dotenv').config();
@@ -7,6 +7,21 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, '..', 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Configure multer for file uploads
+const upload = multer({ dest: uploadsDir });
+
+// Import store
+const { MemoryStore } = require('./store/memory-store');
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -15,12 +30,18 @@ const systemRoutes = require('./routes/systems');
 const scanRoutes = require('./routes/scans');
 const workbookRoutes = require('./routes/workbook');
 const reportRoutes = require('./routes/reports');
+const importsRouter = require('./routes/imports');
+const jiraRouter = require('./routes/jira');
 
 // Import middleware
 const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Initialize in-memory store and make it available to routes
+const store = new MemoryStore();
+app.set('store', store);
 
 // ============================================================================
 // MIDDLEWARE
@@ -79,6 +100,8 @@ app.use('/api/systems', systemRoutes);
 app.use('/api/scans', scanRoutes);
 app.use('/api/workbook', workbookRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/imports', upload.single('file'), importsRouter);
+app.use('/api/jira', jiraRouter);
 
 // 404 handler
 app.use((req, res) => {
@@ -93,7 +116,7 @@ app.use(errorHandler);
 // ============================================================================
 
 app.listen(PORT, () => {
-  console.log(`🚀 POAM Nexus API Server running on port ${PORT}`);
+  console.log(`🚀 TRACE API Server running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔒 CORS enabled for: ${process.env.CORS_ORIGIN || 'http://localhost:8080'}`);
 });
