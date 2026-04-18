@@ -26,7 +26,7 @@ async function renderAPISettingsTab() {
                     <h3 class="text-lg font-semibold text-slate-800">API Integrations</h3>
                     <p class="text-sm text-slate-500 mt-1">Configure scheduled scan imports from vulnerability scanners</p>
                 </div>
-                <button onclick="showAddAPIConnectionModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium">
+                <button onclick="showAddAPIConnectionModal()" class="px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800 font-medium">
                     <i class="fas fa-plus mr-2"></i>Add Connection
                 </button>
             </div>
@@ -41,7 +41,7 @@ async function renderAPISettingsTab() {
                 <i class="fas fa-plug text-slate-400 text-4xl mb-3"></i>
                 <p class="text-slate-600 font-medium">No API connections configured</p>
                 <p class="text-sm text-slate-500 mt-2">Add a connection to enable scheduled scan imports</p>
-                <button onclick="showAddAPIConnectionModal()" class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                <button onclick="showAddAPIConnectionModal()" class="mt-4 px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800">
                     Get Started
                 </button>
             </div>
@@ -77,7 +77,7 @@ async function renderAPISettingsTab() {
                             <button onclick="testAPIConnection('${conn.id}')" class="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded border border-blue-200">
                                 <i class="fas fa-vial"></i> Test
                             </button>
-                            <button onclick="syncAPIConnection('${conn.id}')" class="px-3 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50 rounded border border-indigo-200">
+                            <button onclick="syncAPIConnection('${conn.id}')" class="px-3 py-1.5 text-sm text-teal-700 hover:bg-teal-50 rounded border border-teal-100">
                                 <i class="fas fa-sync-alt"></i> Sync Now
                             </button>
                             <button onclick="editAPIConnection('${conn.id}')" class="px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 rounded border border-slate-200">
@@ -145,13 +145,13 @@ function showAddAPIConnectionModal() {
                 <!-- Connection Name -->
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Connection Name</label>
-                    <input type="text" id="api-name" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Production Tenable Scanner">
+                    <input type="text" id="api-name" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="Production Tenable Scanner">
                 </div>
 
                 <!-- Platform Type -->
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Platform</label>
-                    <select id="api-type" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500" onchange="updateAPICredentialFields()">
+                    <select id="api-type" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500" onchange="updateAPICredentialFields()">
                         <option value="">Select platform...</option>
                         <option value="tenable">Tenable.io</option>
                         <option value="qualys">Qualys</option>
@@ -163,7 +163,7 @@ function showAddAPIConnectionModal() {
                 <!-- Base URL (optional for cloud platforms) -->
                 <div id="api-url-field" style="display: none;">
                     <label class="block text-sm font-medium text-slate-700 mb-1">API Base URL</label>
-                    <input type="url" id="api-url" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="https://api.example.com">
+                    <input type="url" id="api-url" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="https://api.example.com">
                     <p class="text-xs text-slate-500 mt-1">Leave empty to use default cloud endpoint</p>
                 </div>
 
@@ -175,7 +175,7 @@ function showAddAPIConnectionModal() {
                 <!-- Schedule -->
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Sync Schedule</label>
-                    <select id="api-schedule" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <select id="api-schedule" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500">
                         <option value="">Manual only</option>
                         <option value="30m">Every 30 minutes</option>
                         <option value="1h">Every hour</option>
@@ -187,7 +187,7 @@ function showAddAPIConnectionModal() {
 
                 <!-- Enabled -->
                 <div class="flex items-center">
-                    <input type="checkbox" id="api-enabled" checked class="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500">
+                    <input type="checkbox" id="api-enabled" checked class="w-4 h-4 text-teal-700 border-slate-300 rounded focus:ring-teal-500">
                     <label for="api-enabled" class="ml-2 text-sm text-slate-700">Enable this connection</label>
                 </div>
 
@@ -196,7 +196,7 @@ function showAddAPIConnectionModal() {
                     <button type="button" onclick="this.closest('.modal').remove()" class="px-4 py-2 text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200">
                         Cancel
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                    <button type="submit" class="px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800">
                         <i class="fas fa-save mr-2"></i>Save Connection
                     </button>
                 </div>
@@ -235,11 +235,11 @@ function updateAPICredentialFields() {
                 <div class="space-y-3">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Access Key</label>
-                        <input type="text" id="api-access-key" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Your Tenable access key">
+                        <input type="text" id="api-access-key" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="Your Tenable access key">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Secret Key</label>
-                        <input type="password" id="api-secret-key" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Your Tenable secret key">
+                        <input type="password" id="api-secret-key" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="Your Tenable secret key">
                     </div>
                 </div>
             `;
@@ -250,11 +250,11 @@ function updateAPICredentialFields() {
                 <div class="space-y-3">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Username</label>
-                        <input type="text" id="api-username" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Your Qualys username">
+                        <input type="text" id="api-username" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="Your Qualys username">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                        <input type="password" id="api-password" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Your Qualys password">
+                        <input type="password" id="api-password" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="Your Qualys password">
                     </div>
                 </div>
             `;
@@ -264,7 +264,7 @@ function updateAPICredentialFields() {
             html = `
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">API Key</label>
-                    <input type="password" id="api-key" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Your Rapid7 API key">
+                    <input type="password" id="api-key" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="Your Rapid7 API key">
                 </div>
             `;
             break;
@@ -273,7 +273,7 @@ function updateAPICredentialFields() {
             html = `
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Bearer Token</label>
-                    <input type="password" id="api-token" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Your API bearer token">
+                    <input type="password" id="api-token" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="Your API bearer token">
                     <p class="text-xs text-slate-500 mt-1">API must return vulnerability data in our normalized format</p>
                 </div>
             `;

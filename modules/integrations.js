@@ -1344,7 +1344,7 @@ class FeedbackCollector {
 
                         <!-- Submit Buttons -->
                         <div class="flex gap-3 pt-4">
-                            <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+                            <button type="submit" class="flex-1 bg-teal-700 hover:bg-teal-800 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
                                 Submit Response
                             </button>
                             <button type="button" onclick="closeFeedbackModal()" class="px-6 py-3 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-semibold rounded-lg hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
@@ -1537,7 +1537,7 @@ class FeedbackCollector {
     getSeverityColor(severity) {
         const colors = {
             critical: 'text-red-600',
-            high: 'text-orange-600',
+            high: 'text-amber-700',
             medium: 'text-yellow-600',
             low: 'text-green-600'
         };

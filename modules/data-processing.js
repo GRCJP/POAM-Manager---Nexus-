@@ -1100,8 +1100,8 @@ function updateSelectedPOAMInfo() {
         'open': 'bg-red-100 text-red-700',
         'in_progress': 'bg-yellow-100 text-yellow-700',
         'completed': 'bg-green-100 text-green-700',
-        'overdue': 'bg-orange-100 text-orange-700',
-        'risk-accepted': 'bg-purple-100 text-purple-700'
+        'overdue': 'bg-amber-50 text-amber-800',
+        'risk-accepted': 'bg-slate-100 text-slate-700'
     };
     statusBadge.className = `px-2 py-1 rounded text-xs font-semibold ${statusColors[status] || 'bg-slate-100 text-slate-700'}`;
     statusBadge.textContent = status.replace('_', ' ').toUpperCase();
@@ -1109,11 +1109,7 @@ function updateSelectedPOAMInfo() {
     infoDiv.style.display = 'block';
 }
 
-// Clear POAM selection
-function clearPOAMSelection() {
-    document.getElementById('evidence-poam-select').value = '';
-    document.getElementById('selected-poam-info').style.display = 'none';
-}
+// clearPOAMSelection defined above in typeahead section
 
 // Handle evidence file upload
 function handleEvidenceUpload(event) {
@@ -1440,7 +1436,7 @@ function displayEvidenceRepository() {
                         <div class="flex-1">
                             <div class="flex items-center gap-2 mb-2">
                                 <h4 class="font-semibold text-slate-800">${evidence.filename}</h4>
-                                <span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-semibold">
+                                <span class="px-2 py-1 bg-teal-50 text-teal-800 rounded text-xs font-semibold">
                                     <i class="fas fa-link mr-1"></i>${evidence.linkedPOAM}
                                 </span>
                                 <span class="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-semibold">
@@ -1470,7 +1466,7 @@ function displayEvidenceRepository() {
                         </div>
                     </div>
                     <div class="flex flex-col gap-2 ml-4">
-                        <button onclick="viewEvidenceDetails('${evidence.id}')" class="px-3 py-1 text-sm bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors">
+                        <button onclick="viewEvidenceDetails('${evidence.id}')" class="px-3 py-1 text-sm bg-teal-50 text-teal-800 rounded-lg hover:bg-teal-50 transition-colors">
                             <i class="fas fa-eye mr-1"></i>View
                         </button>
                         <button onclick="downloadEvidence('${evidence.id}')" class="px-3 py-1 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">
@@ -1580,10 +1576,10 @@ function viewEvidenceDetails(evidenceId) {
                 </div>
                 
                 <!-- Linked POAM -->
-                <div class="bg-indigo-50 rounded-lg p-4">
+                <div class="bg-teal-50 rounded-lg p-4">
                     <h3 class="font-semibold text-slate-800 mb-3">Linked POAM</h3>
                     <div class="text-sm">
-                        <div class="mb-2"><strong>POAM ID:</strong> <span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-semibold">${evidence.linkedPOAM}</span></div>
+                        <div class="mb-2"><strong>POAM ID:</strong> <span class="px-2 py-1 bg-teal-50 text-teal-800 rounded text-xs font-semibold">${evidence.linkedPOAM}</span></div>
                         ${linkedPOAM ? `
                             <div class="mb-2"><strong>Description:</strong> ${linkedPOAM.finding_description || 'N/A'}</div>
                             <div class="mb-2"><strong>Status:</strong> ${linkedPOAM.status || 'N/A'}</div>
@@ -1697,10 +1693,10 @@ function getFileIcon(filename) {
         'xlsx': 'fas fa-file-excel text-green-500',
         'ppt': 'fas fa-file-powerpoint text-orange-500',
         'pptx': 'fas fa-file-powerpoint text-orange-500',
-        'jpg': 'fas fa-file-image text-purple-500',
-        'jpeg': 'fas fa-file-image text-purple-500',
-        'png': 'fas fa-file-image text-purple-500',
-        'gif': 'fas fa-file-image text-purple-500',
+        'jpg': 'fas fa-file-image text-slate-700',
+        'jpeg': 'fas fa-file-image text-slate-700',
+        'png': 'fas fa-file-image text-slate-700',
+        'gif': 'fas fa-file-image text-slate-700',
         'txt': 'fas fa-file-alt text-slate-500',
         'csv': 'fas fa-file-csv text-green-600',
         'zip': 'fas fa-file-archive text-yellow-600',

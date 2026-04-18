@@ -99,7 +99,7 @@ async function showWorkbookImportPreview(file, systemId) {
                         <button id="cancel-import-btn" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">
                             Cancel
                         </button>
-                        <button id="proceed-import-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                        <button id="proceed-import-btn" class="px-4 py-2 bg-teal-50 text-white rounded-lg hover:bg-teal-50">
                             <i class="fas fa-upload mr-2"></i>Proceed with Import
                         </button>
                     </div>

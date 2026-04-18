@@ -32,7 +32,7 @@ async function renderPOAMActivityWidget(containerId) {
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-semibold text-slate-800">📊 POAM Activity Monitor</h3>
-                        <button onclick="refreshPOAMActivity()" class="text-sm text-indigo-600 hover:text-indigo-700">
+                        <button onclick="refreshPOAMActivity()" class="text-sm text-teal-700 hover:text-teal-800">
                             <i class="fas fa-sync-alt"></i> Refresh
                         </button>
                     </div>
@@ -103,7 +103,7 @@ function buildActivityWidgetHTML(metrics) {
                     <button onclick="showActivityDetails()" class="text-sm text-slate-600 hover:text-slate-800">
                         <i class="fas fa-info-circle"></i> Details
                     </button>
-                    <button onclick="refreshPOAMActivity()" class="text-sm text-indigo-600 hover:text-indigo-700">
+                    <button onclick="refreshPOAMActivity()" class="text-sm text-teal-700 hover:text-teal-800">
                         <i class="fas fa-sync-alt"></i> Refresh
                     </button>
                 </div>
@@ -186,12 +186,12 @@ function buildActivityWidgetHTML(metrics) {
                         </span>
                     ` : ''}
                     ${detailedChanges.riskChanged.length > 0 ? `
-                        <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded">
+                        <span class="px-2 py-1 bg-amber-50 text-amber-800 rounded">
                             ${detailedChanges.riskChanged.length} risk change${detailedChanges.riskChanged.length !== 1 ? 's' : ''}
                         </span>
                     ` : ''}
                     ${detailedChanges.assetCountChanged.length > 0 ? `
-                        <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded">
+                        <span class="px-2 py-1 bg-slate-100 text-slate-700 rounded">
                             ${detailedChanges.assetCountChanged.length} asset update${detailedChanges.assetCountChanged.length !== 1 ? 's' : ''}
                         </span>
                     ` : ''}
@@ -262,7 +262,7 @@ function showActivityDetails() {
         detailedChanges.statusChanged.forEach(change => {
             html += `
                 <tr class="border-t border-slate-200">
-                    <td class="py-2 font-mono text-indigo-600">${change.id}</td>
+                    <td class="py-2 font-mono text-teal-700">${change.id}</td>
                     <td class="py-2 text-center">
                         <span class="px-2 py-1 rounded bg-slate-200 text-slate-700 text-xs">${change.from}</span>
                     </td>
@@ -322,14 +322,14 @@ function showActivityDetails() {
             const getRiskColor = (risk) => {
                 const r = risk.toLowerCase();
                 if (r === 'critical') return 'bg-red-100 text-red-800';
-                if (r === 'high') return 'bg-orange-100 text-orange-800';
+                if (r === 'high') return 'bg-amber-50 text-orange-800';
                 if (r === 'medium') return 'bg-yellow-100 text-yellow-800';
                 return 'bg-slate-100 text-slate-800';
             };
             
             html += `
                 <tr class="border-t border-slate-200">
-                    <td class="py-2 font-mono text-indigo-600">${change.id}</td>
+                    <td class="py-2 font-mono text-teal-700">${change.id}</td>
                     <td class="py-2 text-center">
                         <span class="px-2 py-1 rounded text-xs ${getRiskColor(change.from)}">${change.from}</span>
                     </td>

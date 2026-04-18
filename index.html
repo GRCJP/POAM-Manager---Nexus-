@@ -388,7 +388,7 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-2">
-                                    <i class="fas fa-check-circle text-emerald-600 mr-1"></i> Low Severity
+                                    <i class="fas fa-check-circle text-teal-700 mr-1"></i> Low Severity
                                 </label>
                                 <input type="number" id="setup-sla-low" value="180" min="1" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 teal-focus focus:border-teal-600">
                                 <p class="text-xs text-slate-500 mt-1">Recommended: 180 days</p>
@@ -637,12 +637,12 @@
                 </div>
                 <div class="bg-white p-5 rounded-2xl shadow-sm transition-all cursor-pointer" style="border-top: 3px solid #10B981;" onclick="dashboardDrillDown('closed')">
                     <div class="flex justify-between items-start mb-3">
-                        <span class="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><i class="fas fa-check-circle"></i></span>
-                        <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-300">CLOSED</span>
+                        <span class="p-2 bg-teal-50 text-teal-700 rounded-lg"><i class="fas fa-check-circle"></i></span>
+                        <span class="text-[10px] font-bold text-teal-700 bg-teal-50 px-2 py-1 rounded border border-teal-200">CLOSED</span>
                     </div>
-                    <h3 class="text-3xl font-bold tracking-tight text-emerald-600" id="dash-closed-month">—</h3>
+                    <h3 class="text-3xl font-bold tracking-tight text-teal-700" id="dash-closed-month">—</h3>
                     <p class="text-sm text-slate-500 font-medium">Closed This Month</p>
-                    <p class="text-xs text-emerald-400 mt-1" id="dash-closed-month-sub">Velocity indicator</p>
+                    <p class="text-xs text-teal-700 mt-1" id="dash-closed-month-sub">Velocity indicator</p>
                 </div>
             </div>
 
@@ -1467,7 +1467,7 @@
                         </div>
                         <p class="text-3xl font-bold text-slate-900 mb-1" id="total-poams-count">0</p>
                         <p class="text-sm text-slate-600">Total POAM Items</p>
-                        <p class="text-xs text-emerald-600 mt-2" id="total-poams-delta">+0 from last scan</p>
+                        <p class="text-xs text-teal-700 mt-2" id="total-poams-delta">+0 from last scan</p>
                     </div>
 
                     <!-- Overdue Milestones -->
@@ -1497,10 +1497,10 @@
                     </div>
 
                     <!-- System Health -->
-                    <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm cursor-pointer hover:border-emerald-400 hover:shadow-md transition-all" onclick="filterPOAMsByMetric('open')">
+                    <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm cursor-pointer hover:border-teal-400 hover:shadow-md transition-all" onclick="filterPOAMsByMetric('open')">
                         <div class="flex items-center justify-between mb-4">
-                            <div class="p-2 bg-emerald-50 rounded-lg">
-                                <i class="fas fa-shield-alt text-emerald-600 text-lg"></i>
+                            <div class="p-2 bg-teal-50 rounded-lg">
+                                <i class="fas fa-shield-alt text-teal-700 text-lg"></i>
                             </div>
                             <span class="text-xs text-slate-500 font-medium">HEALTH</span>
                         </div>
@@ -1562,7 +1562,7 @@
                                 </div>
                                 <div class="flex items-center justify-between">
                                     <span class="text-sm text-slate-600">Low</span>
-                                    <span class="text-sm font-medium text-emerald-600" id="risk-low-count">0</span>
+                                    <span class="text-sm font-medium text-teal-700" id="risk-low-count">0</span>
                                 </div>
                             </div>
                         </div>
@@ -1575,7 +1575,7 @@
                                 <p class="text-4xl font-bold text-teal-900 mb-2" id="system-health-percent">0%</p>
                                 <p class="text-xs text-teal-800">Resolved Assets</p>
                                 <div class="flex items-center justify-center mt-3">
-                                    <span class="text-xs text-emerald-600 font-medium" id="health-delta">+0%</span>
+                                    <span class="text-xs text-teal-700 font-medium" id="health-delta">+0%</span>
                                     <span class="text-xs text-teal-700 ml-1">from last scan</span>
                                 </div>
                             </div>
@@ -3546,9 +3546,9 @@
     <!-- Consolidated Modules (v2.0.0) -->
     <script src="modules/data-processing.js?v=20260418-6"></script>
     <script src="modules/pipeline.js"></script>
-    <script src="archive/pre-consolidation/pipeline-progress-ui.js"></script>
-    <script src="archive/pre-consolidation/pipeline-logger.js"></script>
-    <script src="archive/pre-consolidation/milestone-pipeline-orchestrator-v2.js"></script>
+    <script src="modules/pipeline-progress-ui.js"></script>
+    <script src="modules/pipeline-logger.js"></script>
+    <script src="modules/milestone-pipeline-orchestrator-v2.js"></script>
     <script src="vulnerability-analysis-engine-v3.js"></script>
     <script src="modules/poam-ui.js?v=20260418-1"></script>
     <script src="modules/status-normalization.js"></script>

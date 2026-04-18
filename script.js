@@ -102,7 +102,7 @@ function showModule(moduleName) {
     // Highlight active sidebar link
     const allSidebarLinks = document.querySelectorAll('.sidebar-link, .sb-item');
     allSidebarLinks.forEach(link => {
-        link.classList.remove('active', 'bg-indigo-600', 'text-white', 'text-slate-400', 'text-slate-100');
+        link.classList.remove('active', 'bg-teal-700', 'text-white', 'text-slate-400', 'text-slate-100');
     });
 
     // Add active state to the matching sidebar link
@@ -134,6 +134,46 @@ function showEvidenceTab(tab) {
 
 // Placeholder functions for other modules
 // loadEvidenceFiles lives in modules/data-processing.js
+
+// Modal close functions for inline modals in index.html
+function closePOAMModal() {
+    const modal = document.getElementById('poam-modal');
+    if (modal) modal.classList.add('hidden');
+}
+function closeSystemModal() {
+    const modal = document.getElementById('system-modal');
+    if (modal) modal.classList.add('hidden');
+}
+function savePOAM() {
+    // Delegate to workbook create if available, otherwise show feedback
+    if (typeof poamWorkbookCreateItem === 'function') {
+        poamWorkbookCreateItem();
+        closePOAMModal();
+    } else {
+        alert('Please use the POA&M Workbook module to create POAMs.');
+    }
+}
+
+// Control family filter for workbook (called from security-control-monitoring partial)
+function poamWorkbookSetCFFilter(family, btnEl) {
+    // Update pill active state
+    document.querySelectorAll('.poam-cf-pill').forEach(p => {
+        p.style.background = '#fff';
+        p.style.color = '#374151';
+        p.style.borderColor = '#E2E4E8';
+    });
+    if (btnEl) {
+        btnEl.style.background = '#E6F7F7';
+        btnEl.style.color = '#0D7377';
+        btnEl.style.borderColor = '#CCEEEE';
+    }
+    // Apply filter
+    if (window.poamWorkbookState) {
+        window.poamWorkbookState.filters = window.poamWorkbookState.filters || {};
+        window.poamWorkbookState.filters.controlFamily = family === 'all' ? '' : family;
+        if (typeof poamWorkbookApplyFilters === 'function') poamWorkbookApplyFilters();
+    }
+}
 
 function loadReportingData() {
     console.log('Loading reporting data...');
@@ -167,7 +207,7 @@ function renderCriticalAssetsTable(assets) {
 
     const tagColors = {
         'publicly-exposed': 'bg-red-50 text-red-600 border-red-200',
-        'critical-infrastructure': 'bg-purple-50 text-purple-600 border-purple-200',
+        'critical-infrastructure': 'bg-slate-50 text-slate-700 border-slate-300',
         'pii-phi': 'bg-blue-50 text-blue-600 border-blue-200',
         'high-value-target': 'bg-amber-50 text-amber-600 border-amber-200'
     };
@@ -463,7 +503,7 @@ async function renderScanHistory() {
             return `
                 <tr class="hover:bg-slate-50 transition-colors">
                     <td class="px-6 py-4">
-                        <div class="font-mono text-xs font-bold text-indigo-600">${run.scanId}</div>
+                        <div class="font-mono text-xs font-bold text-teal-700">${run.scanId}</div>
                         <div class="text-xs text-slate-500 mt-1">${date}</div>
                     </td>
                     <td class="px-6 py-4">
@@ -471,18 +511,18 @@ async function renderScanHistory() {
                         <div class="text-xs text-slate-500 mt-1">${run.fileName || 'N/A'}</div>
                     </td>
                     <td class="px-6 py-4">
-                        <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold">
+                        <span class="px-2 py-1 bg-teal-50 text-teal-800 rounded-full text-xs font-bold">
                             ${run.totalFindings || run.rawFindings?.length || 0} findings
                         </span>
                     </td>
                     <td class="px-6 py-4">
-                        <span class="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                        <span class="inline-flex items-center gap-1 text-xs text-teal-700 font-medium">
                             <i class="fas fa-check-circle"></i> Persistent
                         </span>
                     </td>
                     <td class="px-6 py-4">
                         <button onclick="revertToScan('${run.scanId}')" 
-                                class="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1">
+                                class="text-xs font-bold text-teal-700 hover:text-teal-900 transition-colors flex items-center gap-1">
                             <i class="fas fa-undo"></i> Revert
                         </button>
                     </td>
@@ -550,7 +590,7 @@ const applicationData = {
         name: 'CRM System',
         description: 'Customer relationship management',
         icon: 'fa-address-book',
-        color: 'purple'
+        color: 'slate'
     },
     'infrastructure': {
         name: 'Infrastructure',
@@ -562,7 +602,7 @@ const applicationData = {
         name: 'Web Applications',
         description: 'Public and internal websites',
         icon: 'fa-globe',
-        color: 'indigo'
+        color: 'teal'
     },
     'databases': {
         name: 'Databases',
@@ -621,14 +661,14 @@ function selectApplication(appId) {
     
     // Update application cards to show selected state
     document.querySelectorAll('.application-card').forEach(card => {
-        card.classList.remove('border-indigo-500', 'bg-indigo-50');
+        card.classList.remove('border-teal-700', 'bg-teal-50');
         card.classList.add('border-slate-200');
     });
     
     const selectedCard = document.querySelector(`[onclick="selectApplication('${appId}')"]`);
     if (selectedCard) {
         selectedCard.classList.remove('border-slate-200');
-        selectedCard.classList.add('border-indigo-500', 'bg-indigo-50');
+        selectedCard.classList.add('border-teal-700', 'bg-teal-50');
     }
     
     // Load POAMs for this application
@@ -642,7 +682,7 @@ function resetApplicationSelection() {
     
     // Reset card styling
     document.querySelectorAll('.application-card').forEach(card => {
-        card.classList.remove('border-indigo-500', 'bg-indigo-50');
+        card.classList.remove('border-teal-700', 'bg-teal-50');
         card.classList.add('border-slate-200');
     });
 }
@@ -736,14 +776,14 @@ function selectVulnerabilityApplication(appId) {
     
     // Update application cards to show selected state
     document.querySelectorAll('.vulnerability-app-card').forEach(card => {
-        card.classList.remove('border-purple-500', 'bg-purple-50');
+        card.classList.remove('border-slate-300', 'bg-slate-50');
         card.classList.add('border-slate-200');
     });
     
     const selectedCard = document.querySelector(`[onclick="selectVulnerabilityApplication('${appId}')"]`);
     if (selectedCard) {
         selectedCard.classList.remove('border-slate-200');
-        selectedCard.classList.add('border-purple-500', 'bg-purple-50');
+        selectedCard.classList.add('border-slate-300', 'bg-slate-50');
     }
     
     // Update the global currentApplication for upload processing
@@ -759,7 +799,7 @@ function resetVulnerabilityApplicationSelection() {
     
     // Reset card styles
     document.querySelectorAll('.vulnerability-app-card').forEach(card => {
-        card.classList.remove('border-purple-500', 'bg-purple-50');
+        card.classList.remove('border-slate-300', 'bg-slate-50');
         card.classList.add('border-slate-200');
     });
 }
@@ -1067,7 +1107,7 @@ function previewFrameworkMapping() {
             </div>
             
             <div class="mt-6 flex justify-end">
-                <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800 transition-colors">
                     Close Preview
                 </button>
             </div>
@@ -1361,12 +1401,12 @@ function firstRunSetupNext() {
     document.getElementById('setup-step-2').classList.remove('hidden');
     
     // Update indicators
-    document.getElementById('setup-step-1-indicator').classList.remove('bg-indigo-600', 'text-white');
+    document.getElementById('setup-step-1-indicator').classList.remove('bg-teal-700', 'text-white');
     document.getElementById('setup-step-1-indicator').classList.add('bg-green-500', 'text-white');
     document.getElementById('setup-step-1-line').classList.remove('bg-slate-200');
     document.getElementById('setup-step-1-line').classList.add('bg-green-500');
     document.getElementById('setup-step-2-indicator').classList.remove('bg-slate-200', 'text-slate-600');
-    document.getElementById('setup-step-2-indicator').classList.add('bg-indigo-600', 'text-white');
+    document.getElementById('setup-step-2-indicator').classList.add('bg-teal-700', 'text-white');
     
     // Update buttons
     document.getElementById('setup-back-btn').classList.remove('hidden');
@@ -1383,10 +1423,10 @@ function firstRunSetupBack() {
     
     // Update indicators
     document.getElementById('setup-step-1-indicator').classList.remove('bg-green-500');
-    document.getElementById('setup-step-1-indicator').classList.add('bg-indigo-600');
+    document.getElementById('setup-step-1-indicator').classList.add('bg-teal-700');
     document.getElementById('setup-step-1-line').classList.remove('bg-green-500');
     document.getElementById('setup-step-1-line').classList.add('bg-slate-200');
-    document.getElementById('setup-step-2-indicator').classList.remove('bg-indigo-600', 'text-white');
+    document.getElementById('setup-step-2-indicator').classList.remove('bg-teal-700', 'text-white');
     document.getElementById('setup-step-2-indicator').classList.add('bg-slate-200', 'text-slate-600');
     
     // Update buttons
@@ -1507,7 +1547,7 @@ function showVulnerabilityTab(tabName) {
         const tab = document.getElementById(tabId);
         if (tab) {
             if (tabId === tabName + '-tab') {
-                tab.className = 'flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium transition-colors';
+                tab.className = 'flex-1 px-4 py-2 bg-teal-700 text-white rounded-lg font-medium transition-colors';
             } else {
                 tab.className = 'flex-1 px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors';
             }

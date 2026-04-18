@@ -338,7 +338,7 @@ function renderRiskDistribution(poams) {
 
     const total = poams.length || 1;
     const colors = { critical: 'bg-red-500', high: 'bg-orange-500', medium: 'bg-amber-400', low: 'bg-green-400' };
-    const textColors = { critical: 'text-red-700', high: 'text-orange-700', medium: 'text-amber-700', low: 'text-green-700' };
+    const textColors = { critical: 'text-red-700', high: 'text-amber-800', medium: 'text-amber-700', low: 'text-green-700' };
 
     if (poams.length === 0) {
         container.innerHTML = '<p class="text-sm text-slate-400">No POAMs to display</p>';
@@ -613,7 +613,7 @@ function dashboardGlobalSearch(query) {
     }
 
     const getRisk = p => (p.riskLevel || p.risk || 'medium').toLowerCase();
-    const riskColors = { critical: 'bg-red-100 text-red-700', high: 'bg-orange-100 text-orange-700', medium: 'bg-amber-100 text-amber-700', low: 'bg-green-100 text-green-700' };
+    const riskColors = { critical: 'bg-red-100 text-red-700', high: 'bg-amber-50 text-amber-800', medium: 'bg-amber-100 text-amber-700', low: 'bg-green-100 text-green-700' };
 
     container.innerHTML = matches.map(p => {
         const risk = getRisk(p);
@@ -730,7 +730,7 @@ function renderCriticalAssetSection(poams, criticalAssets) {
         return { asset: ca, openCount: matching.length, topSeverity, sources: Array.from(sources) };
     }).sort((a, b) => b.openCount - a.openCount);
 
-    const sevColors = { critical: 'bg-red-100 text-red-700', high: 'bg-orange-100 text-orange-700', medium: 'bg-amber-100 text-amber-700', low: 'bg-green-100 text-green-700', none: 'bg-slate-100 text-slate-500' };
+    const sevColors = { critical: 'bg-red-100 text-red-700', high: 'bg-amber-50 text-amber-800', medium: 'bg-amber-100 text-amber-700', low: 'bg-green-100 text-green-700', none: 'bg-slate-100 text-slate-500' };
     const tagColors = { 'publicly-exposed': 'bg-red-50 text-red-600', 'critical-infrastructure': 'bg-teal-50 text-teal-700', 'pii-phi': 'bg-blue-50 text-blue-600', 'high-value-target': 'bg-amber-50 text-amber-600' };
 
     tableEl.innerHTML = `
@@ -1107,7 +1107,7 @@ function renderReportViewer(reportData) {
                 <p class="text-xs text-slate-400 mt-1">Generated: ${new Date().toLocaleString()}</p>
             </div>
             <div class="flex gap-2">
-                <button onclick="exportReportCSV()" class="text-xs px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 font-medium">
+                <button onclick="exportReportCSV()" class="text-xs px-3 py-1.5 bg-teal-50 text-teal-700 rounded-lg hover:bg-teal-100 font-medium">
                     <i class="fas fa-file-csv mr-1"></i>Export CSV
                 </button>
                 <button onclick="exportReportXLSX()" class="text-xs px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 font-medium">

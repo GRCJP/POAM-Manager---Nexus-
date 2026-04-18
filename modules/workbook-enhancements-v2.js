@@ -263,7 +263,7 @@ window.poamWorkbookRenderAllSystemsView = async function() {
               <div class="text-lg font-bold text-amber-900">${sys.analytics.comingDue || 0}</div>
             </div>
             <div class="text-center p-2 bg-orange-50 rounded">
-              <div class="text-xs text-orange-600 mb-1">No POC</div>
+              <div class="text-xs text-amber-700 mb-1">No POC</div>
               <div class="text-lg font-bold text-orange-900">${sys.analytics.missingPoc}</div>
             </div>
             <div class="text-center p-2 bg-green-50 rounded">

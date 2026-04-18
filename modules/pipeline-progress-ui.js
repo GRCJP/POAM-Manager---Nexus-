@@ -86,7 +86,7 @@ class PipelineProgressUI {
                             <span class="text-sm font-medium text-gray-900" id="overall-progress-percent">0%</span>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-3">
-                            <div id="overall-progress-bar" class="bg-indigo-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            <div id="overall-progress-bar" class="bg-teal-50 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
                         </div>
                     </div>
 
@@ -122,13 +122,13 @@ class PipelineProgressUI {
                             <div class="text-xs text-green-600 font-medium mb-1">Eligible</div>
                             <div class="text-2xl font-bold text-green-900" id="count-eligible">0</div>
                         </div>
-                        <div class="bg-purple-50 p-3 rounded-lg">
-                            <div class="text-xs text-purple-600 font-medium mb-1">Groups</div>
-                            <div class="text-2xl font-bold text-purple-900" id="count-groups">0</div>
+                        <div class="bg-slate-100 p-3 rounded-lg">
+                            <div class="text-xs text-slate-700 font-medium mb-1">Groups</div>
+                            <div class="text-2xl font-bold text-slate-700" id="count-groups">0</div>
                         </div>
-                        <div class="bg-indigo-50 p-3 rounded-lg">
-                            <div class="text-xs text-indigo-600 font-medium mb-1">POAMs Created</div>
-                            <div class="text-2xl font-bold text-indigo-900" id="count-poams">0</div>
+                        <div class="bg-teal-50 p-3 rounded-lg">
+                            <div class="text-xs text-teal-700 font-medium mb-1">POAMs Created</div>
+                            <div class="text-2xl font-bold text-teal-700" id="count-poams">0</div>
                         </div>
                     </div>
 
@@ -308,7 +308,7 @@ class PipelineProgressUI {
                     <div class="mt-3 text-xs text-gray-400">Auto-closing in <span id="close-countdown">4</span>s...</div>
                     <div class="mt-2 flex gap-2 justify-center">
                         <button type="button" onclick="showModule('dashboard'); document.getElementById('pipeline-progress-container')?.classList.add('hidden')" 
-                            class="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
+                            class="px-4 py-2 text-sm font-semibold text-white bg-teal-50 rounded-lg hover:bg-teal-50 transition-colors">
                             <i class="fas fa-chart-line mr-1"></i> Go to Dashboard
                         </button>
                         <button type="button" onclick="document.getElementById('pipeline-progress-container')?.classList.add('hidden')" 
