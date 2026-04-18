@@ -518,11 +518,19 @@
                 </a>
                 <a href="#" onclick="showSettingsTab('api-config')" class="sb-item sidebar-sublink" style="font-size:12.5px;padding-left:32px">
                     <i class="fas fa-sync-alt" style="width:13px;text-align:center;font-size:11px"></i>
-                    <span>API Configuration</span>
+                    <span>API Connections</span>
+                </a>
+                <a href="#" onclick="showSettingsTab('jira-config')" class="sb-item sidebar-sublink" style="font-size:12.5px;padding-left:32px">
+                    <i class="fas fa-ticket-alt" style="width:13px;text-align:center;font-size:11px"></i>
+                    <span>Jira</span>
                 </a>
                 <a href="#" onclick="showSettingsTab('preferences')" class="sb-item sidebar-sublink" style="font-size:12.5px;padding-left:32px" id="tab-link-preferences">
                     <i class="fas fa-sliders-h" style="width:13px;text-align:center;font-size:11px"></i>
-                    <span>User Preferences</span>
+                    <span>Preferences</span>
+                </a>
+                <a href="#" onclick="showSettingsTab('critical-assets')" class="sb-item sidebar-sublink" style="font-size:12.5px;padding-left:32px">
+                    <i class="fas fa-shield-virus" style="width:13px;text-align:center;font-size:11px"></i>
+                    <span>Critical Assets</span>
                 </a>
                 <a href="#" onclick="showSettingsTab('systems')" class="sb-item sidebar-sublink" style="font-size:12.5px;padding-left:32px" id="tab-link-systems">
                     <i class="fas fa-server" style="width:13px;text-align:center;font-size:11px"></i>
@@ -2327,40 +2335,36 @@
 
         <!-- Settings Module -->
         <div id="settings-module" class="module hidden">
-            <div class="mb-8 border-b border-slate-200 pb-6">
-                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Application Settings</h1>
-                <p class="text-slate-500 mt-1">Configure system names and global application preferences.</p>
+            <!-- Page Header -->
+            <div class="ph mb-6">
+                <div>
+                    <h1 class="ph-title">Settings & Configuration</h1>
+                    <p class="text-sm text-slate-500 mt-1">Manage SLA thresholds, API connections, and system preferences</p>
+                </div>
             </div>
 
             <!-- Tab Navigation for Settings -->
-            <div class="mb-6 border-b border-slate-200">
-                <nav class="flex space-x-8">
-                    <button onclick="showSettingsTab('sla')" id="btn-settings-sla" class="settings-tab-btn py-4 px-1 border-b-2 font-medium text-sm border-teal-600 text-teal-700">
-                        <i class="fas fa-clock mr-2"></i>SLA & Preferences
-                    </button>
-                    <button onclick="showSettingsTab('risk-framework')" id="btn-settings-risk" class="settings-tab-btn py-4 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300">
-                        <i class="fas fa-shield-alt mr-2"></i>Risk Framework
-                    </button>
-                    <button onclick="showSettingsTab('poam-id')" id="btn-settings-poam-id" class="settings-tab-btn py-4 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300">
-                        <i class="fas fa-hashtag mr-2"></i>POAM ID
-                    </button>
-                    <button onclick="showSettingsTab('api-config')" id="btn-settings-api" class="settings-tab-btn py-4 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300">
-                        <i class="fas fa-sync-alt mr-2"></i>API Config
-                    </button>
-                    <button onclick="showSettingsTab('critical-assets')" id="btn-settings-critical-assets" class="settings-tab-btn py-4 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300">
-                        <i class="fas fa-shield-virus mr-2"></i>Critical Assets
-                    </button>
-                </nav>
+            <div class="mod-tabs mb-6 flex gap-1 border-b border-slate-200">
+                <button class="mod-tab active settings-tab-btn" onclick="showSettingsTab('sla')" id="btn-settings-sla" data-tab="sla">SLA & Preferences</button>
+                <button class="mod-tab settings-tab-btn" onclick="showSettingsTab('risk-framework')" id="btn-settings-risk" data-tab="risk-framework">Risk Framework</button>
+                <button class="mod-tab settings-tab-btn" onclick="showSettingsTab('poam-id')" id="btn-settings-poam-id" data-tab="poam-id">POAM ID</button>
+                <button class="mod-tab settings-tab-btn" onclick="showSettingsTab('api-config')" id="btn-settings-api" data-tab="api-config">API Connections</button>
+                <button class="mod-tab settings-tab-btn" onclick="showSettingsTab('jira-config')" id="btn-settings-jira" data-tab="jira-config">Jira</button>
+                <button class="mod-tab settings-tab-btn" onclick="showSettingsTab('preferences')" id="btn-settings-preferences" data-tab="preferences">Preferences</button>
+                <button class="mod-tab settings-tab-btn" onclick="showSettingsTab('critical-assets')" id="btn-settings-critical-assets" data-tab="critical-assets">Critical Assets</button>
             </div>
 
             <!-- SLA & User Preferences Tab -->
             <div id="settings-sla" class="settings-tab">
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
-                        <i class="fas fa-clock text-teal-700 mr-3"></i>
-                        User Preferences & SLA Configuration
-                    </h3>
-                    <p class="text-slate-600 mb-6">Define Service Level Agreement (SLA) thresholds and general user preferences.</p>
+                <div class="card">
+                    <div class="card-head mb-4">
+                        <h2 class="card-title flex items-center gap-2">
+                            <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                            SLA Configuration
+                        </h2>
+                    </div>
+                    <div class="px-5 pb-5">
+                    <p class="text-sm text-slate-500 mb-6">Define Service Level Agreement (SLA) thresholds and general user preferences.</p>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                         <div class="bg-red-50 rounded-lg p-4 border border-red-200">
@@ -2373,34 +2377,31 @@
                         </div>
                     </div>
 
-                    <div class="flex justify-end gap-3 border-b border-slate-100 pb-8 mb-8">
-                        <button onclick="saveSLAConfig()" class="px-6 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800 transition-colors">
+                    <div class="flex justify-end gap-3 mb-6">
+                        <button onclick="saveSLAConfig()" class="px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800">
                             <i class="fas fa-save mr-2"></i>Save Preferences
                         </button>
                     </div>
 
                     <!-- System Configuration Section (Consolidated) -->
-                    <div class="mt-8 border-t border-slate-100 pt-8">
-                        <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
-                            <i class="fas fa-server text-teal-700 mr-3"></i>
-                            System Configuration
-                        </h3>
-                        <p class="text-slate-600 mb-6">Manage system inventory and tie them to organization/group access permissions.</p>
-                        
-                        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden mb-6">
-                            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-                                <h4 class="font-bold text-slate-700">System Inventory</h4>
+                    <div class="border-t border-slate-200 pt-6">
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3">System Configuration</p>
+                        <p class="text-sm text-slate-500 mb-4">Manage system inventory and tie them to organization/group access permissions.</p>
+
+                        <div class="border border-slate-200 rounded-lg overflow-hidden mb-4">
+                            <div class="px-5 py-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">System Inventory</span>
                                 <button onclick="openAddSystemModal()" class="px-3 py-1.5 bg-teal-700 text-white rounded-lg hover:bg-teal-800 text-xs font-bold transition-all">
                                     <i class="fas fa-plus mr-1"></i> Add System
                                 </button>
                             </div>
                             <table class="w-full text-left text-sm">
-                                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500">
+                                <thead class="bg-slate-50 border-b border-slate-200">
                                     <tr>
-                                        <th class="px-6 py-3 font-semibold uppercase tracking-wider">System ID</th>
-                                        <th class="px-6 py-3 font-semibold uppercase tracking-wider">Display Name</th>
-                                        <th class="px-6 py-3 font-semibold uppercase tracking-wider">Group/Permissions</th>
-                                        <th class="px-6 py-3 font-semibold uppercase tracking-wider text-right">Actions</th>
+                                        <th class="px-5 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">System ID</th>
+                                        <th class="px-5 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Display Name</th>
+                                        <th class="px-5 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Group/Permissions</th>
+                                        <th class="px-5 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="systems-settings-list" class="divide-y divide-slate-100">
@@ -2409,22 +2410,26 @@
                             </table>
                         </div>
                     </div>
+                    </div>
                 </div>
             </div>
 
             <!-- Risk Framework Tab -->
             <div id="settings-risk-framework" class="settings-tab hidden">
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
-                        <i class="fas fa-shield-alt text-teal-700 mr-3"></i>
-                        Risk Management Framework
-                    </h3>
-                    <p class="text-slate-600 mb-6">Select the risk assessment framework to be used for POAMs and control mappings.</p>
+                <div class="card">
+                    <div class="card-head mb-4">
+                        <h2 class="card-title flex items-center gap-2">
+                            <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                            Risk Management Framework
+                        </h2>
+                    </div>
+                    <div class="px-5 pb-5">
+                    <p class="text-sm text-slate-500 mb-6">Select the risk assessment framework to be used for POAMs and control mappings.</p>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Active Framework</label>
-                            <select id="risk-framework-select" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 teal-focus" onchange="updateFrameworkInfo()">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Active Framework</label>
+                            <select id="risk-framework-select" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" onchange="updateFrameworkInfo()">
                                 <option value="nist">NIST 800-53 / RMF</option>
                                 <option value="csf">NIST Cybersecurity Framework</option>
                                 <option value="iso27001">ISO 27001</option>
@@ -2436,8 +2441,8 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Control Mapping Mode</label>
-                            <select id="control-mapper-select" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 teal-focus">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Control Mapping Mode</label>
+                            <select id="control-mapper-select" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none">
                                 <option value="enhanced">Enhanced Control Mapper</option>
                                 <option value="basic">Basic Control Mapper</option>
                                 <option value="custom">Custom Mapping</option>
@@ -2445,19 +2450,19 @@
                         </div>
                     </div>
 
-                    <div id="framework-info" class="bg-teal-50 rounded-lg p-6 border border-teal-200 mb-6">
-                        <h4 class="font-bold text-teal-900 mb-2 text-lg">NIST 800-53 / RMF</h4>
-                        <p class="text-sm text-teal-800 mb-4">Federal risk management framework with comprehensive security controls and assessment procedures for information systems.</p>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                            <div class="bg-white rounded-lg p-3">
+                    <div id="framework-info" class="bg-teal-50 rounded-lg p-4 border border-teal-200 mb-4">
+                        <h4 class="font-bold text-teal-900 mb-2 text-sm">NIST 800-53 / RMF</h4>
+                        <p class="text-xs text-teal-800 mb-3">Federal risk management framework with comprehensive security controls and assessment procedures for information systems.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                            <div class="bg-white rounded-lg p-2.5">
                                 <strong class="text-teal-900">Control Families:</strong>
                                 <p class="text-slate-600">20 control families</p>
                             </div>
-                            <div class="bg-white rounded-lg p-3">
+                            <div class="bg-white rounded-lg p-2.5">
                                 <strong class="text-teal-900">Total Controls:</strong>
                                 <p class="text-slate-600">1000+ security controls</p>
                             </div>
-                            <div class="bg-white rounded-lg p-3">
+                            <div class="bg-white rounded-lg p-2.5">
                                 <strong class="text-teal-900">Impact Levels:</strong>
                                 <p class="text-slate-600">High, Moderate, Low</p>
                             </div>
@@ -2465,49 +2470,54 @@
                     </div>
 
                     <div class="flex justify-end">
-                        <button onclick="saveRiskFramework()" class="px-6 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800 transition-colors">
+                        <button onclick="saveRiskFramework()" class="px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800">
                             <i class="fas fa-save mr-2"></i>Save Framework
                         </button>
+                    </div>
                     </div>
                 </div>
             </div>
 
             <!-- POAM ID Structure Tab -->
             <div id="settings-poam-id" class="settings-tab hidden">
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
-                        <i class="fas fa-hashtag text-teal-700 mr-3"></i>
-                        POAM ID Structure
-                    </h3>
-                    <p class="text-slate-600 mb-6">Configure how POAM identifiers are generated and formatted in your system.</p>
+                <div class="card">
+                    <div class="card-head mb-4">
+                        <h2 class="card-title flex items-center gap-2">
+                            <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                            POAM ID Structure
+                        </h2>
+                    </div>
+                    <div class="px-5 pb-5">
+                    <p class="text-sm text-slate-500 mb-6">Configure how POAM identifiers are generated and formatted in your system.</p>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">POAM ID Prefix</label>
-                            <input type="text" id="settings-poam-id-prefix" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 teal-focus" placeholder="e.g., POAM-2024-" onchange="updateSettingsIDPreview()">
-                            <p class="text-xs text-slate-500 mt-2">Prefix for all POAM identifiers</p>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">POAM ID Prefix</label>
+                            <input type="text" id="settings-poam-id-prefix" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="e.g., POAM-2024-" onchange="updateSettingsIDPreview()">
+                            <p class="text-xs text-slate-500 mt-1">Prefix for all POAM identifiers</p>
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Starting Number</label>
-                            <input type="number" id="settings-poam-id-start" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 teal-focus" placeholder="e.g., 001" min="1" onchange="updateSettingsIDPreview()">
-                            <p class="text-xs text-slate-500 mt-2">Initial counter value for new POAMs</p>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Starting Number</label>
+                            <input type="number" id="settings-poam-id-start" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="e.g., 001" min="1" onchange="updateSettingsIDPreview()">
+                            <p class="text-xs text-slate-500 mt-1">Initial counter value for new POAMs</p>
                         </div>
                     </div>
 
-                    <div class="bg-slate-50 rounded-lg p-6 border border-slate-200 mb-6">
-                        <label class="block text-sm font-semibold text-slate-700 mb-3">Current ID Structure Preview</label>
-                        <div class="px-6 py-4 bg-white rounded-lg font-mono text-lg border-2 border-teal-200 text-center" id="settings-id-preview">
+                    <div class="bg-slate-50 rounded-lg p-4 border border-slate-200 mb-4">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Current ID Structure Preview</label>
+                        <div class="px-4 py-3 bg-white rounded-lg font-mono text-lg border-2 border-teal-200 text-center" id="settings-id-preview">
                             POAM-2024-001
                         </div>
                     </div>
 
                     <div class="flex justify-end gap-3">
-                        <button onclick="resetPOAMIdCounter()" class="px-6 py-2 border border-amber-300 rounded-lg text-sm font-medium text-amber-800 bg-amber-50 hover:bg-amber-100 transition-colors">
+                        <button onclick="resetPOAMIdCounter()" class="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50">
                             <i class="fas fa-redo mr-2"></i>Reset Counter
                         </button>
-                        <button onclick="savePOAMIdConfigFromSettings()" class="px-6 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800 transition-colors">
+                        <button onclick="savePOAMIdConfigFromSettings()" class="px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800">
                             <i class="fas fa-save mr-2"></i>Update Configuration
                         </button>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -2516,57 +2526,163 @@
             <div id="settings-api-config" class="settings-tab hidden">
                 <!-- API settings content will be rendered here by api-settings-ui.js -->
                 <div id="api-settings-content">
-                    <div class="text-center py-8">
-                        <i class="fas fa-spinner fa-spin text-slate-400 text-3xl mb-3"></i>
-                        <p class="text-slate-500">Loading API settings...</p>
+                    <div class="card">
+                        <div class="text-center py-8">
+                            <i class="fas fa-spinner fa-spin text-slate-400 text-3xl mb-3"></i>
+                            <p class="text-slate-500 text-sm">Loading API settings...</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Jira Configuration Tab -->
+            <div id="settings-jira-config" class="settings-tab hidden">
+                <div class="card">
+                    <div class="card-head mb-4">
+                        <h2 class="card-title flex items-center gap-2">
+                            <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                            Jira Integration
+                        </h2>
+                    </div>
+                    <div class="px-5 pb-5">
+                        <p class="text-sm text-slate-500 mb-6">Configure Jira integration for creating and tracking remediation tickets from POAMs.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Jira Instance URL</label>
+                                <input type="text" id="jira-base-url" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="https://your-org.atlassian.net">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Project Key</label>
+                                <input type="text" id="jira-project-key" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="e.g., POAM">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Email</label>
+                                <input type="email" id="jira-email" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="your-email@org.com">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">API Token</label>
+                                <input type="password" id="jira-api-token" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="Enter Jira API token">
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200 mb-4">
+                            <p class="text-xs text-slate-500">Tickets are created manually by selecting POAMs and clicking "Create Jira Ticket". The Remediation Identity hash ensures no duplicate tickets are created.</p>
+                        </div>
+                        <div class="flex justify-end gap-3">
+                            <button onclick="testJiraConnection()" class="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50">
+                                <i class="fas fa-plug mr-2"></i>Test Connection
+                            </button>
+                            <button onclick="saveJiraConfig()" class="px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800">
+                                <i class="fas fa-save mr-2"></i>Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preferences Tab -->
+            <div id="settings-preferences" class="settings-tab hidden">
+                <div class="card">
+                    <div class="card-head mb-4">
+                        <h2 class="card-title flex items-center gap-2">
+                            <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                            User Preferences
+                        </h2>
+                    </div>
+                    <div class="px-5 pb-5">
+                        <p class="text-sm text-slate-500 mb-6">Customize your personal experience and notification settings.</p>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between py-3 border-b border-slate-100">
+                                <div>
+                                    <p class="text-sm font-medium text-slate-700">Email Notifications</p>
+                                    <p class="text-xs text-slate-500">Receive email updates for POAM changes and assignments</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer" checked>
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-700"></div>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between py-3 border-b border-slate-100">
+                                <div>
+                                    <p class="text-sm font-medium text-slate-700">Desktop Notifications</p>
+                                    <p class="text-xs text-slate-500">Show browser notifications for critical updates</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-700"></div>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between py-3">
+                                <div>
+                                    <p class="text-sm font-medium text-slate-700">SLA Violation Alerts</p>
+                                    <p class="text-xs text-slate-500">Get notified when POAMs exceed SLA thresholds</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer" checked>
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-700"></div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="flex justify-end mt-6">
+                            <button onclick="saveUserPreferences()" class="px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800">
+                                <i class="fas fa-save mr-2"></i>Save Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Configuration Tab (redirect) -->
+            <div id="settings-systems" class="settings-tab hidden">
+                <!-- Redirected to preferences tab -->
+            </div>
+
             <!-- Critical Assets Tab -->
             <div id="settings-critical-assets" class="settings-tab hidden">
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
-                        <i class="fas fa-shield-virus text-rose-600 mr-3"></i>
-                        Critical Asset Registry
-                    </h3>
-                    <p class="text-slate-600 mb-6">Tag assets as critical to prioritize open POAMs. Works with all finding sources: scans, assessments, pen tests, and CM findings.</p>
+                <div class="card">
+                    <div class="card-head mb-4">
+                        <h2 class="card-title flex items-center gap-2">
+                            <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                            Critical Asset Registry
+                        </h2>
+                    </div>
+                    <div class="px-5 pb-5">
+                    <p class="text-sm text-slate-500 mb-6">Tag assets as critical to prioritize open POAMs. Works with all finding sources: scans, assessments, pen tests, and CM findings.</p>
 
                     <!-- Add Critical Asset Form -->
-                    <div class="bg-slate-50 rounded-xl p-4 mb-6 border border-slate-200">
-                        <h4 class="text-sm font-bold text-slate-700 mb-3">Add Critical Asset</h4>
+                    <div class="bg-slate-50 rounded-lg p-4 mb-4 border border-slate-200">
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3">Add Critical Asset</p>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
                             <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Asset Name / Hostname</label>
-                                <input type="text" id="ca-name" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:outline-none" placeholder="e.g. web-server-prod-01">
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Asset Name / Hostname</label>
+                                <input type="text" id="ca-name" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="e.g. web-server-prod-01">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">IP Address (optional)</label>
-                                <input type="text" id="ca-ip" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:outline-none" placeholder="e.g. 10.0.1.50">
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">IP Address (optional)</label>
+                                <input type="text" id="ca-ip" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="e.g. 10.0.1.50">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Notes</label>
-                                <input type="text" id="ca-notes" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:outline-none" placeholder="e.g. Internet-facing payment server">
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Notes</label>
+                                <input type="text" id="ca-notes" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="e.g. Internet-facing payment server">
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label class="block text-xs font-semibold text-slate-600 mb-2">Tags</label>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Tags</label>
                             <div class="flex flex-wrap gap-2">
-                                <label class="inline-flex items-center gap-1.5 text-xs bg-white border border-slate-200 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-rose-50 hover:border-rose-200 transition-colors">
-                                    <input type="checkbox" class="ca-tag-checkbox rounded text-rose-600 focus:ring-rose-500" value="publicly-exposed"> Publicly Exposed
+                                <label class="inline-flex items-center gap-1.5 text-xs bg-white border border-slate-200 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-teal-50 hover:border-teal-200 transition-colors">
+                                    <input type="checkbox" class="ca-tag-checkbox rounded text-teal-700 focus:ring-teal-500" value="publicly-exposed"> Publicly Exposed
                                 </label>
-                                <label class="inline-flex items-center gap-1.5 text-xs bg-white border border-slate-200 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-rose-50 hover:border-rose-200 transition-colors">
-                                    <input type="checkbox" class="ca-tag-checkbox rounded text-rose-600 focus:ring-rose-500" value="critical-infrastructure"> Critical Infrastructure
+                                <label class="inline-flex items-center gap-1.5 text-xs bg-white border border-slate-200 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-teal-50 hover:border-teal-200 transition-colors">
+                                    <input type="checkbox" class="ca-tag-checkbox rounded text-teal-700 focus:ring-teal-500" value="critical-infrastructure"> Critical Infrastructure
                                 </label>
-                                <label class="inline-flex items-center gap-1.5 text-xs bg-white border border-slate-200 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-rose-50 hover:border-rose-200 transition-colors">
-                                    <input type="checkbox" class="ca-tag-checkbox rounded text-rose-600 focus:ring-rose-500" value="pii-phi"> PII / PHI
+                                <label class="inline-flex items-center gap-1.5 text-xs bg-white border border-slate-200 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-teal-50 hover:border-teal-200 transition-colors">
+                                    <input type="checkbox" class="ca-tag-checkbox rounded text-teal-700 focus:ring-teal-500" value="pii-phi"> PII / PHI
                                 </label>
-                                <label class="inline-flex items-center gap-1.5 text-xs bg-white border border-slate-200 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-rose-50 hover:border-rose-200 transition-colors">
-                                    <input type="checkbox" class="ca-tag-checkbox rounded text-rose-600 focus:ring-rose-500" value="high-value-target"> High-Value Target
+                                <label class="inline-flex items-center gap-1.5 text-xs bg-white border border-slate-200 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-teal-50 hover:border-teal-200 transition-colors">
+                                    <input type="checkbox" class="ca-tag-checkbox rounded text-teal-700 focus:ring-teal-500" value="high-value-target"> High-Value Target
                                 </label>
                             </div>
                         </div>
-                        <button onclick="addCriticalAssetFromForm()" class="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm font-medium hover:bg-rose-700 transition-colors">
+                        <button onclick="addCriticalAssetFromForm()" class="px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800">
                             <i class="fas fa-plus mr-2"></i>Add Critical Asset
                         </button>
                     </div>
@@ -2576,21 +2692,24 @@
                         <table class="w-full text-sm">
                             <thead>
                                 <tr class="border-b border-slate-200">
-                                    <th class="text-left py-2 px-3 font-semibold text-slate-600">Name / Hostname</th>
-                                    <th class="text-left py-2 px-3 font-semibold text-slate-600">IP</th>
-                                    <th class="text-left py-2 px-3 font-semibold text-slate-600">Tags</th>
-                                    <th class="text-left py-2 px-3 font-semibold text-slate-600">Notes</th>
-                                    <th class="text-left py-2 px-3 font-semibold text-slate-600">Added</th>
-                                    <th class="text-center py-2 px-3 font-semibold text-slate-600">Actions</th>
+                                    <th class="text-left py-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Name / Hostname</th>
+                                    <th class="text-left py-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">IP</th>
+                                    <th class="text-left py-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tags</th>
+                                    <th class="text-left py-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Notes</th>
+                                    <th class="text-left py-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Added</th>
+                                    <th class="text-center py-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="ca-registry-table-body">
-                                <tr><td colspan="6" class="py-6 text-center text-slate-400">No critical assets registered</td></tr>
+                                <tr><td colspan="6" class="py-6 text-center text-slate-400 text-xs">No critical assets registered</td></tr>
                             </tbody>
                         </table>
                     </div>
+                    </div>
                 </div>
             </div>
+
+        </div><!-- end settings-module -->
 
         <!-- Executive Reporting Module (Live) -->
         <div id="reporting-module" class="module hidden">
@@ -2929,484 +3048,111 @@
             </div>
         </div>
 
-        <!-- Settings Module -->
-        <div id="settings-module" class="module hidden">
-            <div class="mb-8">
-                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Settings & Configuration</h1>
-                <p class="text-slate-500 mt-1">Manage system settings, preferences, and configurations</p>
-            </div>
-
-            <!-- SLA Configuration Tab -->
-            <div id="settings-sla" class="settings-tab">
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
-                        <i class="fas fa-clock text-teal-700 mr-3"></i>
-                        User Preferences & SLA Configuration
-                    </h3>
-                    <p class="text-slate-600 mb-6">Define Service Level Agreement (SLA) thresholds and general user preferences.</p>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                        <div class="bg-red-50 rounded-lg p-4 border border-red-200">
-                            <label class="block text-sm font-semibold text-red-900 mb-2">Critical Risk (days)</label>
-                            <input type="number" id="sla-critical" class="w-full px-4 py-2 border border-red-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" value="15" min="1">
-                        </div>
-                        <div class="bg-amber-50 rounded-lg p-4 border border-amber-200">
-                            <label class="block text-sm font-semibold text-amber-900 mb-2">High Risk (days)</label>
-                            <input type="number" id="sla-high" class="w-full px-4 py-2 border border-amber-300 rounded-lg focus:outline-none focus:ring-2 teal-focus" value="30" min="1">
-                        </div>
-                    </div>
-
-                    <div class="flex justify-end gap-3 border-b border-slate-100 pb-8 mb-8">
-                        <button onclick="saveSLAConfig()" class="px-6 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800 transition-colors">
-                            <i class="fas fa-save mr-2"></i>Save Preferences
-                        </button>
-                    </div>
-
-                    <div class="mt-8 border-t border-slate-100 pt-8">
-                        <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
-                            <i class="fas fa-server text-teal-700 mr-3"></i>
-                            User Access Permissions
-                        </h3>
-                        <p class="text-slate-600 mb-6">Manage organization and group access permissions for the enclave.</p>
-                        <!-- Permissions mapping content could go here if needed later -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Risk Framework Tab -->
-            <div id="settings-risk-framework" class="settings-tab hidden">
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
-                        <i class="fas fa-shield-alt text-teal-700 mr-3"></i>
-                        Risk Management Framework
-                    </h3>
-                    <p class="text-slate-600 mb-6">Select the risk assessment framework to be used for POAMs and control mappings.</p>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Active Framework</label>
-                            <select id="risk-framework-select" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 teal-focus" onchange="updateFrameworkInfo()">
-                                <option value="nist">NIST 800-53 / RMF</option>
-                                <option value="csf">NIST Cybersecurity Framework</option>
-                                <option value="iso27001">ISO 27001</option>
-                                <option value="mitre">MITRE ATT&CK</option>
-                                <option value="fedramp">FedRAMP</option>
-                                <option value="cms">CMS ARS</option>
-                                <option value="irs">IRS 1075</option>
-                                <option value="cis">CIS Controls</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Control Mapping Mode</label>
-                            <select id="control-mapper-select" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 teal-focus">
-                                <option value="enhanced">Enhanced Control Mapper</option>
-                                <option value="basic">Basic Control Mapper</option>
-                                <option value="custom">Custom Mapping</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div id="framework-info" class="bg-teal-50 rounded-lg p-6 border border-teal-200 mb-6">
-                        <h4 class="font-bold text-teal-900 mb-2 text-lg">NIST 800-53 / RMF</h4>
-                        <p class="text-sm text-teal-800 mb-4">Federal risk management framework with comprehensive security controls and assessment procedures for information systems.</p>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                            <div class="bg-white rounded-lg p-3">
-                                <strong class="text-teal-900">Control Families:</strong>
-                                <p class="text-slate-600">20 control families</p>
-                            </div>
-                            <div class="bg-white rounded-lg p-3">
-                                <strong class="text-teal-900">Total Controls:</strong>
-                                <p class="text-slate-600">1000+ security controls</p>
-                            </div>
-                            <div class="bg-white rounded-lg p-3">
-                                <strong class="text-teal-900">Impact Levels:</strong>
-                                <p class="text-slate-600">High, Moderate, Low</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-end">
-                        <button onclick="saveRiskFramework()" class="px-6 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800 transition-colors">
-                            <i class="fas fa-save mr-2"></i>Save Framework
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- POAM ID Structure Tab -->
-            <div id="settings-poam-id" class="settings-tab hidden">
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
-                        <i class="fas fa-hashtag text-teal-700 mr-3"></i>
-                        POAM ID Structure
-                    </h3>
-                    <p class="text-slate-600 mb-6">Configure how POAM identifiers are generated and formatted in your system.</p>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">POAM ID Prefix</label>
-                            <input type="text" id="settings-poam-id-prefix" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 teal-focus" placeholder="e.g., POAM-2024-" onchange="updateSettingsIDPreview()">
-                            <p class="text-xs text-slate-500 mt-2">Prefix for all POAM identifiers</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Starting Number</label>
-                            <input type="number" id="settings-poam-id-start" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 teal-focus" placeholder="e.g., 001" min="1" onchange="updateSettingsIDPreview()">
-                            <p class="text-xs text-slate-500 mt-2">Initial counter value for new POAMs</p>
-                        </div>
-                    </div>
-
-                    <div class="bg-slate-50 rounded-lg p-6 border border-slate-200 mb-6">
-                        <label class="block text-sm font-semibold text-slate-700 mb-3">Current ID Structure Preview</label>
-                        <div class="px-6 py-4 bg-white rounded-lg font-mono text-lg border-2 border-teal-200 text-center" id="settings-id-preview">
-                            POAM-2024-001
-                        </div>
-                    </div>
-
-                    <div class="flex justify-end gap-3">
-                        <button onclick="resetPOAMIdCounter()" class="px-6 py-2 border border-amber-300 rounded-lg text-sm font-medium text-amber-800 bg-amber-50 hover:bg-amber-100 transition-colors">
-                            <i class="fas fa-redo mr-2"></i>Reset Counter
-                        </button>
-                        <button onclick="savePOAMIdConfigFromSettings()" class="px-6 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800 transition-colors">
-                            <i class="fas fa-save mr-2"></i>Update Configuration
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- API Configuration Tab -->
-            <div id="settings-api-config" class="settings-tab hidden">
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
-                        <i class="fas fa-sync-alt text-teal-700 mr-3"></i>
-                        API Configuration
-                    </h3>
-                    <p class="text-slate-600 mb-6">Configure automated vulnerability scan retrieval from scanner APIs</p>
-
-                    <!-- Scanner Connections -->
-                    <div class="mb-6">
-                        <h4 class="font-semibold text-slate-800 mb-4">Scanner Connections</h4>
-                        
-                        <!-- Qualys VM -->
-                        <div class="bg-slate-50 rounded-lg p-4 mb-4 border border-slate-200">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="flex items-center gap-3">
-                                    <i class="fas fa-chart-line text-blue-600 text-2xl"></i>
-                                    <div>
-                                        <h5 class="font-semibold text-slate-800">Qualys VM</h5>
-                                        <p class="text-xs text-slate-500">Vulnerability Management Platform</p>
-                                    </div>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="qualys-enabled" class="sr-only peer" checked>
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-700"></div>
-                                </label>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1">API URL</label>
-                                    <input type="text" id="qualys-url" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="https://qualysapi.qualys.com">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1">API Key</label>
-                                    <input type="password" id="qualys-key" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="Enter API key">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1">Schedule</label>
-                                    <select id="qualys-schedule" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
-                                        <option value="daily">Daily at 2:00 AM</option>
-                                        <option value="weekly">Weekly on Monday</option>
-                                        <option value="monthly">Monthly on 1st</option>
-                                        <option value="manual">Manual Only</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1">Last Pull</label>
-                                    <input type="text" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-slate-100" value="Never" disabled>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Tenable/Nessus -->
-                        <div class="bg-slate-50 rounded-lg p-4 mb-4 border border-slate-200">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="flex items-center gap-3">
-                                    <i class="fas fa-shield-alt text-green-600 text-2xl"></i>
-                                    <div>
-                                        <h5 class="font-semibold text-slate-800">Tenable/Nessus</h5>
-                                        <p class="text-xs text-slate-500">Security Center & Nessus Professional</p>
-                                    </div>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="tenable-enabled" class="sr-only peer">
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-700"></div>
-                                </label>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1">API URL</label>
-                                    <input type="text" id="tenable-url" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="https://cloud.tenable.com">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1">Access Key</label>
-                                    <input type="password" id="tenable-key" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="Enter access key">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1">Schedule</label>
-                                    <select id="tenable-schedule" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
-                                        <option value="daily">Daily at 2:00 AM</option>
-                                        <option value="weekly" selected>Weekly on Monday</option>
-                                        <option value="monthly">Monthly on 1st</option>
-                                        <option value="manual">Manual Only</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1">Last Pull</label>
-                                    <input type="text" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-slate-100" value="Never" disabled>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Wiz Cloud -->
-                        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="flex items-center gap-3">
-                                    <i class="fas fa-cloud text-teal-700 text-2xl"></i>
-                                    <div>
-                                        <h5 class="font-semibold text-slate-800">Wiz Cloud Security</h5>
-                                        <p class="text-xs text-slate-500">Cloud Security Platform</p>
-                                    </div>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="wiz-enabled" class="sr-only peer">
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-700"></div>
-                                </label>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1">API Endpoint</label>
-                                    <input type="text" id="wiz-url" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="https://api.wiz.io">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1">Client Secret</label>
-                                    <input type="password" id="wiz-secret" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="Enter client secret">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1">Schedule</label>
-                                    <select id="wiz-schedule" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
-                                        <option value="daily">Daily at 2:00 AM</option>
-                                        <option value="weekly">Weekly on Monday</option>
-                                        <option value="monthly">Monthly on 1st</option>
-                                        <option value="manual" selected>Manual Only</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-1">Last Pull</label>
-                                    <input type="text" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-slate-100" value="Never" disabled>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Test & Save -->
-                    <div class="flex justify-end gap-3">
-                        <button onclick="testAPIConnections()" class="px-6 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition-colors">
-                            <i class="fas fa-plug mr-2"></i>Test Connections
-                        </button>
-                        <button onclick="saveAPIConfig()" class="px-6 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800 transition-colors">
-                            <i class="fas fa-save mr-2"></i>Save Configuration
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- User Preferences Tab -->
-            <div id="settings-preferences" class="settings-tab hidden">
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
-                        <i class="fas fa-sliders-h text-teal-700 mr-3"></i>
-                        User Preferences
-                    </h3>
-                    <p class="text-slate-600 mb-6">Customize your personal experience and notification settings.</p>
-
-                    <div class="space-y-6">
-                        <!-- Notification Settings -->
-                        <div class="border-b border-slate-200 pb-6">
-                            <h4 class="font-semibold text-slate-800 mb-4">Notifications</h4>
-                            <div class="space-y-4">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="font-medium text-slate-700">Email Notifications</p>
-                                        <p class="text-sm text-slate-500">Receive email updates for POAM changes and assignments</p>
-                                    </div>
-                                    <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" class="sr-only peer" checked>
-                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-700"></div>
-                                    </label>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="font-medium text-slate-700">Desktop Notifications</p>
-                                        <p class="text-sm text-slate-500">Show browser notifications for critical updates</p>
-                                    </div>
-                                    <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" class="sr-only peer">
-                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-700"></div>
-                                    </label>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="font-medium text-slate-700">SLA Violation Alerts</p>
-                                        <p class="text-sm text-slate-500">Get notified when POAMs exceed SLA thresholds</p>
-                                    </div>
-                                    <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" class="sr-only peer" checked>
-                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-700"></div>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- System Configuration Section (Consolidated) -->
-                        <div class="pt-6">
-                            <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
-                                <i class="fas fa-server text-teal-700 mr-3"></i>
-                                System Configuration
-                            </h3>
-                            <p class="text-slate-600 mb-6">Manage system inventory and tie them to organization/group access permissions.</p>
-                            
-                            <div class="bg-white border border-slate-200 rounded-xl overflow-hidden mb-6">
-                                <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-                                    <h4 class="font-bold text-slate-700">System Inventory</h4>
-                                    <button onclick="openAddSystemModal()" class="px-3 py-1.5 bg-teal-700 text-white rounded-lg hover:bg-teal-800 text-xs font-bold transition-all">
-                                        <i class="fas fa-plus mr-1"></i> Add System
-                                    </button>
-                                </div>
-                                <table class="w-full text-left text-sm">
-                                    <thead class="bg-slate-50 border-b border-slate-200 text-slate-500">
-                                        <tr>
-                                            <th class="px-6 py-3 font-semibold uppercase tracking-wider">System ID</th>
-                                            <th class="px-6 py-3 font-semibold uppercase tracking-wider">Display Name</th>
-                                            <th class="px-6 py-3 font-semibold uppercase tracking-wider">Group/Permissions</th>
-                                            <th class="px-6 py-3 font-semibold uppercase tracking-wider text-right">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="systems-settings-list" class="divide-y divide-slate-100">
-                                        <!-- Populated via settings-manager.js -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-end mt-6">
-                        <button onclick="saveUserPreferences()" class="px-6 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800 transition-colors">
-                            <i class="fas fa-save mr-2"></i>Save Settings
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- System Configuration Tab -->
-            <div id="settings-systems" class="settings-tab hidden">
-                <!-- Redirected to User Preferences tab -->
-            </div>
-        </div>
-
         <!-- Administration Module -->
         <div id="admin-module" class="module hidden">
-            <div class="mb-8">
-                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Administration</h1>
-                <p class="text-slate-500 mt-1">Manage users, organization settings, and system permissions</p>
+            <!-- Page Header -->
+            <div class="ph mb-6">
+                <div>
+                    <h1 class="ph-title">Administration</h1>
+                    <p class="text-sm text-slate-500 mt-1">Manage users, organization settings, and system permissions</p>
+                </div>
+            </div>
+
+            <!-- Tab Navigation for Admin -->
+            <div class="mod-tabs mb-6 flex gap-1 border-b border-slate-200">
+                <button class="mod-tab active admin-tab-btn" onclick="showAdminTab('users')" data-tab="users">User Management</button>
+                <button class="mod-tab admin-tab-btn" onclick="showAdminTab('organization')" data-tab="organization">Organization</button>
+                <button class="mod-tab admin-tab-btn" onclick="showAdminTab('roles')" data-tab="roles">Roles & Permissions</button>
             </div>
 
             <!-- User Management Tab -->
             <div id="admin-users" class="admin-tab">
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <div>
-                            <h3 class="text-xl font-bold text-slate-800 flex items-center">
-                                <i class="fas fa-users text-teal-700 mr-3"></i>
-                                User Management
-                            </h3>
-                            <p class="text-slate-600 mt-1">Manage user accounts, roles, and access permissions</p>
-                        </div>
-                        <button class="px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800 transition-colors">
-                            <i class="fas fa-user-plus mr-2"></i>Add User
+                <div class="card">
+                    <div class="card-head mb-4">
+                        <h2 class="card-title flex items-center gap-2">
+                            <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                            User Management
+                        </h2>
+                        <button class="px-3 py-1.5 bg-teal-700 text-white rounded-lg hover:bg-teal-800 text-xs font-bold">
+                            <i class="fas fa-user-plus mr-1"></i>Add User
                         </button>
                     </div>
+                    <div class="px-5 pb-5">
+                        <div class="mb-4">
+                            <input type="text" placeholder="Search users..." class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none">
+                        </div>
 
-                    <div class="mb-4">
-                        <input type="text" placeholder="Search users..." class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 teal-focus">
-                    </div>
-
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="bg-slate-50 border-b border-slate-200">
-                                <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">User</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Role</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Department</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Status</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Last Active</th>
-                                    <th class="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100">
-                                <tr class="hover:bg-slate-50">
-                                    <td class="px-4 py-3">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-10 h-10 bg-teal-50 rounded-full flex items-center justify-center text-teal-800 font-semibold">AU</div>
-                                            <div>
-                                                <p class="font-medium text-slate-800">Admin User</p>
-                                                <p class="text-sm text-slate-500">admin@poamnexus.com</p>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="border-b border-slate-200">
+                                        <th class="text-left py-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">User</th>
+                                        <th class="text-left py-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Role</th>
+                                        <th class="text-left py-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Department</th>
+                                        <th class="text-left py-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                                        <th class="text-left py-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Last Active</th>
+                                        <th class="text-right py-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="px-3 py-3">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-8 h-8 bg-teal-50 rounded-full flex items-center justify-center text-teal-800 text-xs font-semibold">AU</div>
+                                                <div>
+                                                    <p class="text-sm font-medium text-slate-800">Admin User</p>
+                                                    <p class="text-xs text-slate-500">admin@poamnexus.com</p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <span class="px-2 py-1 bg-teal-50 text-teal-800 rounded text-xs font-semibold">Administrator</span>
-                                    </td>
-                                    <td class="px-4 py-3 text-sm text-slate-600">Security Operations</td>
-                                    <td class="px-4 py-3">
-                                        <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Active</span>
-                                    </td>
-                                    <td class="px-4 py-3 text-sm text-slate-600">Just now</td>
-                                    <td class="px-4 py-3 text-right">
-                                        <button class="text-teal-700 hover:text-teal-800 mr-2"><i class="fas fa-edit"></i></button>
-                                        <button class="text-slate-600 hover:text-slate-800"><i class="fas fa-ellipsis-v"></i></button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                                        </td>
+                                        <td class="px-3 py-3">
+                                            <span class="px-2 py-1 bg-teal-50 text-teal-800 rounded text-xs font-semibold">Administrator</span>
+                                        </td>
+                                        <td class="px-3 py-3 text-sm text-slate-600">Security Operations</td>
+                                        <td class="px-3 py-3">
+                                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Active</span>
+                                        </td>
+                                        <td class="px-3 py-3 text-sm text-slate-600">Just now</td>
+                                        <td class="px-3 py-3 text-right">
+                                            <button class="text-teal-700 hover:text-teal-800 mr-2"><i class="fas fa-edit"></i></button>
+                                            <button class="text-slate-600 hover:text-slate-800"><i class="fas fa-ellipsis-v"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Organization Tab -->
             <div id="admin-organization" class="admin-tab hidden">
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center">
-                        <i class="fas fa-building text-teal-700 mr-3"></i>
-                        Organization Settings
-                    </h3>
-                    <p class="text-slate-600 mb-6">Configure organization-wide settings and information</p>
+                <div class="card">
+                    <div class="card-head mb-4">
+                        <h2 class="card-title flex items-center gap-2">
+                            <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                            Organization Settings
+                        </h2>
+                    </div>
+                    <div class="px-5 pb-5">
+                        <p class="text-sm text-slate-500 mb-6">Configure organization-wide settings and information</p>
 
-                    <div class="space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Organization Name</label>
-                                <input type="text" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 teal-focus" value="POAM Nexus Security">
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Organization Name</label>
+                                <input type="text" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" value="POAM Nexus Security">
                             </div>
                             <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Organization ID</label>
-                                <input type="text" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 teal-focus" value="ORG-2024-001" disabled>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Organization ID</label>
+                                <input type="text" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50" value="ORG-2024-001" disabled>
                             </div>
                             <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Primary Contact</label>
-                                <input type="email" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 teal-focus" value="security@organization.com">
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Primary Contact</label>
+                                <input type="email" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" value="security@organization.com">
                             </div>
                             <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Time Zone</label>
-                                <select class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 teal-focus">
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Time Zone</label>
+                                <select class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none">
                                     <option>UTC-05:00 (Eastern Time)</option>
                                     <option>UTC-06:00 (Central Time)</option>
                                     <option>UTC-07:00 (Mountain Time)</option>
@@ -3415,73 +3161,71 @@
                             </div>
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Organization Description</label>
-                            <textarea class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 teal-focus" rows="3">Enterprise security operations and compliance management</textarea>
+                        <div class="mb-4">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Organization Description</label>
+                            <textarea class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" rows="3">Enterprise security operations and compliance management</textarea>
                         </div>
-                    </div>
 
-                    <div class="flex justify-end mt-6">
-                        <button class="px-6 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800 transition-colors">
-                            <i class="fas fa-save mr-2"></i>Save Organization Settings
-                        </button>
+                        <div class="flex justify-end">
+                            <button class="px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800">
+                                <i class="fas fa-save mr-2"></i>Save Organization Settings
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Roles & Permissions Tab -->
             <div id="admin-roles" class="admin-tab hidden">
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <div>
-                            <h3 class="text-xl font-bold text-slate-800 flex items-center">
-                                <i class="fas fa-user-shield text-teal-700 mr-3"></i>
-                                Roles & Permissions
-                            </h3>
-                            <p class="text-slate-600 mt-1">Define user roles and their access permissions</p>
-                        </div>
-                        <button class="px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800 transition-colors">
-                            <i class="fas fa-plus mr-2"></i>Create Role
+                <div class="card">
+                    <div class="card-head mb-4">
+                        <h2 class="card-title flex items-center gap-2">
+                            <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                            Roles & Permissions
+                        </h2>
+                        <button class="px-3 py-1.5 bg-teal-700 text-white rounded-lg hover:bg-teal-800 text-xs font-bold">
+                            <i class="fas fa-plus mr-1"></i>Create Role
                         </button>
                     </div>
+                    <div class="px-5 pb-5">
+                        <p class="text-sm text-slate-500 mb-4">Define user roles and their access permissions</p>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="border border-slate-200 rounded-lg p-4 hover:border-teal-300 transition-colors cursor-pointer">
-                            <div class="flex items-center justify-between mb-3">
-                                <h4 class="font-semibold text-slate-800">Administrator</h4>
-                                <span class="px-2 py-1 bg-teal-50 text-teal-800 rounded text-xs font-semibold">Full Access</span>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="border border-slate-200 rounded-lg p-4 hover:border-teal-300 transition-colors cursor-pointer">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h4 class="text-sm font-semibold text-slate-800">Administrator</h4>
+                                    <span class="px-2 py-1 bg-teal-50 text-teal-800 rounded text-xs font-semibold">Full Access</span>
+                                </div>
+                                <p class="text-xs text-slate-600 mb-3">Complete system access and configuration</p>
+                                <div class="text-xs text-slate-500">
+                                    <i class="fas fa-users mr-1"></i>3 users
+                                </div>
                             </div>
-                            <p class="text-sm text-slate-600 mb-3">Complete system access and configuration</p>
-                            <div class="text-xs text-slate-500">
-                                <i class="fas fa-users mr-1"></i>3 users
+                            <div class="border border-slate-200 rounded-lg p-4 hover:border-teal-300 transition-colors cursor-pointer">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h4 class="text-sm font-semibold text-slate-800">Security Analyst</h4>
+                                    <span class="px-2 py-1 bg-teal-50 text-teal-700 rounded text-xs font-semibold">Read/Write</span>
+                                </div>
+                                <p class="text-xs text-slate-600 mb-3">Manage POAMs and evidence</p>
+                                <div class="text-xs text-slate-500">
+                                    <i class="fas fa-users mr-1"></i>12 users
+                                </div>
                             </div>
-                        </div>
-                        <div class="border border-slate-200 rounded-lg p-4 hover:border-teal-300 transition-colors cursor-pointer">
-                            <div class="flex items-center justify-between mb-3">
-                                <h4 class="font-semibold text-slate-800">Security Analyst</h4>
-                                <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">Read/Write</span>
-                            </div>
-                            <p class="text-sm text-slate-600 mb-3">Manage POAMs and evidence</p>
-                            <div class="text-xs text-slate-500">
-                                <i class="fas fa-users mr-1"></i>12 users
-                            </div>
-                        </div>
-                        <div class="border border-slate-200 rounded-lg p-4 hover:border-teal-300 transition-colors cursor-pointer">
-                            <div class="flex items-center justify-between mb-3">
-                                <h4 class="font-semibold text-slate-800">Auditor</h4>
-                                <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Read Only</span>
-                            </div>
-                            <p class="text-sm text-slate-600 mb-3">View reports and audit logs</p>
-                            <div class="text-xs text-slate-500">
-                                <i class="fas fa-users mr-1"></i>5 users
+                            <div class="border border-slate-200 rounded-lg p-4 hover:border-teal-300 transition-colors cursor-pointer">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h4 class="text-sm font-semibold text-slate-800">Auditor</h4>
+                                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Read Only</span>
+                                </div>
+                                <p class="text-xs text-slate-600 mb-3">View reports and audit logs</p>
+                                <div class="text-xs text-slate-500">
+                                    <i class="fas fa-users mr-1"></i>5 users
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
-            </div>
         
         <!-- POAM ID Configuration Popup -->
     <div id="poam-id-config-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">

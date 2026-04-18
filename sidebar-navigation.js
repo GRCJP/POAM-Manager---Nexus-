@@ -65,11 +65,16 @@ function showSettingsTab(tabName) {
         selectedTab.classList.remove('hidden');
     }
 
-    // Update tab button active state (mockup-C: settings uses sidebar nav, no in-module tab bar)
+    // Update in-module tab bar active state
+    document.querySelectorAll('#settings-module .mod-tab').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    const activeTabBtn = document.querySelector(`#settings-module .mod-tab[data-tab="${finalTabName}"]`);
+    if (activeTabBtn) activeTabBtn.classList.add('active');
 
     // Update sidebar active state
     updateSettingsSubmenuActiveState(finalTabName);
-    
+
     // Load tab-specific data
     if (finalTabName === 'sla') {
         loadSLAConfig();
@@ -82,8 +87,10 @@ function showSettingsTab(tabName) {
         if (typeof loadCriticalAssetsRegistry === 'function') loadCriticalAssetsRegistry();
     } else if (finalTabName === 'api-config') {
         if (typeof renderAPISettingsTab === 'function') renderAPISettingsTab();
+    } else if (finalTabName === 'jira-config') {
+        if (typeof loadJiraConfig === 'function') loadJiraConfig();
     }
-    
+
     // Close mobile sidebar after selection
     if (window.innerWidth < 1024) {
         toggleSidebar();
@@ -108,22 +115,29 @@ function showAdminTab(tabName) {
     if (adminModule && adminModule.classList.contains('hidden')) {
         showModule('admin');
     }
-    
+
     // Hide all admin tabs
     const adminTabs = document.querySelectorAll('.admin-tab');
     adminTabs.forEach(tab => {
         tab.classList.add('hidden');
     });
-    
+
     // Show selected tab
     const targetTab = document.getElementById('admin-' + tabName);
     if (targetTab) {
         targetTab.classList.remove('hidden');
     }
-    
+
+    // Update in-module tab bar active state
+    document.querySelectorAll('#admin-module .mod-tab').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    const activeTabBtn = document.querySelector(`#admin-module .mod-tab[data-tab="${tabName}"]`);
+    if (activeTabBtn) activeTabBtn.classList.add('active');
+
     // Update sidebar active state for admin submenu
     updateAdminSubmenuActiveState(tabName);
-    
+
     // Close mobile sidebar after selection
     if (window.innerWidth < 1024) {
         toggleSidebar();
@@ -354,11 +368,47 @@ function loadAPIConfig() {
     }
 }
 
+// Jira integration functions
+function loadJiraConfig() {
+    const saved = localStorage.getItem('jiraConfig');
+    if (saved) {
+        const config = JSON.parse(saved);
+        const urlEl = document.getElementById('jira-base-url');
+        const keyEl = document.getElementById('jira-project-key');
+        const emailEl = document.getElementById('jira-email');
+        const tokenEl = document.getElementById('jira-api-token');
+        if (urlEl) urlEl.value = config.baseUrl || '';
+        if (keyEl) keyEl.value = config.projectKey || '';
+        if (emailEl) emailEl.value = config.email || '';
+        if (tokenEl) tokenEl.value = config.apiToken || '';
+    }
+}
+
+function saveJiraConfig() {
+    const config = {
+        baseUrl: document.getElementById('jira-base-url').value,
+        projectKey: document.getElementById('jira-project-key').value,
+        email: document.getElementById('jira-email').value,
+        apiToken: document.getElementById('jira-api-token').value
+    };
+    localStorage.setItem('jiraConfig', JSON.stringify(config));
+    alert('Jira configuration saved successfully.');
+}
+
+function testJiraConnection() {
+    const url = document.getElementById('jira-base-url').value;
+    if (!url) {
+        alert('Please enter a Jira instance URL first.');
+        return;
+    }
+    alert('Connection test is not available in this environment. Configuration saved locally.');
+}
+
 // Initialize sidebar on page load
 document.addEventListener('DOMContentLoaded', function() {
     // Set dashboard as active by default
     updateSidebarActiveState('dashboard');
-    
+
     // Load saved configurations
     loadSLAConfig();
     loadRiskFramework();
