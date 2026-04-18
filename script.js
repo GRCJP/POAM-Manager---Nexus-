@@ -85,6 +85,9 @@ function showModule(moduleName) {
     } else if (moduleName === 'reporting') {
         // Load reporting data
         loadReportingData();
+    } else if (moduleName === 'audit') {
+        // Load audit log
+        if (typeof loadAuditModule === 'function') loadAuditModule();
     } else if (moduleName === 'security-control-monitoring') {
         // Initialize Security Control Monitoring (Workbook) module
         if (typeof initPOAMWorkbookModule === 'function') {
