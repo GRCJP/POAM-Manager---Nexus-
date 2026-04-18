@@ -227,7 +227,7 @@ window.poamWorkbookRenderAllSystemsView = async function() {
     <div class="space-y-4">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-lg font-bold text-slate-900">All Systems Overview</h3>
-        <button onclick="poamWorkbookExportAllSystems()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-semibold">
+        <button onclick="poamWorkbookExportAllSystems()" class="px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800 text-sm font-semibold">
           <i class="fas fa-file-export mr-2"></i>Export All Systems
         </button>
       </div>
@@ -243,7 +243,7 @@ window.poamWorkbookRenderAllSystemsView = async function() {
               <button onclick="poamWorkbookShowSystem('${escapeAttr(sys.id)}')" class="px-3 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 text-sm font-medium">
                 <i class="fas fa-eye mr-1"></i>View
               </button>
-              <button onclick="poamWorkbookExportSystem('${escapeAttr(sys.id)}')" class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 text-sm font-medium">
+              <button onclick="poamWorkbookExportSystem('${escapeAttr(sys.id)}')" class="px-3 py-1 bg-teal-50 text-teal-800 rounded hover:bg-teal-100 text-sm font-medium">
                 <i class="fas fa-download mr-1"></i>Export
               </button>
             </div>

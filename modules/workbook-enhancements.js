@@ -187,7 +187,7 @@ function showImportValidationModal(validationResults, onProceed, onCancel) {
                         Cancel
                     </button>
                     ${!hasErrors ? `
-                        <button id="proceed-import-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                        <button id="proceed-import-btn" class="px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800">
                             <i class="fas fa-upload mr-2"></i>Import ${summary.validRows + summary.rowsWithWarnings} POAMs
                         </button>
                     ` : `
@@ -318,7 +318,7 @@ function showQuickEditPOAMModal(poamId, systemId) {
                         <button type="button" onclick="this.closest('.modal').remove()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">
                             Cancel
                         </button>
-                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                        <button type="submit" class="px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800">
                             <i class="fas fa-save mr-2"></i>Save Changes
                         </button>
                     </div>

@@ -20,14 +20,14 @@ if (!window.pocTeams) {
 
 // UI Helpers for Detail View
 function getRiskBadge(risk) {
-    const colors = {
-        'critical': 'bg-red-100 text-red-700 border-red-200',
-        'high': 'bg-orange-100 text-orange-700 border-orange-200',
-        'medium': 'bg-yellow-100 text-yellow-700 border-yellow-200',
-        'low': 'bg-green-100 text-green-700 border-green-200'
+    const styles = {
+        'critical': 'background:#FEF2F2;color:#991B1B;border-color:#FECACA',
+        'high':     'background:#FFFBEB;color:#B45309;border-color:#FDE68A',
+        'medium':   'background:#E6F7F7;color:#0D7377;border-color:#CCEEEE',
+        'low':      'background:#F3F4F6;color:#6B7280;border-color:#E2E4E8'
     };
-    const colorClass = colors[risk?.toLowerCase()] || 'bg-slate-100 text-slate-700 border-slate-200';
-    return `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold border ${colorClass}">${(risk || 'Medium').toUpperCase()}</span>`;
+    const style = styles[risk?.toLowerCase()] || styles['medium'];
+    return `<span style="display:inline-block;padding:3px 10px;border-radius:9999px;font-size:11px;font-weight:700;border:1px solid;${style}">${(risk || 'Medium').toUpperCase()}</span>`;
 }
 
 function getStatusOptions(currentStatus) {
@@ -411,7 +411,7 @@ function renderFocusedPOAMDetailPage(poam) {
 
             <div class="bg-slate-100 border-b border-slate-200 px-6 flex-shrink-0">
                 <nav class="flex -mb-px gap-6">
-                    <button onclick="switchMainTab('details')" id="main-tab-details" class="px-1 py-4 text-sm font-bold border-b-2 border-indigo-600 text-indigo-600 transition-all flex items-center gap-2">
+                    <button onclick="switchMainTab('details')" id="main-tab-details" class="px-1 py-4 text-sm font-bold border-b-2 border-teal-700 text-teal-700 transition-all flex items-center gap-2">
                         <i class="fas fa-edit"></i> POAM Details
                     </button>
                     <button onclick="switchMainTab('milestones')" id="main-tab-milestones" class="px-1 py-4 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-all flex items-center gap-2">
@@ -446,11 +446,11 @@ function renderFocusedPOAMDetailPage(poam) {
                                               rows="4" class="hidden w-full text-sm text-slate-700 border border-slate-200 rounded px-3 py-2 resize-none"
                                               onchange="updatePOAMField('${poam.id}', 'description', this.value)">${displayPOAM.description || ''}</textarea>
                                 </div>
-                                <div class="bg-emerald-50/60 border border-emerald-100 rounded-lg p-4">
-                                    <label class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Mitigation Strategy</label>
-                                    <div data-edit="display" class="text-sm text-emerald-900 leading-relaxed whitespace-pre-wrap">${displayPOAM.mitigation || 'No mitigation specified'}</div>
+                                <div class="bg-teal-50 border border-teal-100 rounded-lg p-4">
+                                    <label class="text-[11px] font-bold text-teal-700 uppercase tracking-wider">Mitigation Strategy</label>
+                                    <div data-edit="display" class="text-sm text-teal-900 leading-relaxed whitespace-pre-wrap">${displayPOAM.mitigation || 'No mitigation specified'}</div>
                                     <textarea data-edit="input" disabled
-                                              rows="3" class="hidden w-full text-sm text-emerald-900 border border-emerald-200 rounded px-3 py-2 resize-none"
+                                              rows="3" class="hidden w-full text-sm text-teal-900 border border-teal-200 rounded px-3 py-2 resize-none"
                                               onchange="updatePOAMField('${poam.id}', 'mitigation', this.value)">${displayPOAM.mitigation || ''}</textarea>
                                 </div>
                             </div>
@@ -458,7 +458,7 @@ function renderFocusedPOAMDetailPage(poam) {
                                 <div>
                                     <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Impacted Components / URL Details</label>
                                     <div data-edit="display" class="text-sm text-slate-700 whitespace-pre-wrap">${displayPOAM.impactedComponents || 'Not specified'}</div>
-                                    <button type="button" onclick="switchMainTab('assets')" class="mt-2 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800">See affected assets</button>
+                                    <button type="button" onclick="switchMainTab('assets')" class="mt-2 text-[11px] font-semibold text-teal-700 hover:text-teal-900">See affected assets</button>
                                     <textarea data-edit="input" disabled
                                               rows="2" class="hidden w-full text-sm text-slate-700 border border-slate-200 rounded px-3 py-2 resize-none"
                                               onchange="updatePOAMField('${poam.id}', 'impactedComponents', this.value)">${displayPOAM.impactedComponents || ''}</textarea>
@@ -553,8 +553,8 @@ function renderFocusedPOAMDetailPage(poam) {
                                     </div>
                                 </div>
                                 ${delayedActionVisible ? `
-                                <div class="mt-3 p-3 border border-orange-200 bg-orange-50 rounded-lg">
-                                    <div class="text-[10px] font-bold text-orange-700 uppercase mb-2">Delayed POAM Decision</div>
+                                <div class="mt-3 p-3 border border-amber-200 bg-amber-50 rounded-lg">
+                                    <div class="text-[10px] font-bold text-amber-800 uppercase mb-2">Delayed POAM Decision</div>
                                     <div class="grid grid-cols-1 gap-2">
                                         <div>
                                             <label class="text-[10px] font-bold text-slate-500 uppercase">Action</label>
@@ -587,7 +587,7 @@ function renderFocusedPOAMDetailPage(poam) {
                                                       placeholder="Optional notes for evidence and audit trail"></textarea>
                                         </div>
                                         <button onclick="applyDelayedPOAMAction('${poam.id}', '${displayPOAM.controlFamily || poam.controlFamily || 'CM'}')"
-                                                class="w-full px-3 py-2 text-sm font-semibold bg-orange-600 text-white rounded hover:bg-orange-700">
+                                                class="w-full px-3 py-2 text-sm font-semibold bg-amber-700 text-white rounded hover:bg-amber-800">
                                             Apply Delayed POAM Decision
                                         </button>
                                     </div>
@@ -604,7 +604,7 @@ function renderFocusedPOAMDetailPage(poam) {
                             <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">Milestone Management</span>
                             <div class="flex gap-2">
                                 <button onclick="addMilestoneToPOAM('${poam.id}')" 
-                                        class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors">
+                                        class="text-xs font-bold text-teal-700 hover:text-teal-900 flex items-center gap-1 transition-colors">
                                     <i class="fas fa-plus"></i> ${poam.milestones && poam.milestones.length > 0 ? 'Add Milestone' : 'Generate Milestones'}
                                 </button>
                                 <button onclick="recalculateMilestoneDates('${poam.id}')" 
@@ -624,7 +624,7 @@ function renderFocusedPOAMDetailPage(poam) {
                         <div class="bg-slate-50 border-b border-slate-200 px-4 py-2 flex justify-between items-center">
                             <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">Affected Asset Inventory</span>
                             <button onclick="exportAssetScanData('${poam.id}')" 
-                                    class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors">
+                                    class="text-xs font-bold text-teal-700 hover:text-teal-900 flex items-center gap-1 transition-colors">
                                 <i class="fas fa-file-export"></i> Export Scan Data (Filtered)
                             </button>
                         </div>
@@ -648,7 +648,7 @@ function renderFocusedPOAMDetailPage(poam) {
             
             <div class="bg-slate-50 px-6 py-3 flex justify-end gap-3 border-t border-slate-200">
                 <button onclick="closePOAMDetails()" class="px-4 py-2 text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50">Cancel</button>
-                <button onclick="saveAndClosePOAMDetails('${poam.id}')" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-bold transition-all flex items-center gap-2">
+                <button onclick="saveAndClosePOAMDetails('${poam.id}')" class="px-4 py-2 bg-teal-700 text-white rounded hover:bg-teal-800 font-bold transition-all flex items-center gap-2">
                     <i class="fas fa-save"></i> Save Changes
                 </button>
             </div>
@@ -681,7 +681,7 @@ function switchMainTab(tabName) {
     ['details', 'milestones', 'assets', 'history'].forEach(t => {
         const btn = document.getElementById(`main-tab-${t}`);
         if (btn) {
-            btn.classList.remove('text-indigo-600', 'border-b-2', 'border-indigo-600', 'font-bold');
+            btn.classList.remove('text-teal-700', 'border-b-2', 'border-teal-700', 'font-bold');
             btn.classList.add('text-slate-500', 'font-medium', 'border-transparent');
         }
     });
@@ -689,7 +689,7 @@ function switchMainTab(tabName) {
     if (target) target.classList.remove('hidden');
     const activeBtn = document.getElementById(`main-tab-${tabName}`);
     if (activeBtn) {
-        activeBtn.classList.add('text-indigo-600', 'border-b-2', 'border-indigo-600', 'font-bold');
+        activeBtn.classList.add('text-teal-700', 'border-b-2', 'border-teal-700', 'font-bold');
         activeBtn.classList.remove('text-slate-500', 'font-medium', 'border-transparent');
     }
 }
@@ -722,7 +722,7 @@ function renderAssetsList(assets) {
             </thead>
             <tbody class="divide-y divide-slate-100">
                 ${normalizedAssets.map(asset => `
-                    <tr class="hover:bg-indigo-50/30 transition-colors">
+                    <tr class="hover:bg-teal-50/30 transition-colors">
                         <td class="px-4 py-2 text-xs font-medium text-slate-700">${asset.asset_name || asset.name || 'N/A'}</td>
                         <td class="px-4 py-2 text-xs font-mono text-slate-600">${asset.ipv4 || asset.ip || 'N/A'}</td>
                         <td class="px-4 py-2 text-xs text-slate-600">${asset.os || 'Unknown'}</td>
@@ -745,7 +745,7 @@ function renderMilestonesList(poam) {
         return `
             <div class="space-y-3">
                 <div class="text-xs text-slate-500 italic">No milestones added</div>
-                <button onclick="addMilestoneToPOAM('${poam.id}')" class="text-xs bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700">
+                <button onclick="addMilestoneToPOAM('${poam.id}')" class="text-xs bg-teal-700 text-white px-3 py-1 rounded hover:bg-teal-800">
                     <i class="fas fa-plus"></i> Generate Milestones
                 </button>
             </div>
@@ -757,19 +757,19 @@ function renderMilestonesList(poam) {
             ${milestones.map((milestone, index) => {
                 const status = milestone.status || 'pending';
                 const statusClass = status === 'completed'
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    ? 'bg-teal-50 text-teal-800 border-teal-200'
                     : status === 'in-progress'
                         ? 'bg-blue-50 text-blue-700 border-blue-200'
                         : 'bg-slate-50 text-slate-600 border-slate-200';
                 
                 return `
-                    <div class="border border-slate-200 rounded-lg p-3 hover:border-indigo-300 transition-colors">
+                    <div class="border border-slate-200 rounded-lg p-3 hover:border-teal-200 transition-colors">
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex-1">
                                 <input type="text" 
                                        value="${milestone.name || `Milestone ${index + 1}`}" 
                                        onchange="updateMilestoneField('${poam.id}', ${index}, 'name', this.value)"
-                                       class="text-xs font-semibold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 focus:outline-none w-full"
+                                       class="text-xs font-semibold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-teal-700 focus:outline-none w-full"
                                        placeholder="Milestone name">
                             </div>
                             <div class="flex items-center gap-2">
@@ -792,7 +792,7 @@ function renderMilestonesList(poam) {
                                 <input type="date" 
                                        value="${milestone.targetDate || milestone.date || ''}" 
                                        onchange="updateMilestoneField('${poam.id}', ${index}, 'targetDate', this.value)"
-                                       class="w-full text-xs text-slate-700 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-indigo-500">
+                                       class="w-full text-xs text-slate-700 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-teal-700">
                             </div>
                             <div>
                                 <label class="text-[10px] text-slate-500 uppercase">Weight (%)</label>
@@ -800,14 +800,14 @@ function renderMilestonesList(poam) {
                                        value="${milestone.weight || 0}" 
                                        min="0" max="100"
                                        onchange="updateMilestoneField('${poam.id}', ${index}, 'weight', parseInt(this.value))"
-                                       class="w-full text-xs text-slate-700 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-indigo-500">
+                                       class="w-full text-xs text-slate-700 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-teal-700">
                             </div>
                         </div>
                         
                         <div>
                             <label class="text-[10px] text-slate-500 uppercase">Description</label>
                             <textarea onchange="updateMilestoneField('${poam.id}', ${index}, 'description', this.value)"
-                                      class="w-full text-xs text-slate-700 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-indigo-500 resize-none"
+                                      class="w-full text-xs text-slate-700 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-teal-700 resize-none"
                                       rows="2"
                                       placeholder="Milestone description">${milestone.description || ''}</textarea>
                         </div>
@@ -816,7 +816,7 @@ function renderMilestonesList(poam) {
             }).join('')}
             
             <div class="flex justify-between items-center pt-2 border-t border-slate-200">
-                <button onclick="addMilestoneToPOAM('${poam.id}')" class="text-xs bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700">
+                <button onclick="addMilestoneToPOAM('${poam.id}')" class="text-xs bg-teal-700 text-white px-3 py-1 rounded hover:bg-teal-800">
                     <i class="fas fa-plus"></i> ${poam.milestones && poam.milestones.length > 0 ? 'Add Milestone' : 'Generate Milestones'}
                 </button>
                 <button onclick="recalculateMilestoneDates('${poam.id}')" class="text-xs bg-slate-600 text-white px-3 py-1 rounded hover:bg-slate-700">
@@ -831,9 +831,9 @@ function getSeverityColor(s) {
     if (!s) return 'bg-slate-100 text-slate-700';
     const l = s.toLowerCase();
     if (l.includes('critical')) return 'bg-red-100 text-red-700';
-    if (l.includes('high')) return 'bg-orange-100 text-orange-700';
-    if (l.includes('medium')) return 'bg-yellow-100 text-yellow-700';
-    return 'bg-green-100 text-green-700';
+    if (l.includes('high')) return 'bg-amber-50 text-amber-800';
+    if (l.includes('medium')) return 'bg-teal-50 text-teal-800';
+    return 'bg-slate-100 text-slate-700';
 }
 
 async function closePOAMDetails() {
@@ -1620,12 +1620,12 @@ function renderStatusHistory(statusHistory) {
     };
 
     const actionColors = {
-        'created': 'border-indigo-300 bg-indigo-50',
+        'created': 'border-teal-200 bg-teal-50',
         'status_change': 'border-blue-300 bg-blue-50',
         'risk_change': 'border-amber-300 bg-amber-50',
         'scan_update': 'border-slate-300 bg-slate-50',
         'auto_resolved': 'border-green-300 bg-green-50',
-        'manual_edit': 'border-purple-300 bg-purple-50',
+        'manual_edit': 'border-slate-300 bg-slate-50',
         'milestone_update': 'border-cyan-300 bg-cyan-50',
         'note_added': 'border-slate-200 bg-white'
     };
@@ -1944,7 +1944,7 @@ function showBulkAssignPOC() {
                 <button onclick="this.closest('.fixed').remove()" class="flex-1 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">
                     Cancel
                 </button>
-                <button onclick="executeBulkAssignPOC()" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                <button onclick="executeBulkAssignPOC()" class="flex-1 px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800">
                     Assign POC
                 </button>
             </div>
@@ -2025,7 +2025,7 @@ function showBulkChangeStatus() {
                 <button onclick="this.closest('.fixed').remove()" class="flex-1 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">
                     Cancel
                 </button>
-                <button onclick="executeBulkChangeStatus()" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                <button onclick="executeBulkChangeStatus()" class="flex-1 px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800">
                     Change Status
                 </button>
             </div>
@@ -2095,13 +2095,13 @@ function showBulkAddNote() {
                 id="bulk-note-text" 
                 rows="4"
                 placeholder="Enter note or comment..."
-                class="w-full px-3 py-2 border border-slate-300 rounded-lg mb-6 focus:ring-2 focus:ring-indigo-500"></textarea>
+                class="w-full px-3 py-2 border border-slate-300 rounded-lg mb-6 focus:ring-2 focus:ring-teal-500"></textarea>
             
             <div class="flex gap-3">
                 <button onclick="this.closest('.fixed').remove()" class="flex-1 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">
                     Cancel
                 </button>
-                <button onclick="executeBulkAddNote()" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                <button onclick="executeBulkAddNote()" class="flex-1 px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800">
                     Add Note
                 </button>
             </div>
@@ -2377,9 +2377,9 @@ function updateFilterChips() {
         activeFilters.risk.forEach(risk => {
             const colors = {
                 'critical': 'bg-red-100 text-red-700',
-                'high': 'bg-orange-100 text-orange-700',
-                'medium': 'bg-yellow-100 text-yellow-700',
-                'low': 'bg-green-100 text-green-700'
+                'high': 'bg-amber-50 text-amber-800',
+                'medium': 'bg-teal-50 text-teal-800',
+                'low': 'bg-slate-100 text-slate-700'
             };
             chips.push({
                 label: `Risk: ${risk.charAt(0).toUpperCase() + risk.slice(1)}`,
@@ -2402,7 +2402,7 @@ function updateFilterChips() {
     if (activeFilters.poc) {
         chips.push({
             label: `POC: ${activeFilters.poc}`,
-            color: 'bg-purple-100 text-purple-700',
+            color: 'bg-slate-100 text-slate-700',
             onRemove: () => { applyPOCFilter(''); }
         });
     }
@@ -2411,7 +2411,7 @@ function updateFilterChips() {
     if (activeFilters.assetRange) {
         chips.push({
             label: `Assets: > ${activeFilters.assetRange}`,
-            color: 'bg-indigo-100 text-indigo-700',
+            color: 'bg-teal-50 text-teal-800',
             onRemove: () => { applyAssetFilter(''); }
         });
     }
@@ -2475,10 +2475,10 @@ function updateFilterIndicator(columnName, count) {
     
     if (icon) {
         if (count > 0) {
-            icon.classList.add('text-indigo-600');
+            icon.classList.add('text-teal-700');
             icon.classList.remove('text-slate-600');
         } else {
-            icon.classList.remove('text-indigo-600');
+            icon.classList.remove('text-teal-700');
             icon.classList.add('text-slate-600');
         }
     }

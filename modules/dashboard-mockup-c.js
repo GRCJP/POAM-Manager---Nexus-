@@ -255,7 +255,7 @@
         }).join('');
         if (xLabels) xLabels.innerHTML = months.map((m, i) => {
             const x = xStart + i * xStep;
-            return `<text x="${x.toFixed(1)}" y="160" text-anchor="middle" fill="#9CA3AF" font-size="9" font-family="Inter,system-ui">${m.label}</text>`;
+            return `<text x="${x.toFixed(1)}" y="160" text-anchor="middle" fill="#6B7280" font-size="9" font-family="Inter,system-ui">${m.label}</text>`;
         }).join('');
 
         // Hide empty-state message if we have any data
@@ -288,7 +288,7 @@
         const listEl = document.getElementById('dash-priority-list');
         if (!listEl) return;
         if (top.length === 0) {
-            listEl.innerHTML = '<div style="padding:24px 18px;text-align:center;font-size:13px;color:#9CA3AF">No open items</div>';
+            listEl.innerHTML = '<div style="padding:24px 18px;text-align:center;font-size:13px;color:#6B7280">No open items</div>';
             return;
         }
         listEl.innerHTML = top.map(item => {
@@ -341,7 +341,7 @@
         const el = document.getElementById('dash-systems-list');
         if (!el) return;
         if (ranked.length === 0) {
-            el.innerHTML = '<div style="font-size:12px;color:#9CA3AF;padding:8px 0">No data available</div>';
+            el.innerHTML = '<div style="font-size:12px;color:#6B7280;padding:8px 0">No data available</div>';
             return;
         }
         el.innerHTML = ranked.map(([sys, count]) => {
@@ -381,7 +381,7 @@
         const el = document.getElementById('dash-activity-feed');
         if (!el) return;
         if (top.length === 0) {
-            el.innerHTML = '<div class="act-item"><div class="act-dot" style="background:#9CA3AF"></div><div class="act-text">No recent activity</div><div class="act-time">—</div></div>';
+            el.innerHTML = '<div class="act-item"><div class="act-dot" style="background:#6B7280"></div><div class="act-text">No recent activity</div><div class="act-time">—</div></div>';
             return;
         }
         const now = new Date();
@@ -390,7 +390,7 @@
             if (action === 'auto_resolved' || action === 'resolved' || action === 'closed') return '#10B981';
             if (action === 'risk_change') return '#F59E0B';
             if (action === 'risk_accepted') return '#6B7280';
-            return '#9CA3AF';
+            return '#6B7280';
         };
         el.innerHTML = top.map(ev => {
             const ageMs = now - ev.date;

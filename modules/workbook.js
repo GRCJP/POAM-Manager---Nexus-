@@ -66,7 +66,7 @@ async function poamWorkbookOpenSystemIdConfigModal(forSystemId) {
           <button id="wb-sysid-reset" class="px-4 py-2 border border-orange-300 rounded-lg text-sm font-semibold text-orange-700 bg-orange-50 hover:bg-orange-100">Reset Counter</button>
           <div class="flex gap-3">
             <button id="wb-sysid-cancel" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">Cancel</button>
-            <button id="wb-sysid-save" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save</button>
+            <button id="wb-sysid-save" class="px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800">Save</button>
           </div>
         </div>
       </div>
@@ -248,7 +248,7 @@ async function renderWorkbookSystemsTable() {
 
   const systems = await window.poamWorkbookDB.getSystems();
   if (!systems || systems.length === 0) {
-    container.innerHTML = '<div style="padding:40px;text-align:center;color:#9CA3AF;font-size:13px">No systems configured. Click "Add System" to get started.</div>';
+    container.innerHTML = '<div style="padding:40px;text-align:center;color:#6B7280;font-size:13px">No systems configured. Click "Add System" to get started.</div>';
     return;
   }
 
@@ -280,8 +280,8 @@ async function renderWorkbookSystemsTable() {
             <td style="padding:12px 20px;font-size:13px;font-weight:600;color:#111827;border-bottom:1px solid #F3F4F6">${escapeHtml(r.name)}</td>
             <td style="padding:12px 16px;text-align:center;font-size:13px;font-weight:600;color:#374151;border-bottom:1px solid #F3F4F6">${r.total}</td>
             <td style="padding:12px 16px;text-align:center;font-size:13px;font-weight:700;color:#111827;border-bottom:1px solid #F3F4F6">${r.open}</td>
-            <td style="padding:12px 16px;text-align:center;font-size:13px;font-weight:700;color:${r.overdue > 0 ? '#DC2626' : '#9CA3AF'};border-bottom:1px solid #F3F4F6">${r.overdue}</td>
-            <td style="padding:12px 16px;text-align:center;font-size:13px;font-weight:700;color:${r.comingDue > 0 ? '#B45309' : '#9CA3AF'};border-bottom:1px solid #F3F4F6">${r.comingDue}</td>
+            <td style="padding:12px 16px;text-align:center;font-size:13px;font-weight:700;color:${r.overdue > 0 ? '#DC2626' : '#6B7280'};border-bottom:1px solid #F3F4F6">${r.overdue}</td>
+            <td style="padding:12px 16px;text-align:center;font-size:13px;font-weight:700;color:${r.comingDue > 0 ? '#B45309' : '#6B7280'};border-bottom:1px solid #F3F4F6">${r.comingDue}</td>
             <td style="padding:12px 20px;text-align:right;border-bottom:1px solid #F3F4F6">
               <button onclick="event.stopPropagation();poamWorkbookNavigateToSystem('${escapeAttr(r.id)}')" class="btn-sec" style="font-size:11.5px;padding:5px 12px">View</button>
             </td>
@@ -318,7 +318,7 @@ async function poamWorkbookOpenEditSystemModal(systemId) {
         </div>
         <div class="flex justify-end gap-3 mt-6">
           <button id="wb-editsys-cancel" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">Cancel</button>
-          <button id="wb-editsys-save" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save</button>
+          <button id="wb-editsys-save" class="px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800">Save</button>
         </div>
       </div>
     `;
@@ -389,7 +389,7 @@ function poamWorkbookOpenPasteModal() {
       </div>
       <div class="flex justify-end gap-3 mt-6">
         <button id="wb-paste-cancel" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">Cancel</button>
-        <button id="wb-paste-import" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Preview</button>
+        <button id="wb-paste-import" class="px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800">Preview</button>
       </div>
     </div>
   `;
@@ -692,7 +692,7 @@ function poamWorkbookOpenPastePreviewModal({ systemId, parsed, onCommit }) {
       </div>
       <div class="flex justify-end gap-3 mt-4">
         <button id="wb-preview-cancel" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">Cancel</button>
-        <button id="wb-preview-commit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Commit</button>
+        <button id="wb-preview-commit" class="px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800">Commit</button>
       </div>
     </div>
   `;
@@ -1008,7 +1008,7 @@ async function renderWorkbookSystemTable(systemId) {
       const id = item.id;
       const checked = window.poamWorkbookState.selectedItemIds.has(id);
       return `
-      <tr class="border-b border-slate-100 hover:bg-indigo-50 transition-colors group">
+      <tr class="border-b border-slate-100 hover:bg-teal-50 transition-colors group">
         <td class="px-3 py-2" onclick="event.stopPropagation()">
           <input type="checkbox" ${checked ? 'checked' : ''} onchange="poamWorkbookToggleRowSelection('${id}', this.checked)" />
         </td>
@@ -1016,7 +1016,7 @@ async function renderWorkbookSystemTable(systemId) {
           <div class="flex items-center gap-2">
             ${escapeHtml(item['Item number'] || '')}
             <button onclick="event.stopPropagation(); showQuickEditPOAMModal('${id}', '${systemId}')" 
-                    class="opacity-0 group-hover:opacity-100 transition-opacity text-indigo-600 hover:text-indigo-800"
+                    class="opacity-0 group-hover:opacity-100 transition-opacity text-teal-700 hover:text-teal-900"
                     title="Quick Edit">
               <i class="fas fa-edit text-xs"></i>
             </button>
@@ -1192,7 +1192,7 @@ function poamWorkbookOpenBulkEditModal({ mode } = {}) {
       </div>
       <div class="flex justify-end gap-3 mt-6">
         <button id="wb-bulk-cancel" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">Cancel</button>
-        <button id="wb-bulk-apply" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Apply</button>
+        <button id="wb-bulk-apply" class="px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800">Apply</button>
       </div>
     </div>
   `;
@@ -1273,6 +1273,19 @@ async function poamWorkbookInlineUpdate(id, field, value) {
 
 async function poamWorkbookCreateItem() {
   const systemId = window.poamWorkbookState.activeSystemId;
+  if (!systemId || systemId === 'all') {
+    // Check if any systems exist
+    const systems = await window.poamWorkbookDB.getSystems();
+    if (!systems || systems.length === 0) {
+      showUpdateFeedback('Add a system first before creating a POA&M.', 'error');
+      poamWorkbookOpenAddSystemModal();
+      return;
+    }
+    showUpdateFeedback('Select a system from the dropdown before adding a POA&M.', 'error');
+    const sel = document.getElementById('poam-system-select');
+    if (sel) { sel.focus(); sel.style.outline = '2px solid #0D7377'; setTimeout(() => sel.style.outline = '', 2000); }
+    return;
+  }
   const nextNum = typeof window.poamWorkbookDB.reserveNextWorkbookItemNumber === 'function'
     ? await window.poamWorkbookDB.reserveNextWorkbookItemNumber(systemId)
     : await window.poamWorkbookDB.getNextItemNumber(systemId);
@@ -1345,7 +1358,7 @@ function poamWorkbookOpenImportErrorModal(message) {
       </div>
       <pre class="w-full max-h-[55vh] overflow-auto text-xs bg-slate-50 border border-slate-200 rounded-lg p-3 whitespace-pre-wrap">${escapeHtml(String(message || ''))}</pre>
       <div class="flex justify-end gap-3 mt-5">
-        <button id="wb-importerr-ok" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Close</button>
+        <button id="wb-importerr-ok" class="px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800">Close</button>
       </div>
     </div>
   `;
@@ -1380,6 +1393,9 @@ async function poamWorkbookExportSystem() {
   }
 }
 
+// Global alias so onclick="openAddSystemModal()" works from HTML
+window.openAddSystemModal = function() { poamWorkbookOpenAddSystemModal(); };
+
 function poamWorkbookOpenAddSystemModal() {
   const modal = document.createElement('div');
   modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
@@ -1392,16 +1408,16 @@ function poamWorkbookOpenAddSystemModal() {
       <div class="space-y-4">
         <div>
           <label class="block text-sm font-semibold text-slate-700 mb-2">System Name</label>
-          <input id="wb-addsys-name" type="text" class="w-full px-3 py-2 border border-slate-200 rounded-lg" placeholder="e.g., Enclave Echo">
+          <input id="wb-addsys-name" type="text" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-teal-600" placeholder="e.g., Enclave Echo">
         </div>
         <div>
           <label class="block text-sm font-semibold text-slate-700 mb-2">Description</label>
-          <input id="wb-addsys-desc" type="text" class="w-full px-3 py-2 border border-slate-200 rounded-lg" placeholder="Security Control Monitoring system">
+          <input id="wb-addsys-desc" type="text" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-teal-600" placeholder="Security Control Monitoring system">
         </div>
       </div>
       <div class="flex justify-end gap-3 mt-6">
         <button id="wb-addsys-cancel" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">Cancel</button>
-        <button id="wb-addsys-save" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save</button>
+        <button id="wb-addsys-save" class="px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800">Save</button>
       </div>
     </div>
   `;
@@ -1453,7 +1469,7 @@ async function poamWorkbookOpenItemDetails(id) {
           <div class="text-sm font-semibold truncate">${escapeHtml(item['Vulnerability Name'] || 'Workbook POAM')}</div>
         </div>
         <div class="flex items-center gap-2">
-          <button id="wb-save" class="text-xs font-semibold px-3 py-1 rounded bg-indigo-600 hover:bg-indigo-700">Save</button>
+          <button id="wb-save" class="text-xs font-semibold px-3 py-1 rounded bg-teal-700 hover:bg-teal-800">Save</button>
           <button id="wb-cancel" class="text-slate-300 hover:text-white"><i class="fas fa-times"></i></button>
         </div>
       </div>
@@ -1508,7 +1524,7 @@ async function poamWorkbookOpenItemDetails(id) {
               <div class="text-xs text-slate-600 mt-2">Controls</div>
               <div class="flex items-center gap-2">
                 <select id="wb-control-select" class="flex-1 text-xs border border-slate-200 rounded px-2 py-1 bg-white"></select>
-                <button type="button" class="px-2 py-1 text-xs bg-indigo-600 text-white rounded" onclick="wbAppendSelectedControl()">Add</button>
+                <button type="button" class="px-2 py-1 text-xs bg-teal-700 text-white rounded" onclick="wbAppendSelectedControl()">Add</button>
               </div>
               <button type="button" class="w-full mt-2 px-2 py-1 text-xs bg-white border border-slate-200 rounded hover:bg-slate-50" onclick="wbApplyMitigationTemplate()">Insert mitigation starter</button>
             </div>

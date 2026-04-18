@@ -71,7 +71,7 @@
                                     <strong>Due:</strong> <span id="selected-poam-due"></span>
                                 </div>
                             </div>
-                            <button onclick="clearPOAMSelection()" style="background:none;border:none;cursor:pointer;color:#9CA3AF;font-size:14px;padding:0;margin-left:8px"><i class="fas fa-times"></i></button>
+                            <button onclick="clearPOAMSelection()" style="background:none;border:none;cursor:pointer;color:#6B7280;font-size:14px;padding:0;margin-left:8px"><i class="fas fa-times"></i></button>
                         </div>
                     </div>
                 </div>
@@ -85,29 +85,29 @@
                         <div>
                             <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px">Artifact Owner *</label>
                             <input type="text" id="evidence-owner" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none" placeholder="e.g., John Smith" required>
-                            <div style="font-size:11px;color:#9CA3AF;margin-top:3px">Person responsible for the artifact</div>
+                            <div style="font-size:11px;color:#6B7280;margin-top:3px">Person responsible for the artifact</div>
                         </div>
                         <div>
                             <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px">Submitted By *</label>
                             <input type="text" id="evidence-submitter" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none" placeholder="e.g., Jane Doe" required>
-                            <div style="font-size:11px;color:#9CA3AF;margin-top:3px">Person uploading the evidence</div>
+                            <div style="font-size:11px;color:#6B7280;margin-top:3px">Person uploading the evidence</div>
                         </div>
                         <div>
                             <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px">Submission Date *</label>
                             <input type="date" id="evidence-date" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none" required>
-                            <div style="font-size:11px;color:#9CA3AF;margin-top:3px">Date evidence was provided</div>
+                            <div style="font-size:11px;color:#6B7280;margin-top:3px">Date evidence was provided</div>
                         </div>
                     </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
                         <div>
                             <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px">Evidence Reference ID</label>
                             <input type="text" id="evidence-reference" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none" placeholder="Auto-generated if empty">
-                            <div style="font-size:11px;color:#9CA3AF;margin-top:3px">Unique identifier for tracking</div>
+                            <div style="font-size:11px;color:#6B7280;margin-top:3px">Unique identifier for tracking</div>
                         </div>
                         <div>
                             <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px">Contact Email</label>
                             <input type="email" id="evidence-email" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none" placeholder="owner@example.com">
-                            <div style="font-size:11px;color:#9CA3AF;margin-top:3px">For follow-up questions</div>
+                            <div style="font-size:11px;color:#6B7280;margin-top:3px">For follow-up questions</div>
                         </div>
                     </div>
                 </div>
@@ -132,10 +132,10 @@
 
                 <!-- File Upload -->
                 <div style="margin:0 20px 20px;border:2px dashed #D1D5DB;border-radius:8px;padding:32px;text-align:center;cursor:pointer;transition:border-color 0.15s" onclick="document.getElementById('evidence-file-upload').click()">
-                    <i class="fas fa-cloud-upload-alt" style="font-size:32px;color:#9CA3AF;display:block;margin-bottom:10px"></i>
+                    <i class="fas fa-cloud-upload-alt" style="font-size:32px;color:#6B7280;display:block;margin-bottom:10px"></i>
                     <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:4px">Upload Evidence Files</div>
                     <div style="font-size:12.5px;color:#6B7280;margin-bottom:14px">Drag and drop files here or click to browse</div>
-                    <div style="font-size:11px;color:#9CA3AF;margin-bottom:14px">Supported: PDF, Images, Documents, Spreadsheets (Max 50MB per file)</div>
+                    <div style="font-size:11px;color:#6B7280;margin-bottom:14px">Supported: PDF, Images, Documents, Spreadsheets (Max 50MB per file)</div>
                     <input type="file" id="evidence-file-upload" class="hidden" multiple onchange="handleEvidenceUpload(event)">
                     <button type="button" class="btn-cta"><i class="fas fa-folder-open" style="margin-right:6px"></i>Choose Files</button>
                 </div>
@@ -170,10 +170,10 @@
                     </select>
                 </div>
                 <div id="evidence-list" style="padding:0 20px 20px;display:flex;flex-direction:column;gap:8px">
-                    <div style="text-align:center;padding:48px 0;color:#9CA3AF">
+                    <div style="text-align:center;padding:48px 0;color:#6B7280">
                         <i class="fas fa-folder-open" style="font-size:40px;display:block;margin-bottom:12px;opacity:0.4"></i>
                         <div style="font-size:14px;font-weight:600;color:#374151">No evidence uploaded yet</div>
-                        <div style="font-size:12px;color:#9CA3AF;margin-top:4px">Upload evidence files to link them to POAMs</div>
+                        <div style="font-size:12px;color:#6B7280;margin-top:4px">Upload evidence files to link them to POAMs</div>
                     </div>
                 </div>
             </div>
@@ -199,7 +199,7 @@
                             </thead>
                             <tbody id="scan-history-list">
                                 <tr>
-                                    <td colspan="5" style="padding:48px;text-align:center;color:#9CA3AF">
+                                    <td colspan="5" style="padding:48px;text-align:center;color:#6B7280">
                                         <i class="fas fa-history" style="font-size:36px;display:block;margin-bottom:12px;color:#E2E4E8"></i>
                                         <div style="font-size:13px;font-weight:500;color:#6B7280">Loading scan history...</div>
                                     </td>
