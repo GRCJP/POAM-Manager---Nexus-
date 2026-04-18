@@ -174,12 +174,15 @@ async function initPOAMWorkbookModule() {
 
 function poamWorkbookShowOverview() {
   window.poamWorkbookState.activeTab = 'overview';
+  window.poamWorkbookState.activeSystemId = null;
   const overview = document.getElementById('poam-workbook-view-overview');
   const system = document.getElementById('poam-workbook-view-system');
   const allSystems = document.getElementById('poam-workbook-view-all-systems');
   if (overview) overview.classList.remove('hidden');
   if (system) system.classList.add('hidden');
   if (allSystems) allSystems.classList.add('hidden');
+  const sel = document.getElementById('poam-system-select');
+  if (sel) sel.value = 'all';
 }
 
 async function poamWorkbookShowAllSystems() {
@@ -207,46 +210,85 @@ async function renderWorkbookSidebarSystems() {
   if (!container) return;
 
   const activeId = window.poamWorkbookState.activeSystemId;
+
+  // Populate the system select dropdown
+  const sel = document.getElementById('poam-system-select');
+  if (sel) {
+    // Rebuild options after "All Systems" (index 0)
+    while (sel.options.length > 1) sel.remove(1);
+    systems.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.id;
+      opt.textContent = s.name;
+      sel.appendChild(opt);
+    });
+    const onOverview = !activeId || window.poamWorkbookState.activeTab === 'overview';
+    sel.value = onOverview ? 'all' : (activeId || 'all');
+  }
+
+  // Keep container empty (no longer used for tabs)
+  container.innerHTML = '';
+}
+
+// Handle system dropdown selection
+window.poamWorkbookHandleSystemSelect = async function(value) {
+  if (value === 'all') {
+    window.poamWorkbookState.activeSystemId = null;
+    window.poamWorkbookState.activeTab = 'overview';
+    poamWorkbookShowOverview();
+  } else {
+    await poamWorkbookNavigateToSystem(value);
+  }
+};
+
+// Render per-system breakdown table into #poam-workbook-systems-table
+async function renderWorkbookSystemsTable() {
+  const container = document.getElementById('poam-workbook-systems-table');
+  if (!container) return;
+
+  const systems = await window.poamWorkbookDB.getSystems();
+  if (!systems || systems.length === 0) {
+    container.innerHTML = '<div style="padding:40px;text-align:center;color:#9CA3AF;font-size:13px">No systems configured. Click "Add System" to get started.</div>';
+    return;
+  }
+
+  const rows = await Promise.all(systems.map(async s => {
+    const items = await window.poamWorkbookDB.getItemsBySystem(s.id);
+    const a = computeWorkbookAnalytics(items, `sys-table:${s.id}`);
+    const open = items.filter(i => {
+      const st = String(i['Status'] || '').trim();
+      return st !== 'Completed' && st !== 'Closed';
+    }).length;
+    return { id: s.id, name: s.name, total: a.total, open, overdue: a.overdue, comingDue: a.comingDue };
+  }));
+
   container.innerHTML = `
-    <div class="space-y-2">
-      <div class="flex items-center justify-between">
-        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Systems</div>
-        <button
-          onclick="poamWorkbookOpenAddSystemModal()"
-          class="text-slate-400 hover:text-slate-200"
-          title="Add System"
-        ><i class="fas fa-plus text-xs"></i></button>
-      </div>
-      <div class="space-y-2">
-        ${systems.map(s => {
-          const isActive = s.id === activeId;
-          const cls = isActive
-            ? 'bg-indigo-600 text-white'
-            : 'text-slate-300 hover:bg-slate-800/60';
-          return `
-            <div class="flex items-center justify-between gap-2 px-3 py-2 rounded-lg ${cls}">
-              <button
-                class="text-sm font-semibold leading-none truncate text-left"
-                onclick="poamWorkbookNavigateToSystem('${escapeAttr(s.id)}')"
-                title="Open ${escapeAttr(s.name)}"
-              >${escapeHtml(s.name)}</button>
-              <div class="flex items-center gap-2">
-                <button
-                  class="text-white/70 hover:text-white"
-                  onclick="event.stopPropagation(); poamWorkbookOpenSystemIdConfigModal('${escapeAttr(s.id)}')"
-                  title="Workbook ID Settings"
-                ><i class="fas fa-cog text-xs"></i></button>
-                <button
-                  class="text-white/70 hover:text-white"
-                  onclick="event.stopPropagation(); poamWorkbookOpenEditSystemModal('${escapeAttr(s.id)}')"
-                  title="Edit System"
-                ><i class="fas fa-pen text-xs"></i></button>
-              </div>
-            </div>
-          `;
-        }).join('')}
-      </div>
-    </div>
+    <table style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr>
+          <th style="text-align:left;padding:10px 20px;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6">System</th>
+          <th style="text-align:center;padding:10px 16px;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6">Total</th>
+          <th style="text-align:center;padding:10px 16px;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6">Open</th>
+          <th style="text-align:center;padding:10px 16px;font-size:10px;font-weight:700;color:#991B1B;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6">Overdue</th>
+          <th style="text-align:center;padding:10px 16px;font-size:10px;font-weight:700;color:#B45309;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6">Coming Due</th>
+          <th style="padding:10px 20px;border-bottom:1px solid #F3F4F6"></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(r => `
+          <tr style="cursor:pointer" onclick="poamWorkbookNavigateToSystem('${escapeAttr(r.id)}')" onmouseover="this.style.background='#FAFAFA'" onmouseout="this.style.background=''">
+            <td style="padding:12px 20px;font-size:13px;font-weight:600;color:#111827;border-bottom:1px solid #F3F4F6">${escapeHtml(r.name)}</td>
+            <td style="padding:12px 16px;text-align:center;font-size:13px;font-weight:600;color:#374151;border-bottom:1px solid #F3F4F6">${r.total}</td>
+            <td style="padding:12px 16px;text-align:center;font-size:13px;font-weight:700;color:#111827;border-bottom:1px solid #F3F4F6">${r.open}</td>
+            <td style="padding:12px 16px;text-align:center;font-size:13px;font-weight:700;color:${r.overdue > 0 ? '#DC2626' : '#9CA3AF'};border-bottom:1px solid #F3F4F6">${r.overdue}</td>
+            <td style="padding:12px 16px;text-align:center;font-size:13px;font-weight:700;color:${r.comingDue > 0 ? '#B45309' : '#9CA3AF'};border-bottom:1px solid #F3F4F6">${r.comingDue}</td>
+            <td style="padding:12px 20px;text-align:right;border-bottom:1px solid #F3F4F6">
+              <button onclick="event.stopPropagation();poamWorkbookNavigateToSystem('${escapeAttr(r.id)}')" class="btn-sec" style="font-size:11.5px;padding:5px 12px">View</button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
   `;
 }
 
@@ -866,7 +908,11 @@ async function poamWorkbookNavigateToSystem(systemId) {
 
 async function poamWorkbookOpenSystem(systemId) {
   window.poamWorkbookState.activeSystemId = systemId;
+  window.poamWorkbookState.activeTab = 'system';
   poamWorkbookClearSelection();
+  // Sync dropdown
+  const sel = document.getElementById('poam-system-select');
+  if (sel) sel.value = systemId;
   await renderWorkbookSidebarSystems();
   await renderWorkbookSystemTable(systemId);
 
@@ -911,6 +957,9 @@ async function renderWorkbookOverview() {
 
   const controlsDist = document.getElementById('poam-workbook-controls-dist');
   if (controlsDist) controlsDist.innerHTML = renderTopList(analytics.controlsDist);
+
+  // Render per-system breakdown table
+  await renderWorkbookSystemsTable();
 }
 
 async function renderWorkbookSystemTable(systemId) {

@@ -1,0 +1,290 @@
+        <div id="security-control-monitoring-module" class="module hidden">
+
+            <!-- Page Header -->
+            <div class="ph">
+                <div>
+                    <div class="ph-title">POA&amp;M Workbook</div>
+                    <div class="ph-meta">
+                        <span class="ph-tag teal" id="poam-header-system-tag">All Systems</span>
+                        <span class="ph-tag" id="poam-header-fisma-tag">FISMA Moderate</span>
+                        <span class="ph-tag" id="poam-header-open-count-tag">0 Open</span>
+                    </div>
+                </div>
+                <div class="ph-actions">
+                    <button onclick="poamWorkbookCreateItem()" class="btn-cta"><i class="fas fa-plus" style="margin-right:6px"></i>Add POA&amp;M</button>
+                    <button onclick="poamWorkbookExportSystem()" class="btn-sec"><i class="fas fa-file-export" style="margin-right:6px;color:#0D7377"></i>Export</button>
+                    <label class="btn-sec" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;margin:0">
+                        <i class="fas fa-file-import" style="color:#0D7377"></i>Import
+                        <input type="file" accept=".xlsx" class="hidden" onchange="poamWorkbookHandleImportInputWithPreview(event)">
+                    </label>
+                </div>
+            </div>
+
+            <!-- System Selector -->
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+                <span style="font-size:11px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.8px;white-space:nowrap;flex-shrink:0">System</span>
+                <select id="poam-system-select" onchange="poamWorkbookHandleSystemSelect(this.value)" style="border:1px solid #D1D5DB;border-radius:6px;padding:7px 12px;font-size:13px;font-weight:600;color:#111827;font-family:inherit;outline:none;background:#fff;cursor:pointer;min-width:220px;max-width:320px">
+                    <option value="all">All Systems — Overview</option>
+                </select>
+                <div id="scm-poam-workbook-systems" style="display:none"></div>
+                <div id="poam-sys-pill-all" style="display:none"></div>
+                <button onclick="openAddSystemModal()" class="btn-sec" style="font-size:12px;white-space:nowrap;flex-shrink:0">
+                    <i class="fas fa-plus" style="margin-right:5px;color:#0D7377"></i>Add System
+                </button>
+            </div>
+
+            <div id="poam-workbook-main">
+                <!-- Overview view -->
+                <div id="poam-workbook-view-overview" class="poam-workbook-view">
+
+                    <!-- 3 KPI tiles: the actionable ones -->
+                    <div class="kpi-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px">
+                        <div class="kpi">
+                            <div class="kpi-top-bar" style="background:#0D7377"></div>
+                            <div class="kpi-lbl">Total POAMs</div>
+                            <div class="kpi-num" id="poam-workbook-metric-total">0</div>
+                        </div>
+                        <div class="kpi urgent">
+                            <div class="kpi-lbl">Overdue</div>
+                            <div class="kpi-num" id="poam-workbook-metric-overdue">0</div>
+                            <div class="kpi-sub warn-text">Requires attention</div>
+                        </div>
+                        <div class="kpi">
+                            <div class="kpi-top-bar" style="background:#F59E0B"></div>
+                            <div class="kpi-lbl">Coming Due (30d)</div>
+                            <div class="kpi-num" id="poam-workbook-metric-coming-due" style="color:#B45309">0</div>
+                        </div>
+                    </div>
+
+                    <!-- Hidden IDs preserved for JS compat -->
+                    <div style="display:none">
+                        <span id="poam-workbook-metric-missing-poc"></span>
+                        <span id="poam-workbook-metric-completed"></span>
+                        <div id="poam-workbook-metric-status"></div>
+                        <div id="poam-workbook-metric-severity"></div>
+                        <div id="poam-workbook-controls-dist"></div>
+                        <div id="poam-workbook-top-vulns"></div>
+                    </div>
+
+                    <!-- Per-system breakdown table -->
+                    <div class="card">
+                        <div class="card-head" style="padding-bottom:12px">
+                            <div>
+                                <div class="card-title">Systems Overview</div>
+                                <div class="card-sub">Open POAMs and upcoming deadlines by system</div>
+                            </div>
+                            <button onclick="poamWorkbookExportAllSystems()" class="btn-sec" style="font-size:12px;margin-top:2px">
+                                <i class="fas fa-file-export" style="margin-right:5px;color:#0D7377"></i>Export All
+                            </button>
+                        </div>
+                        <div style="height:1px;background:#F3F4F6;margin:0 20px"></div>
+                        <div id="poam-workbook-systems-table" style="overflow-x:auto">
+                            <div style="padding:40px;text-align:center;color:#9CA3AF;font-size:13px">Loading systems...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System view -->
+                <div id="poam-workbook-view-system" class="poam-workbook-view hidden">
+
+                    <!-- System context strip: active system name + total, kept for JS targeting -->
+                    <div style="display:none">
+                        <span id="poam-workbook-active-system-name"></span>
+                        <span id="poam-workbook-system-total">0</span>
+                    </div>
+
+                    <!-- Quick Status Panel -->
+                    <div id="poam-workbook-quick-status" style="margin-bottom:14px"></div>
+
+                    <!-- Filter + Table unified Card -->
+                    <div class="card" style="margin-bottom:14px">
+
+                        <!-- Filter bar -->
+                        <div style="padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid #F3F4F6">
+                            <!-- Search -->
+                            <div style="flex:1;min-width:180px;position:relative">
+                                <i class="fas fa-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#9CA3AF;font-size:12px;pointer-events:none"></i>
+                                <input type="text" id="poam-workbook-search" placeholder="Search POA&amp;Ms..." style="width:100%;border:1px solid #E2E4E8;border-radius:6px;padding:7px 12px 7px 30px;font-size:13px;color:#374151;font-family:inherit;outline:none;box-sizing:border-box" oninput="window.poamWorkbookState.filters.searchText=this.value; poamWorkbookApplyFilters()">
+                            </div>
+                            <!-- Control family pills -->
+                            <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+                                <span style="font-size:11px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;margin-right:2px;white-space:nowrap">Family:</span>
+                                <button onclick="poamWorkbookSetCFFilter('all',this)" class="poam-cf-pill" style="padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:700;border:1px solid #CCEEEE;background:#E6F7F7;color:#0D7377;cursor:pointer;font-family:inherit">All</button>
+                                <button onclick="poamWorkbookSetCFFilter('AC',this)" class="poam-cf-pill" style="padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:700;border:1px solid #E2E4E8;background:#fff;color:#374151;cursor:pointer;font-family:inherit">AC</button>
+                                <button onclick="poamWorkbookSetCFFilter('AU',this)" class="poam-cf-pill" style="padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:700;border:1px solid #E2E4E8;background:#fff;color:#374151;cursor:pointer;font-family:inherit">AU</button>
+                                <button onclick="poamWorkbookSetCFFilter('CM',this)" class="poam-cf-pill" style="padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:700;border:1px solid #E2E4E8;background:#fff;color:#374151;cursor:pointer;font-family:inherit">CM</button>
+                                <button onclick="poamWorkbookSetCFFilter('IA',this)" class="poam-cf-pill" style="padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:700;border:1px solid #E2E4E8;background:#fff;color:#374151;cursor:pointer;font-family:inherit">IA</button>
+                                <button onclick="poamWorkbookSetCFFilter('IR',this)" class="poam-cf-pill" style="padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:700;border:1px solid #E2E4E8;background:#fff;color:#374151;cursor:pointer;font-family:inherit">IR</button>
+                                <button onclick="poamWorkbookSetCFFilter('RA',this)" class="poam-cf-pill" style="padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:700;border:1px solid #E2E4E8;background:#fff;color:#374151;cursor:pointer;font-family:inherit">RA</button>
+                                <button onclick="poamWorkbookSetCFFilter('SC',this)" class="poam-cf-pill" style="padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:700;border:1px solid #E2E4E8;background:#fff;color:#374151;cursor:pointer;font-family:inherit">SC</button>
+                                <button onclick="poamWorkbookSetCFFilter('SI',this)" class="poam-cf-pill" style="padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:700;border:1px solid #E2E4E8;background:#fff;color:#374151;cursor:pointer;font-family:inherit">SI</button>
+                                <button onclick="poamWorkbookSetCFFilter('more',this)" class="poam-cf-pill" style="padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:700;border:1px solid #E2E4E8;background:#fff;color:#6B7280;cursor:pointer;font-family:inherit">+ more</button>
+                            </div>
+                            <!-- Status pills -->
+                            <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+                                <span style="font-size:11px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;margin-right:2px;white-space:nowrap">Status:</span>
+                                <button onclick="window.poamWorkbookState.filters.status='all'; poamWorkbookApplyFilters(); poamWorkbookSyncStatusPills(this)" class="poam-status-pill" data-status="all" style="padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:700;border:1px solid #CCEEEE;background:#E6F7F7;color:#0D7377;cursor:pointer;font-family:inherit">All</button>
+                                <button onclick="window.poamWorkbookState.filters.status='Open'; poamWorkbookApplyFilters(); poamWorkbookSyncStatusPills(this)" class="poam-status-pill" data-status="Open" style="padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:700;border:1px solid #E2E4E8;background:#fff;color:#374151;cursor:pointer;font-family:inherit">Open</button>
+                                <button onclick="window.poamWorkbookState.filters.status='In Progress'; poamWorkbookApplyFilters(); poamWorkbookSyncStatusPills(this)" class="poam-status-pill" data-status="In Progress" style="padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:700;border:1px solid #E2E4E8;background:#fff;color:#374151;cursor:pointer;font-family:inherit">In Progress</button>
+                                <button onclick="window.poamWorkbookState.filters.status='Delayed'; poamWorkbookApplyFilters(); poamWorkbookSyncStatusPills(this)" class="poam-status-pill" data-status="Delayed" style="padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:700;border:1px solid #E2E4E8;background:#fff;color:#374151;cursor:pointer;font-family:inherit">Delayed</button>
+                                <button onclick="window.poamWorkbookState.filters.status='Closed'; poamWorkbookApplyFilters(); poamWorkbookSyncStatusPills(this)" class="poam-status-pill" data-status="Closed" style="padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:700;border:1px solid #E2E4E8;background:#fff;color:#374151;cursor:pointer;font-family:inherit">Closed</button>
+                                <button onclick="window.poamWorkbookState.filters.status='Risk Accepted'; poamWorkbookApplyFilters(); poamWorkbookSyncStatusPills(this)" class="poam-status-pill" data-status="Risk Accepted" style="padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:700;border:1px solid #E2E4E8;background:#fff;color:#374151;cursor:pointer;font-family:inherit">Risk Accepted</button>
+                            </div>
+                            <!-- Hidden legacy selects preserved for JS compatibility -->
+                            <select id="poam-workbook-filter-status" class="hidden" onchange="window.poamWorkbookState.filters.status=this.value; poamWorkbookApplyFilters()">
+                                <option value="all">All Status</option>
+                                <option value="Open">Open</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Closed">Closed</option>
+                                <option value="Delayed">Delayed</option>
+                                <option value="Risk Accepted">Risk Accepted</option>
+                            </select>
+                            <select id="poam-workbook-filter-severity" class="hidden" onchange="window.poamWorkbookState.filters.severity=this.value; poamWorkbookApplyFilters()">
+                                <option value="all">All Severity</option>
+                                <option value="Critical">Critical</option>
+                                <option value="High">High</option>
+                                <option value="Moderate">Moderate</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                            </select>
+                            <select id="poam-workbook-filter-date" class="hidden" onchange="window.poamWorkbookState.filters.dateRange=this.value; poamWorkbookApplyFilters()">
+                                <option value="all">All Dates</option>
+                                <option value="overdue">Overdue</option>
+                                <option value="coming-due">Coming Due (30 days)</option>
+                            </select>
+                            <!-- Reset -->
+                            <button onclick="window.poamWorkbookState.filters={searchText:'',status:'all',severity:'all',poc:'all',dateRange:'all',controlFamily:'all'}; document.getElementById('poam-workbook-search').value=''; document.getElementById('poam-workbook-filter-status').value='all'; document.getElementById('poam-workbook-filter-severity').value='all'; document.getElementById('poam-workbook-filter-date').value='all'; poamWorkbookApplyFilters()" class="btn-sec" style="padding:6px 12px;font-size:12px;white-space:nowrap">
+                                <i class="fas fa-redo" style="margin-right:4px"></i>Reset
+                            </button>
+                        </div>
+
+                        <!-- Bulk Actions bar (hidden until rows selected) -->
+                        <div id="poam-workbook-bulk-actions" class="hidden" style="padding:10px 16px;background:#E6F7F7;border-bottom:1px solid #CCEEEE;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                            <div style="font-size:12.5px;font-weight:700;color:#0A5E62">
+                                Selected: <span id="poam-workbook-selected-count" style="font-weight:900">0</span>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:6px">
+                                <button onclick="poamWorkbookBulkUpdateStatus()" class="btn-sec" style="font-size:11.5px;padding:5px 10px">
+                                    <i class="fas fa-flag" style="margin-right:4px;color:#0D7377"></i>Update Status
+                                </button>
+                                <button onclick="poamWorkbookBulkDeleteSelected()" style="background:#DC2626;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit">
+                                    <i class="fas fa-trash" style="margin-right:4px"></i>Delete
+                                </button>
+                                <button onclick="poamWorkbookClearSelection()" class="btn-sec" style="font-size:11.5px;padding:5px 10px">Clear</button>
+                            </div>
+                        </div>
+
+                        <!-- POA&M Table -->
+                        <div style="overflow-x:auto">
+                            <table style="width:100%;border-collapse:collapse">
+                                <thead>
+                                    <tr style="background:#F9FAFB">
+                                        <th style="text-align:left;padding:10px 16px;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;width:36px">
+                                            <input id="poam-workbook-select-all" type="checkbox" onchange="poamWorkbookToggleSelectAll(this.checked)" onclick="event.stopPropagation()" />
+                                        </th>
+                                        <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;white-space:nowrap">POAM ID</th>
+                                        <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;white-space:nowrap">Control</th>
+                                        <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6">Weakness</th>
+                                        <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6">System</th>
+                                        <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6">Severity</th>
+                                        <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6">Status</th>
+                                        <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6">Milestone</th>
+                                        <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;white-space:nowrap">Due Date</th>
+                                        <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6">POC</th>
+                                        <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="poam-workbook-table-body"></tbody>
+                            </table>
+                        </div>
+
+                        <!-- Empty state (toggled by JS) -->
+                        <div id="poam-workbook-empty-state" class="hidden" style="padding:52px 20px;text-align:center">
+                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin:0 auto 16px;display:block">
+                                <rect x="8" y="6" width="32" height="36" rx="3" stroke="#D1D5DB" stroke-width="2" fill="#F9FAFB"/>
+                                <line x1="14" y1="16" x2="34" y2="16" stroke="#D1D5DB" stroke-width="1.5" stroke-linecap="round"/>
+                                <line x1="14" y1="22" x2="34" y2="22" stroke="#D1D5DB" stroke-width="1.5" stroke-linecap="round"/>
+                                <line x1="14" y1="28" x2="26" y2="28" stroke="#D1D5DB" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                            <div style="font-size:14px;font-weight:700;color:#374151;margin-bottom:6px">No POA&amp;Ms for this system</div>
+                            <div style="font-size:12.5px;color:#6B7280;margin-bottom:16px">Track control deficiency items by adding the first POA&amp;M entry.</div>
+                            <button onclick="poamWorkbookCreateItem()" class="btn-cta"><i class="fas fa-plus" style="margin-right:6px"></i>Add the first POA&amp;M</button>
+                        </div>
+                    </div>
+
+                    <!-- Control Family Summary Strip -->
+                    <div class="metrics-strip" id="poam-cf-summary-strip" style="margin-bottom:14px">
+                        <div class="ms-item">
+                            <div>
+                                <div class="ms-val" id="poam-cf-ac">—</div>
+                                <div class="ms-label">AC</div>
+                                <div class="ms-sub">Access Control</div>
+                            </div>
+                        </div>
+                        <div class="ms-item">
+                            <div>
+                                <div class="ms-val" id="poam-cf-au">—</div>
+                                <div class="ms-label">AU</div>
+                                <div class="ms-sub">Audit &amp; Accountability</div>
+                            </div>
+                        </div>
+                        <div class="ms-item">
+                            <div>
+                                <div class="ms-val" id="poam-cf-cm">—</div>
+                                <div class="ms-label">CM</div>
+                                <div class="ms-sub">Config Mgmt</div>
+                            </div>
+                        </div>
+                        <div class="ms-item">
+                            <div>
+                                <div class="ms-val" id="poam-cf-ia">—</div>
+                                <div class="ms-label">IA</div>
+                                <div class="ms-sub">Identification &amp; Auth</div>
+                            </div>
+                        </div>
+                        <div class="ms-item">
+                            <div>
+                                <div class="ms-val" id="poam-cf-ir">—</div>
+                                <div class="ms-label">IR</div>
+                                <div class="ms-sub">Incident Response</div>
+                            </div>
+                        </div>
+                        <div class="ms-item">
+                            <div>
+                                <div class="ms-val" id="poam-cf-ra">—</div>
+                                <div class="ms-label">RA</div>
+                                <div class="ms-sub">Risk Assessment</div>
+                            </div>
+                        </div>
+                        <div class="ms-item">
+                            <div>
+                                <div class="ms-val" id="poam-cf-sc">—</div>
+                                <div class="ms-label">SC</div>
+                                <div class="ms-sub">System &amp; Comm</div>
+                            </div>
+                        </div>
+                        <div class="ms-item">
+                            <div>
+                                <div class="ms-val" id="poam-cf-si">—</div>
+                                <div class="ms-label">SI</div>
+                                <div class="ms-sub">System Integrity</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Secondary system actions (destructive / utility) -->
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+                        <button onclick="poamWorkbookClearSystemPOAMs()" class="btn-sec" style="color:#DC2626;border-color:#FECACA;font-size:12px;padding:5px 10px" title="Clear all POAMs for this system">
+                            <i class="fas fa-trash-alt" style="margin-right:4px"></i>Clear System
+                        </button>
+                        <button onclick="poamWorkbookOpenPasteModal()" class="btn-sec" style="font-size:12px;padding:5px 10px"><i class="fas fa-paste" style="margin-right:4px"></i>Paste POAMs</button>
+                        <button onclick="poamWorkbookExportAll()" class="btn-sec" style="font-size:12px;padding:5px 10px"><i class="fas fa-file-export" style="margin-right:4px"></i>Export All</button>
+                    </div>
+                </div>
+
+                <div id="poam-workbook-view-all-systems" class="poam-workbook-view hidden">
+                    <!-- All systems view will be rendered here -->
+                </div>
+            </div>
+        </div>

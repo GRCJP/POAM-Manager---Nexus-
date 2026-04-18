@@ -33,18 +33,13 @@ function toggleSidebarSection(sectionId) {
 
 // Update sidebar active state
 function updateSidebarActiveState(moduleName) {
-    // Remove active class from all sidebar links
-    const sidebarLinks = document.querySelectorAll('.sidebar-link, .sidebar-sublink');
-    sidebarLinks.forEach(link => {
-        link.classList.remove('bg-indigo-600', 'text-white');
-        link.classList.add('text-slate-100');
+    // Use mockup-C .active class — remove from all, add to matching link
+    document.querySelectorAll('.sidebar-link, .sidebar-sublink, .sb-item').forEach(link => {
+        link.classList.remove('active');
     });
-    
-    // Add active class to current link
     const activeLink = document.querySelector(`[onclick*="showModule('${moduleName}')"]`);
-    if (activeLink && (activeLink.classList.contains('sidebar-link') || activeLink.classList.contains('sidebar-sublink'))) {
-        activeLink.classList.add('bg-indigo-600', 'text-white');
-        activeLink.classList.remove('text-slate-100');
+    if (activeLink) {
+        activeLink.classList.add('active');
     }
 }
 
@@ -70,16 +65,7 @@ function showSettingsTab(tabName) {
         selectedTab.classList.remove('hidden');
     }
 
-    // Update tab button active state
-    document.querySelectorAll('.settings-tab-btn').forEach(btn => {
-        btn.classList.remove('border-indigo-500', 'text-indigo-600');
-        btn.classList.add('border-transparent', 'text-slate-500');
-    });
-    const activeBtn = document.getElementById(`btn-settings-${finalTabName}`);
-    if (activeBtn) {
-        activeBtn.classList.remove('border-transparent', 'text-slate-500');
-        activeBtn.classList.add('border-indigo-500', 'text-indigo-600');
-    }
+    // Update tab button active state (mockup-C: settings uses sidebar nav, no in-module tab bar)
 
     // Update sidebar active state
     updateSettingsSubmenuActiveState(finalTabName);
@@ -106,15 +92,13 @@ function showSettingsTab(tabName) {
 
 // Update settings submenu active state
 function updateSettingsSubmenuActiveState(tabName) {
-    const settingsSubmenu = document.querySelectorAll('#settings-section .sidebar-sublink');
-    settingsSubmenu.forEach(link => {
-        link.classList.remove('bg-slate-700', 'text-white');
+    document.querySelectorAll('.sidebar-sublink, .sb-item').forEach(link => {
+        if (link.getAttribute('onclick') && link.getAttribute('onclick').includes('showSettingsTab')) {
+            link.classList.remove('active');
+        }
     });
-    
     const activeLink = document.querySelector(`[onclick*="showSettingsTab('${tabName}')"]`);
-    if (activeLink) {
-        activeLink.classList.add('bg-slate-700', 'text-white');
-    }
+    if (activeLink) activeLink.classList.add('active');
 }
 
 // Show specific admin tab
@@ -148,15 +132,13 @@ function showAdminTab(tabName) {
 
 // Update admin submenu active state
 function updateAdminSubmenuActiveState(tabName) {
-    const adminSubmenu = document.querySelectorAll('#admin-section .sidebar-sublink');
-    adminSubmenu.forEach(link => {
-        link.classList.remove('bg-slate-700', 'text-white');
+    document.querySelectorAll('.sidebar-sublink, .sb-item').forEach(link => {
+        if (link.getAttribute('onclick') && link.getAttribute('onclick').includes('showAdminTab')) {
+            link.classList.remove('active');
+        }
     });
-    
     const activeLink = document.querySelector(`[onclick*="showAdminTab('${tabName}')"]`);
-    if (activeLink) {
-        activeLink.classList.add('bg-slate-700', 'text-white');
-    }
+    if (activeLink) activeLink.classList.add('active');
 }
 
 // Settings functions
@@ -282,20 +264,20 @@ function updateFrameworkInfo() {
     const data = frameworkData[framework] || frameworkData['nist'];
     
     infoDiv.innerHTML = `
-        <h4 class="font-bold text-indigo-900 mb-2 text-lg">${data.name}</h4>
-        <p class="text-sm text-indigo-800 mb-4">${data.description}</p>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div class="bg-white rounded-lg p-3">
-                <strong class="text-indigo-900">Control Families:</strong>
-                <p class="text-slate-600">${data.families}</p>
+        <p style="font-size:15px;font-weight:700;color:#0D7377;margin:0 0 6px">${data.name}</p>
+        <p style="font-size:13px;color:#374151;margin:0 0 16px">${data.description}</p>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+            <div style="background:#fff;border-radius:6px;padding:12px;border:1px solid #E2E4E8">
+                <p style="font-size:11px;font-weight:700;color:#0D7377;margin:0 0 4px">Control Families</p>
+                <p style="font-size:13px;color:#374151;margin:0">${data.families}</p>
             </div>
-            <div class="bg-white rounded-lg p-3">
-                <strong class="text-indigo-900">Total Controls:</strong>
-                <p class="text-slate-600">${data.controls}</p>
+            <div style="background:#fff;border-radius:6px;padding:12px;border:1px solid #E2E4E8">
+                <p style="font-size:11px;font-weight:700;color:#0D7377;margin:0 0 4px">Total Controls</p>
+                <p style="font-size:13px;color:#374151;margin:0">${data.controls}</p>
             </div>
-            <div class="bg-white rounded-lg p-3">
-                <strong class="text-indigo-900">Impact Levels:</strong>
-                <p class="text-slate-600">${data.levels}</p>
+            <div style="background:#fff;border-radius:6px;padding:12px;border:1px solid #E2E4E8">
+                <p style="font-size:11px;font-weight:700;color:#0D7377;margin:0 0 4px">Impact Levels</p>
+                <p style="font-size:13px;color:#374151;margin:0">${data.levels}</p>
             </div>
         </div>
     `;

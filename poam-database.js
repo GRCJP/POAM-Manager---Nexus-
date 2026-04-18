@@ -402,10 +402,10 @@ class POAMDatabase {
             name: asset.name || asset.assetName || asset.asset_name || asset.assetId || 'Unknown Asset',
             ipv4: asset.ipv4 || asset.ip || asset.asset_ipv4 || '',
             os: asset.os || asset.operatingSystem || 'Unknown',
+            results: asset.results || asset.result || asset.findingResults || '',
             status: asset.status || 'affected',
             firstDetected: asset.firstDetected || asset.scanDate || new Date().toISOString().split('T')[0],
             lastDetected: asset.lastDetected || asset.scanDate || new Date().toISOString().split('T')[0]
-            // Removed: result, results, solution, raw (stored in scan summaries)
         }));
     }
 

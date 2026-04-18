@@ -142,7 +142,7 @@ class JiraIntegration {
         }
 
         description += `----\n`;
-        description += `View in POAM Nexus: [Dashboard|${this.getAppURL()}#/poam/${poam.id}]\n`;
+        description += `View in TRACE: [Dashboard|${this.getAppURL()}#/poam/${poam.id}]\n`;
 
         return description;
     }
@@ -435,7 +435,7 @@ class EmailDelivery {
         const subject = this.config.templates?.subject
             ?.replace('{count}', totalCount)
             ?.replace('{team}', pocTeam)
-            || `[POAM Nexus] Weekly Security Alert - ${totalCount} New POAMs Assigned to ${pocTeam}`;
+            || `[TRACE] Weekly Security Alert - ${totalCount} New POAMs Assigned to ${pocTeam}`;
 
         const html = this.generateHTMLEmail(pocTeam, groupedPOAMs, totalCount, batchId);
         const text = this.generatePlainTextEmail(pocTeam, groupedPOAMs, totalCount, batchId);
@@ -483,7 +483,7 @@ class EmailDelivery {
 <body>
     <div class="container">
         <div class="header">
-            <h1>POAM Nexus Weekly Security Alert</h1>
+            <h1>TRACE Weekly Security Alert</h1>
             <p>New POAMs assigned to ${pocTeam}</p>
         </div>
         
@@ -527,7 +527,7 @@ class EmailDelivery {
 
             <p><strong>Action Required:</strong></p>
             <ol>
-                <li>Review each POAM in POAM Nexus dashboard</li>
+                <li>Review each POAM in TRACE dashboard</li>
                 <li>Acknowledge receipt via links above</li>
                 <li>Request extensions if needed (requires justification)</li>
             </ol>
@@ -536,7 +536,7 @@ class EmailDelivery {
         </div>
 
         <div class="footer">
-            <p>This is an automated notification from POAM Nexus.</p>
+            <p>This is an automated notification from TRACE.</p>
             <p>Sent: ${new Date().toLocaleString()}</p>
         </div>
     </div>
@@ -641,7 +641,7 @@ SUMMARY:
 • Batch ID: ${batchId}
 
 ACTION REQUIRED:
-1. Review each POAM in POAM Nexus dashboard
+1. Review each POAM in TRACE dashboard
 2. Acknowledge receipt
 3. Request extensions if needed (requires justification)
 
@@ -650,7 +650,7 @@ Dashboard: ${this.getAppURL()}
 Questions? Contact Security Team at ${this.config.replyTo || 'security-team@agency.gov'}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-This is an automated notification from POAM Nexus.
+This is an automated notification from TRACE.
 Sent: ${new Date().toLocaleString()}
 `;
 

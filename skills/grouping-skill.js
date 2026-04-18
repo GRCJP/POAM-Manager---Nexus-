@@ -32,7 +32,14 @@ class GroupingSkill extends BaseSkill {
             }
             
             // Build signature from remediation object
-            const signature = `${rem.actionType || 'other'}::${rem.targetKey || 'unknown'}::${rem.assetClass || 'general'}`;
+            // CRITICAL: include ignored/risk-accepted flag as part of the signature so
+            // risk-accepted findings NEVER merge into the same POAM as open findings.
+            const status = (finding.status || '').toLowerCase().trim();
+            const isRiskAccepted = finding.ignored === true ||
+                status === 'risk accepted' || status === 'risk-accepted' ||
+                status === 'ignored' || status === 'yes';
+            const statusBucket = isRiskAccepted ? 'risk-accepted' : 'open';
+            const signature = `${rem.actionType || 'other'}::${rem.targetKey || 'unknown'}::${rem.assetClass || 'general'}::${statusBucket}`;
             
             // Create or update group
             if (!groups.has(signature)) {

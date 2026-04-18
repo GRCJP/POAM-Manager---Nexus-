@@ -1,0 +1,143 @@
+        <div id="admin-module" class="module hidden">
+            <div class="ph">
+                <div>
+                    <div class="ph-title">Administration</div>
+                    <div class="ph-meta">Manage users, organization settings, and system permissions</div>
+                </div>
+            </div>
+
+            <!-- User Management Tab -->
+            <div id="admin-users" class="admin-tab">
+                <div class="card">
+                    <div class="card-head" style="display:flex;align-items:center;justify-content:space-between">
+                        <div>
+                            <span class="card-title"><i class="fas fa-users" style="color:#0D7377;margin-right:8px"></i>User Management</span>
+                            <span class="card-sub">Manage user accounts, roles, and access permissions</span>
+                        </div>
+                        <button class="btn-cta"><i class="fas fa-user-plus" style="margin-right:6px"></i>Add User</button>
+                    </div>
+                    <div style="height:1px;background:#F3F4F6;margin:0 20px"></div>
+                    <div style="padding:16px 20px">
+                        <input type="text" placeholder="Search users..." style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none;box-sizing:border-box;margin-bottom:16px">
+                        <div style="overflow-x:auto">
+                            <table style="width:100%;border-collapse:collapse">
+                                <thead>
+                                    <tr>
+                                        <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;padding:10px 12px;text-align:left">User</th>
+                                        <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;padding:10px 12px;text-align:left">Role</th>
+                                        <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;padding:10px 12px;text-align:left">Department</th>
+                                        <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;padding:10px 12px;text-align:left">Status</th>
+                                        <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;padding:10px 12px;text-align:left">Last Active</th>
+                                        <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;padding:10px 12px;text-align:right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr style="border-bottom:1px solid #F9FAFB">
+                                        <td style="padding:12px">
+                                            <div style="display:flex;align-items:center;gap:10px">
+                                                <div style="width:36px;height:36px;background:#E6F7F7;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#0D7377;flex-shrink:0">AU</div>
+                                                <div>
+                                                    <p style="font-size:13px;font-weight:600;color:#1F2937;margin:0">Admin User</p>
+                                                    <p style="font-size:11px;color:#9CA3AF;margin:0">admin@poamnexus.com</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td style="padding:12px"><span style="font-size:11px;font-weight:700;color:#0A5E62;background:#E6F7F7;padding:3px 8px;border-radius:4px">Administrator</span></td>
+                                        <td style="padding:12px;font-size:13px;color:#374151">Security Operations</td>
+                                        <td style="padding:12px"><span style="font-size:11px;font-weight:700;color:#047857;background:#D1FAE5;padding:3px 8px;border-radius:4px">Active</span></td>
+                                        <td style="padding:12px;font-size:13px;color:#6B7280">Just now</td>
+                                        <td style="padding:12px;text-align:right">
+                                            <button style="background:none;border:none;cursor:pointer;color:#0D7377;font-size:14px;margin-right:8px"><i class="fas fa-edit"></i></button>
+                                            <button style="background:none;border:none;cursor:pointer;color:#6B7280;font-size:14px"><i class="fas fa-ellipsis-v"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Organization Tab -->
+            <div id="admin-organization" class="admin-tab hidden">
+                <div class="card">
+                    <div class="card-head">
+                        <span class="card-title"><i class="fas fa-building" style="color:#0D7377;margin-right:8px"></i>Organization Settings</span>
+                        <span class="card-sub">Configure organization-wide settings and information</span>
+                    </div>
+                    <div style="height:1px;background:#F3F4F6;margin:0 20px"></div>
+                    <div style="padding:20px">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+                            <div>
+                                <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px">Organization Name</label>
+                                <input type="text" value="TRACE" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none;box-sizing:border-box">
+                            </div>
+                            <div>
+                                <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px">Organization ID</label>
+                                <input type="text" value="ORG-2024-001" disabled style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 12px;font-size:13px;color:#9CA3AF;font-family:inherit;outline:none;background:#F3F4F6;box-sizing:border-box">
+                            </div>
+                            <div>
+                                <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px">Primary Contact</label>
+                                <input type="email" value="security@organization.com" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none;box-sizing:border-box">
+                            </div>
+                            <div>
+                                <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px">Time Zone</label>
+                                <select style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none">
+                                    <option>UTC-05:00 (Eastern Time)</option>
+                                    <option>UTC-06:00 (Central Time)</option>
+                                    <option>UTC-07:00 (Mountain Time)</option>
+                                    <option>UTC-08:00 (Pacific Time)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="margin-bottom:20px">
+                            <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px">Organization Description</label>
+                            <textarea rows="3" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none;resize:vertical;box-sizing:border-box">Enterprise security operations and compliance management</textarea>
+                        </div>
+                        <div style="display:flex;justify-content:flex-end">
+                            <button class="btn-cta"><i class="fas fa-save" style="margin-right:6px"></i>Save Organization Settings</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Roles & Permissions Tab -->
+            <div id="admin-roles" class="admin-tab hidden">
+                <div class="card">
+                    <div class="card-head" style="display:flex;align-items:center;justify-content:space-between">
+                        <div>
+                            <span class="card-title"><i class="fas fa-user-shield" style="color:#0D7377;margin-right:8px"></i>Roles &amp; Permissions</span>
+                            <span class="card-sub">Define user roles and their access permissions</span>
+                        </div>
+                        <button class="btn-cta"><i class="fas fa-plus" style="margin-right:6px"></i>Create Role</button>
+                    </div>
+                    <div style="height:1px;background:#F3F4F6;margin:0 20px"></div>
+                    <div style="padding:20px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+                        <div style="border:1px solid #E2E4E8;border-radius:8px;padding:16px;cursor:pointer">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                                <p style="font-size:13px;font-weight:700;color:#1F2937;margin:0">Administrator</p>
+                                <span style="font-size:10px;font-weight:700;color:#0A5E62;background:#E6F7F7;padding:2px 8px;border-radius:4px">Full Access</span>
+                            </div>
+                            <p style="font-size:12px;color:#6B7280;margin:0 0 10px">Complete system access and configuration</p>
+                            <p style="font-size:11px;color:#9CA3AF;margin:0"><i class="fas fa-users" style="margin-right:4px"></i>3 users</p>
+                        </div>
+                        <div style="border:1px solid #E2E4E8;border-radius:8px;padding:16px;cursor:pointer">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                                <p style="font-size:13px;font-weight:700;color:#1F2937;margin:0">Security Analyst</p>
+                                <span style="font-size:10px;font-weight:700;color:#0A5E62;background:#E6F7F7;padding:2px 8px;border-radius:4px">Read/Write</span>
+                            </div>
+                            <p style="font-size:12px;color:#6B7280;margin:0 0 10px">Manage POAMs and evidence</p>
+                            <p style="font-size:11px;color:#9CA3AF;margin:0"><i class="fas fa-users" style="margin-right:4px"></i>12 users</p>
+                        </div>
+                        <div style="border:1px solid #E2E4E8;border-radius:8px;padding:16px;cursor:pointer">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                                <p style="font-size:13px;font-weight:700;color:#1F2937;margin:0">Auditor</p>
+                                <span style="font-size:10px;font-weight:700;color:#047857;background:#D1FAE5;padding:2px 8px;border-radius:4px">Read Only</span>
+                            </div>
+                            <p style="font-size:12px;color:#6B7280;margin:0 0 10px">View reports and audit logs</p>
+                            <p style="font-size:11px;color:#9CA3AF;margin:0"><i class="fas fa-users" style="margin-right:4px"></i>5 users</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>

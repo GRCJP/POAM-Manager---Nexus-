@@ -312,9 +312,14 @@ class CSVParserSkill extends BaseSkill {
             
             // Status (default to ACTIVE if not present, matching original engine)
             status: (row.status || row['Status'] || '').trim() || 'ACTIVE',
+            // Risk Accepted / disabled flags from Qualys — MUST be preserved
+            // so downstream classification can mark these findings risk-accepted
+            ignored: ((row.ignored || row['Ignored'] || '') + '').trim().toLowerCase() === 'yes',
+            disabled: ((row.disabled || row['Disabled'] || '') + '').trim().toLowerCase() === 'yes',
+            lastFixed: (row.lastFixed || row['Last Fixed'] || '').trim() || '',
             firstDetected,
             lastDetected,
-            
+
             // Raw for reference
             raw: row
         };

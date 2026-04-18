@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TRACE POAM — POAM-0047 Detail (Mockup C)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    background: #F1F0EE;
+    display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+    color: #1F2937;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ── Banner ── */
+  .banner { height: 54px; background: #1F2937; display: flex; align-items: center;
+    padding: 0 22px; gap: 16px; flex-shrink: 0; border-bottom: 1px solid #151C27; }
+  .brand { display: flex; align-items: center; gap: 11px; flex-shrink: 0; }
+  .bmark { width: 30px; height: 30px; background: #0D7377; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .bmark-t { font-size: 15px; font-weight: 900; color: #fff;
+    font-family: Georgia, 'Times New Roman', serif; letter-spacing: -0.5px; }
+  .bname { display: flex; flex-direction: column; gap: 1px; }
+  .bname-top { font-size: 14px; font-weight: 700; color: #F3F4F6; letter-spacing: 0.1px; }
+  .bname-sub { font-size: 9px; font-weight: 600; color: #4B5563; letter-spacing: 1.3px; text-transform: uppercase; }
+  .bn-sep { width: 1px; height: 24px; background: rgba(255,255,255,0.08); margin: 0 4px; }
+  .bn-search { display: flex; align-items: center; gap: 7px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 6px; padding: 5px 11px; cursor: pointer; flex: 0 0 200px; }
+  .bn-search svg { width: 12px; height: 12px; stroke: #4B5563; fill: none; stroke-width: 2; flex-shrink: 0; }
+  .bn-search-text { font-size: 12px; color: #4B5563; }
+  .bn-search-kbd { margin-left: auto; font-size: 10px; color: #374151;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 3px; padding: 1px 5px; }
+  .bn-spacer { flex: 1; }
+  .bn-actions { display: flex; align-items: center; gap: 9px; }
+  .bn-icon-btn { position: relative; width: 32px; height: 32px; border-radius: 6px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
+    display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .bn-icon-btn svg { width: 15px; height: 15px; stroke: #6B7280; fill: none; stroke-width: 1.8; }
+  .bn-badge { position: absolute; top: 4px; right: 4px; width: 7px; height: 7px;
+    background: #EF4444; border-radius: 50%; border: 2px solid #1F2937; }
+  .btn-cta { background: #0D7377; color: #fff; border: none; border-radius: 6px;
+    padding: 7px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer;
+    font-family: inherit; letter-spacing: 0.1px; white-space: nowrap; }
+  .user-block { display: flex; align-items: center; gap: 8px; padding: 4px 7px; border-radius: 6px; cursor: pointer; }
+  .u-avatar { width: 30px; height: 30px; border-radius: 50%; background: #374151;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11.5px; font-weight: 700; color: #9CA3AF; flex-shrink: 0; }
+  .u-info { display: flex; flex-direction: column; }
+  .u-name { font-size: 12px; color: #D1D5DB; font-weight: 600; line-height: 1.2; }
+  .u-role { font-size: 9.5px; color: #4B5563; }
+
+  /* ── Layout ── */
+  .layout { display: flex; flex: 1; overflow: hidden; }
+
+  /* ── Sidebar ── */
+  .sidebar { width: 210px; background: #FFFFFF; border-right: 1px solid #E2E4E8;
+    display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto; padding-top: 8px; }
+  .sb-section { padding-bottom: 2px; }
+  .sb-lbl { font-size: 9.5px; font-weight: 700; color: #9CA3AF;
+    letter-spacing: 1.1px; text-transform: uppercase; padding: 12px 16px 5px; }
+  .sb-item { display: flex; align-items: center; gap: 10px; padding: 9px 14px 9px 16px;
+    font-size: 13.5px; font-weight: 500; color: #3D4451; cursor: pointer;
+    border-left: 3px solid transparent; transition: background 0.12s, color 0.12s; }
+  .sb-item:hover { background: #F3F4F6; color: #1F2937; }
+  .sb-item.active { background: #E6F7F7; color: #0D7377; border-left-color: #0D7377; font-weight: 700; }
+  .sb-item svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.9; flex-shrink: 0; opacity: 0.7; }
+  .sb-item.active svg { opacity: 1; }
+  .sb-badge { margin-left: auto; background: #FEE2E2; color: #991B1B; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 10px; }
+  .sb-divider { height: 1px; background: #E5E7EB; margin: 6px 14px; }
+  .sb-footer { margin-top: auto; padding: 12px 16px 14px; border-top: 1px solid #E5E7EB;
+    display: flex; align-items: center; gap: 8px; font-size: 11px; color: #6B7280; font-weight: 500; }
+  .sdot { width: 7px; height: 7px; border-radius: 50%; background: #10B981; flex-shrink: 0; }
+
+  /* ── Main ── */
+  .main { flex: 1; overflow-y: auto; padding: 22px 24px; }
+
+  /* ── Card base ── */
+  .card { background: #fff; border-radius: 10px; border: 1px solid #E2E4E8;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.05); overflow: hidden; }
+  .card-head { padding: 16px 20px 0; display: flex; align-items: flex-start; justify-content: space-between; }
+  .card-title { font-size: 13.5px; font-weight: 700; color: #111827; }
+  .card-sub { font-size: 11px; color: #6B7280; margin-top: 2px; }
+  .card-body { padding: 14px 20px 18px; }
+
+  /* ── Buttons ── */
+  .btn-sec { background: #fff; border: 1px solid #D1D5DB; color: #374151;
+    border-radius: 6px; padding: 7px 13px; font-size: 12px; cursor: pointer;
+    font-weight: 500; font-family: inherit; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+  .btn-danger { background: #fff; border: 1px solid #FCA5A5; color: #991B1B;
+    border-radius: 6px; padding: 7px 13px; font-size: 12px; cursor: pointer;
+    font-weight: 600; font-family: inherit; }
+
+  /* ── Badges ── */
+  .badge { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 5px; white-space: nowrap; }
+  .bc { background: #FEE2E2; color: #991B1B; }
+  .bip { background: #EFF6FF; color: #1D4ED8; }
+  .bt { background: #E6F7F7; color: #0A5E62; }
+  .bl { background: #F3F4F6; color: #374151; }
+  .badge-sys { background: #F3F4F6; color: #1F2937; border: 1px solid #D1D5DB; }
+  .badge-ctrl { background: #EDE9FE; color: #5B21B6; border: 1px solid #DDD6FE; }
+  .badge-crit-dot { display: inline-flex; align-items: center; gap: 5px; background: #FEE2E2; color: #991B1B; font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 5px; }
+  .badge-crit-dot::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #DC2626; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* ── Detail header card ── */
+  .detail-header {
+    background: #fff; border-radius: 10px; border: 1px solid #E2E4E8;
+    border-left: 4px solid #7F1D1D;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.05);
+    padding: 18px 22px; margin-bottom: 16px;
+  }
+  .breadcrumb { font-size: 11px; color: #9CA3AF; margin-bottom: 10px; }
+  .breadcrumb a { color: #9CA3AF; text-decoration: none; }
+  .breadcrumb a:hover { color: #6B7280; }
+  .detail-title { font-size: 18px; font-weight: 800; color: #111827; letter-spacing: -0.4px; line-height: 1.35; margin-bottom: 10px; }
+  .detail-badges { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-bottom: 12px; }
+  .detail-actions { display: flex; gap: 8px; }
+
+  /* ── Progress segments ── */
+  .progress-label { font-size: 11px; font-weight: 600; color: #6B7280; margin-bottom: 6px; }
+  .progress-segments { display: flex; gap: 4px; align-items: center; }
+  .seg { height: 10px; flex: 1; border-radius: 5px; }
+  .seg.done { background: #10B981; }
+  .seg.overdue { background: #DC2626; }
+  .seg.pending { background: #E5E7EB; }
+
+  /* ── Two column layout ── */
+  .two-col { display: grid; grid-template-columns: 1fr 310px; gap: 16px; }
+
+  /* ── Field rows ── */
+  .field-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 9px 0; border-bottom: 1px solid #F3F4F6; }
+  .field-row:last-child { border-bottom: none; }
+  .field-label { font-size: 11.5px; color: #6B7280; font-weight: 500; flex-shrink: 0; width: 130px; }
+  .field-val { font-size: 12.5px; color: #111827; font-weight: 600; text-align: right; flex: 1; }
+  .field-val.muted { color: #6B7280; font-weight: 400; }
+
+  /* ── Milestone timeline ── */
+  .timeline { display: flex; flex-direction: column; gap: 0; }
+  .tl-item { display: flex; gap: 14px; position: relative; }
+  .tl-left { display: flex; flex-direction: column; align-items: center; width: 28px; flex-shrink: 0; }
+  .tl-circle { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; z-index: 1; }
+  .tl-circle.done { background: #D1FAE5; color: #059669; border: 2px solid #6EE7B7; }
+  .tl-circle.overdue { background: #FEE2E2; color: #DC2626; border: 2px solid #FCA5A5; }
+  .tl-circle.pending { background: #F3F4F6; color: #9CA3AF; border: 2px solid #E5E7EB; }
+  .tl-line { width: 2px; flex: 1; min-height: 16px; margin: 2px 0; }
+  .tl-line.done { background: #6EE7B7; }
+  .tl-line.red { background: #FCA5A5; }
+  .tl-line.grey { background: #E5E7EB; }
+  .tl-body { flex: 1; padding: 4px 0 16px; }
+  .tl-title { font-size: 13px; font-weight: 700; color: #111827; }
+  .tl-due { font-size: 11px; color: #6B7280; margin-top: 2px; }
+  .tl-status { display: inline-block; margin-top: 4px; font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+
+  /* ── Comment/activity ── */
+  .comment-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid #F3F4F6; }
+  .comment-item:last-child { border-bottom: none; }
+  .comment-av { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 10.5px; font-weight: 800; color: #fff; flex-shrink: 0; margin-top: 1px; }
+  .comment-body { flex: 1; }
+  .comment-meta { display: flex; align-items: center; gap: 7px; margin-bottom: 3px; }
+  .comment-author { font-size: 12.5px; font-weight: 700; color: #111827; }
+  .comment-time { font-size: 11px; color: #9CA3AF; }
+  .comment-text { font-size: 12.5px; color: #374151; line-height: 1.5; }
+  .comment-tag { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; }
+
+  /* ── Gauge (risk) ── */
+  .risk-gauge-wrap { text-align: center; padding: 4px 0 8px; }
+
+  /* ── Status step indicator ── */
+  .status-steps { display: flex; align-items: center; gap: 0; margin-top: 4px; }
+  .step-item { display: flex; align-items: center; }
+  .step-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid #E5E7EB; background: #fff; }
+  .step-dot.done { background: #10B981; border-color: #10B981; }
+  .step-dot.current { background: #3B82F6; border-color: #3B82F6; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); }
+  .step-dot.future { background: #fff; border-color: #D1D5DB; }
+  .step-line { height: 2px; width: 22px; background: #E5E7EB; }
+  .step-line.done { background: #10B981; }
+  .step-label { font-size: 9.5px; color: #9CA3AF; text-align: center; margin-top: 4px; }
+  .step-label.current { color: #1D4ED8; font-weight: 700; }
+  .step-label.done-lbl { color: #059669; font-weight: 600; }
+  .step-col { display: flex; flex-direction: column; align-items: center; }
+
+  /* ── SLA mini bar ── */
+  .sla-bar-wrap { display: flex; gap: 3px; margin-top: 4px; }
+  .sla-seg { height: 8px; flex: 1; border-radius: 3px; }
+  .sla-seg.over { background: #DC2626; }
+  .sla-seg.remain { background: #E5E7EB; }
+
+  /* ── Related items ── */
+  .related-item { display: flex; align-items: center; gap: 9px; padding: 9px 0; border-bottom: 1px solid #F3F4F6; }
+  .related-item:last-child { border-bottom: none; }
+  .ri-id { font-size: 11px; font-weight: 700; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.4px; }
+  .ri-title { font-size: 12px; color: #374151; flex: 1; }
+  .ri-arrow { font-size: 13px; color: #0D7377; }
+
+  /* ── No-acceptance banner ── */
+  .no-accept { background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 12px 14px; display: flex; align-items: flex-start; gap: 10px; }
+  .no-accept-icon { font-size: 16px; flex-shrink: 0; }
+  .no-accept-text { font-size: 12px; color: #92400E; line-height: 1.5; }
+  .no-accept-title { font-weight: 700; font-size: 12.5px; color: #78350F; margin-bottom: 2px; }
+
+  /* Control chip */
+  .ctrl-chip { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: 5px; background: #EDE9FE; color: #5B21B6; border: 1px solid #DDD6FE; margin: 2px 2px 2px 0; }
+</style>
+</head>
+<body>
+
+<!-- Banner -->
+<header class="banner">
+  <div class="brand">
+    <div class="bmark"><span class="bmark-t">T</span></div>
+    <div class="bname">
+      <div class="bname-top">TRACE</div>
+      <div class="bname-sub">POAM Manager</div>
+    </div>
+  </div>
+  <div class="bn-sep"></div>
+  <div class="bn-search">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg>
+    <span class="bn-search-text">Search POAMs&hellip;</span>
+    <span class="bn-search-kbd">&#8984;K</span>
+  </div>
+  <div class="bn-spacer"></div>
+  <div class="bn-actions">
+    <div class="bn-icon-btn">
+      <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <div class="bn-badge"></div>
+    </div>
+    <button class="btn-cta">+ Import Scan</button>
+    <div class="user-block">
+      <div class="u-avatar">JL</div>
+      <div class="u-info">
+        <div class="u-name">J. Lee</div>
+        <div class="u-role">ISSO</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sb-section">
+      <div class="sb-lbl">Workspace</div>
+      <div class="sb-item">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        Dashboard
+      </div>
+      <div class="sb-item active">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        POA&amp;M Items
+        <span class="sb-badge">12</span>
+      </div>
+      <div class="sb-item">
+        <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Findings
+      </div>
+      <div class="sb-item">
+        <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        Assets
+      </div>
+    </div>
+    <div class="sb-divider"></div>
+    <div class="sb-section">
+      <div class="sb-lbl">Reporting</div>
+      <div class="sb-item">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Reports
+      </div>
+      <div class="sb-item">
+        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Analytics
+      </div>
+    </div>
+    <div class="sb-divider"></div>
+    <div class="sb-section">
+      <div class="sb-item">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </div>
+    </div>
+    <div class="sb-footer">
+      <div class="sdot"></div>
+      All systems operational
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Detail Header Card -->
+    <div class="detail-header">
+      <div class="breadcrumb">
+        <a href="#">POA&amp;M Items</a> &rsaquo; POAM-0047
+      </div>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+        <div style="flex:1">
+          <div class="detail-title">Privileged Access Management Controls Not Implemented on Domain Controllers</div>
+          <div class="detail-badges">
+            <span class="badge-crit-dot">Critical</span>
+            <span class="badge bip">In Progress</span>
+            <span class="badge badge-sys">GS-DATACENTER-01</span>
+            <span class="ctrl-chip">AC-2</span>
+            <span class="ctrl-chip">AC-3</span>
+            <span class="ctrl-chip">AC-6</span>
+          </div>
+          <!-- Milestone progress bar -->
+          <div class="progress-label">Milestone Progress: 2 of 5 complete</div>
+          <div class="progress-segments">
+            <div class="seg done"></div>
+            <div class="seg done"></div>
+            <div class="seg overdue"></div>
+            <div class="seg pending"></div>
+            <div class="seg pending"></div>
+          </div>
+        </div>
+        <div class="detail-actions" style="flex-shrink:0;margin-top:4px">
+          <button class="btn-sec">&#9998; Edit</button>
+          <button class="btn-sec">Change Status &#9660;</button>
+          <button class="btn-danger">Close POAM</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Two-column layout -->
+    <div class="two-col">
+
+      <!-- LEFT COLUMN -->
+      <div style="display:flex;flex-direction:column;gap:14px">
+
+        <!-- Finding Details -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Finding Details</div>
+          </div>
+          <div class="card-body" style="padding-top:10px">
+            <div class="field-row">
+              <span class="field-label">Source</span>
+              <span class="field-val">NIST SP 800-53 Rev. 5 Assessment</span>
+            </div>
+            <div class="field-row">
+              <span class="field-label">Discovery Date</span>
+              <span class="field-val">January 14, 2025</span>
+            </div>
+            <div class="field-row">
+              <span class="field-label">Control Families</span>
+              <span class="field-val" style="text-align:right">
+                <span class="ctrl-chip">AC-2</span>
+                <span class="ctrl-chip">AC-3</span>
+                <span class="ctrl-chip">AC-6</span>
+                <span class="ctrl-chip">IA-2</span>
+              </span>
+            </div>
+            <div class="field-row">
+              <span class="field-label">Assets Affected</span>
+              <span class="field-val">
+                <span style="background:#FEE2E2;color:#991B1B;font-size:12px;font-weight:700;padding:3px 10px;border-radius:5px">14 assets</span>
+              </span>
+            </div>
+            <div class="field-row">
+              <span class="field-label">Finding ID</span>
+              <span class="field-val muted">FIND-2025-0047-AC</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Milestone Timeline -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Milestone Plan</div>
+            <span style="font-size:10.5px;background:#FEE2E2;color:#991B1B;font-weight:700;padding:3px 9px;border-radius:5px">1 Overdue</span>
+          </div>
+          <div class="card-body" style="padding-top:14px">
+            <div class="timeline">
+
+              <!-- M1: Done -->
+              <div class="tl-item">
+                <div class="tl-left">
+                  <div class="tl-circle done">&#10003;</div>
+                  <div class="tl-line done"></div>
+                </div>
+                <div class="tl-body">
+                  <div class="tl-title">Inventory &amp; scope all privileged accounts</div>
+                  <div class="tl-due">Due: Feb 10, 2025</div>
+                  <span class="tl-status" style="background:#D1FAE5;color:#065F46">Completed</span>
+                </div>
+              </div>
+
+              <!-- M2: Done -->
+              <div class="tl-item">
+                <div class="tl-left">
+                  <div class="tl-circle done">&#10003;</div>
+                  <div class="tl-line red"></div>
+                </div>
+                <div class="tl-body">
+                  <div class="tl-title">Deploy PAM tooling in dev environment</div>
+                  <div class="tl-due">Due: Mar 01, 2025</div>
+                  <span class="tl-status" style="background:#D1FAE5;color:#065F46">Completed</span>
+                </div>
+              </div>
+
+              <!-- M3: Overdue -->
+              <div class="tl-item">
+                <div class="tl-left">
+                  <div class="tl-circle overdue">&#9888;</div>
+                  <div class="tl-line grey"></div>
+                </div>
+                <div class="tl-body">
+                  <div class="tl-title">Enforce PAM on all production domain controllers</div>
+                  <div class="tl-due" style="color:#DC2626;font-weight:600">Due: Mar 25, 2025 &mdash; 14 days overdue</div>
+                  <span class="tl-status" style="background:#FEE2E2;color:#991B1B">Overdue</span>
+                </div>
+              </div>
+
+              <!-- M4: Pending -->
+              <div class="tl-item">
+                <div class="tl-left">
+                  <div class="tl-circle pending">4</div>
+                  <div class="tl-line grey"></div>
+                </div>
+                <div class="tl-body">
+                  <div class="tl-title">Document access procedures and update SSP</div>
+                  <div class="tl-due">Due: Apr 30, 2025</div>
+                  <span class="tl-status" style="background:#F3F4F6;color:#6B7280">Pending</span>
+                </div>
+              </div>
+
+              <!-- M5: Pending -->
+              <div class="tl-item">
+                <div class="tl-left">
+                  <div class="tl-circle pending">5</div>
+                </div>
+                <div class="tl-body" style="padding-bottom:4px">
+                  <div class="tl-title">Final AO verification and POAM closure</div>
+                  <div class="tl-due">Due: May 15, 2025</div>
+                  <span class="tl-status" style="background:#F3F4F6;color:#6B7280">Pending</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Comments & Activity -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Comments &amp; Activity</div>
+            <button style="font-size:11.5px;background:#0D7377;color:#fff;border:none;border-radius:5px;padding:4px 12px;cursor:pointer;font-family:inherit;font-weight:600">+ Comment</button>
+          </div>
+          <div class="card-body" style="padding-top:8px">
+
+            <div class="comment-item">
+              <div class="comment-av" style="background:#6366F1">JL</div>
+              <div class="comment-body">
+                <div class="comment-meta">
+                  <span class="comment-author">J. Lee</span>
+                  <span class="comment-tag" style="background:#FEE2E2;color:#991B1B">ISSO</span>
+                  <span class="comment-time">Apr 7, 2025 &middot; 9:14am</span>
+                </div>
+                <div class="comment-text">CyberArk deployment on the last 3 domain controllers is blocked pending a change window approval. Escalated to ISSM. ETA April 18.</div>
+              </div>
+            </div>
+
+            <div class="comment-item">
+              <div class="comment-av" style="background:#059669">AT</div>
+              <div class="comment-body">
+                <div class="comment-meta">
+                  <span class="comment-author">A. Torres</span>
+                  <span class="comment-tag" style="background:#E6F7F7;color:#0A5E62">Sys Admin</span>
+                  <span class="comment-time">Apr 3, 2025 &middot; 2:48pm</span>
+                </div>
+                <div class="comment-text">8 of 11 DCs now have PAM enforced. Remaining 3 are legacy Win2012 R2 boxes. Need extended maintenance window due to service dependencies.</div>
+              </div>
+            </div>
+
+            <div class="comment-item">
+              <div class="comment-av" style="background:#374151">SY</div>
+              <div class="comment-body">
+                <div class="comment-meta">
+                  <span class="comment-author">System</span>
+                  <span class="comment-tag" style="background:#F3F4F6;color:#374151">Auto</span>
+                  <span class="comment-time">Mar 25, 2025</span>
+                </div>
+                <div class="comment-text">&#128680; Milestone 3 has passed its due date and is now marked overdue. SLA breach notification sent.</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div><!-- end left column -->
+
+      <!-- RIGHT COLUMN -->
+      <div style="display:flex;flex-direction:column;gap:14px">
+
+        <!-- Risk Assessment with gauge -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Risk Assessment</div>
+          </div>
+          <div class="card-body" style="padding-top:12px">
+            <!--
+              Risk gauge: viewBox 180x100
+              Arc: center (90,90), r=75
+              Start: M 15,90 end: M 165,90
+              84% of 180deg = 151.2deg from left
+              End angle from +x: 180 - 151.2 = 28.8deg
+              x = 90 + 75*cos(28.8) = 90 + 75*0.876 = 90+65.7 = 155.7 ≈ 156
+              y = 90 - 75*sin(28.8) = 90 - 75*0.484 = 90-36.3 = 53.7 ≈ 54
+            -->
+            <div class="risk-gauge-wrap">
+              <svg viewBox="0 0 180 100" width="180" height="100" style="display:block;margin:0 auto">
+                <path d="M 15,90 A 75,75 0 0 1 165,90" fill="none" stroke="#E5E7EB" stroke-width="13" stroke-linecap="round"/>
+                <path d="M 15,90 A 75,75 0 0 1 156,54" fill="none" stroke="#DC2626" stroke-width="13" stroke-linecap="round"/>
+                <text x="90" y="82" text-anchor="middle" font-size="36" font-weight="900" fill="#111827" font-family="Inter,system-ui">8.4</text>
+                <text x="90" y="96" text-anchor="middle" font-size="10" fill="#6B7280" font-family="Inter,system-ui">/ 10 Risk Score</text>
+              </svg>
+              <div style="text-align:center;margin-top:6px">
+                <span style="background:#FEE2E2;color:#991B1B;font-size:12px;font-weight:800;padding:4px 14px;border-radius:5px;letter-spacing:0.3px">HIGH RISK</span>
+              </div>
+            </div>
+            <div style="height:1px;background:#F3F4F6;margin:12px 0"></div>
+            <div class="field-row">
+              <span class="field-label">Remediation Priority</span>
+              <span class="field-val"><span style="background:#FEE2E2;color:#991B1B;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:4px">P1 &mdash; Critical</span></span>
+            </div>
+            <div class="field-row">
+              <span class="field-label">Potential Impact</span>
+              <span class="field-val" style="color:#DC2626;font-weight:700">Mission Critical</span>
+            </div>
+            <div class="field-row">
+              <span class="field-label">Likelihood</span>
+              <span class="field-val">High (0.9)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- POAM Details (metadata with visual touches) -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">POAM Details</div>
+          </div>
+          <div class="card-body" style="padding-top:10px">
+
+            <!-- Status with step indicator -->
+            <div class="field-row" style="flex-direction:column;gap:6px;align-items:flex-start">
+              <span class="field-label">Status</span>
+              <div>
+                <div class="status-steps">
+                  <!-- Open done -->
+                  <div class="step-col">
+                    <div class="step-dot done"></div>
+                    <div class="step-label done-lbl">Open</div>
+                  </div>
+                  <div class="step-line done" style="margin-bottom:14px"></div>
+                  <!-- In Progress current -->
+                  <div class="step-col">
+                    <div class="step-dot current"></div>
+                    <div class="step-label current">In Progress</div>
+                  </div>
+                  <div class="step-line" style="margin-bottom:14px"></div>
+                  <!-- Resolved -->
+                  <div class="step-col">
+                    <div class="step-dot future"></div>
+                    <div class="step-label">Resolved</div>
+                  </div>
+                  <div class="step-line" style="margin-bottom:14px"></div>
+                  <!-- Closed -->
+                  <div class="step-col">
+                    <div class="step-dot future"></div>
+                    <div class="step-label">Closed</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="field-row">
+              <span class="field-label">Due Date</span>
+              <span class="field-val" style="color:#DC2626;font-weight:700">Mar 25, 2025 &middot; 14d overdue</span>
+            </div>
+
+            <!-- SLA bar: overdue vs target -->
+            <div class="field-row" style="flex-direction:column;align-items:flex-start;gap:5px">
+              <span class="field-label">SLA Target</span>
+              <div style="width:100%">
+                <div style="display:flex;gap:3px;width:100%">
+                  <!-- Target was 90 days, 104 days elapsed = 104/90 = 115%, cap at known portion -->
+                  <!-- Show: 90% bar (target) in grey + 14% overrun in red -->
+                  <div style="flex:9;height:8px;background:#E5E7EB;border-radius:3px 0 0 3px;overflow:hidden">
+                    <div style="height:100%;width:100%;background:#9CA3AF;border-radius:3px 0 0 3px"></div>
+                  </div>
+                  <div style="flex:1.4;height:8px;background:#DC2626;border-radius:0 3px 3px 0"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-top:3px">
+                  <span style="font-size:10px;color:#9CA3AF">90-day SLA target</span>
+                  <span style="font-size:10px;color:#DC2626;font-weight:700">+14d overrun</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="field-row">
+              <span class="field-label">POAM Owner</span>
+              <span class="field-val">
+                <span style="display:inline-flex;align-items:center;gap:6px">
+                  <span style="width:22px;height:22px;border-radius:50%;background:#6366F1;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff">JL</span>
+                  J. Lee
+                </span>
+              </span>
+            </div>
+            <div class="field-row">
+              <span class="field-label">Created</span>
+              <span class="field-val muted">Jan 14, 2025</span>
+            </div>
+            <div class="field-row">
+              <span class="field-label">Last Updated</span>
+              <span class="field-val muted">Apr 7, 2025</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Related Items -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Related Items</div>
+          </div>
+          <div class="card-body" style="padding-top:8px">
+            <div class="related-item">
+              <span style="width:8px;height:8px;border-radius:2px;background:#B45309;flex-shrink:0;margin-top:2px"></span>
+              <div style="flex:1">
+                <div class="ri-id">POAM-0061</div>
+                <div class="ri-title">Service account audit trail not captured in SIEM</div>
+              </div>
+              <span class="ri-arrow">&rarr;</span>
+            </div>
+            <div class="related-item">
+              <span style="width:8px;height:8px;border-radius:2px;background:#0D7377;flex-shrink:0;margin-top:2px"></span>
+              <div style="flex:1">
+                <div class="ri-id">POAM-0088</div>
+                <div class="ri-title">Role-based access review not completed Q4</div>
+              </div>
+              <span class="ri-arrow">&rarr;</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Risk Acceptance -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Risk Acceptance</div>
+          </div>
+          <div class="card-body" style="padding-top:12px">
+            <div class="no-accept">
+              <div class="no-accept-icon">&#9888;</div>
+              <div>
+                <div class="no-accept-title">No Risk Acceptance on File</div>
+                <div class="no-accept-text">This item has not been formally accepted. Risk acceptance requires AO approval and documentation in the system of record.</div>
+              </div>
+            </div>
+            <button style="margin-top:12px;width:100%;background:#fff;border:1px solid #D1D5DB;color:#374151;border-radius:6px;padding:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Request Risk Acceptance</button>
+          </div>
+        </div>
+
+      </div><!-- end right column -->
+
+    </div><!-- end two-col -->
+
+  </main>
+</div>
+</body>
+</html>

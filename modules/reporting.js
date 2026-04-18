@@ -1378,7 +1378,7 @@ async function exportOSCALPOAM(options = {}) {
                     actors: [{
                         type: 'tool',
                         'actor-uuid': generateOSCALUUID(),
-                        props: [{ name: 'tool-name', value: p.findingSource || 'Vulnerability Scanner', ns: 'https://poam-nexus.local' }]
+                        props: [{ name: 'tool-name', value: p.findingSource || 'Vulnerability Scanner', ns: 'https://trace.local' }]
                     }]
                 }]
             };
@@ -1391,17 +1391,17 @@ async function exportOSCALPOAM(options = {}) {
                 description: p.findingDescription || p.description || 'No description',
                 statement: `Risk identified for ${p.controlFamily || 'unknown'} control family with ${p.riskLevel || p.risk || 'medium'} severity.`,
                 props: [
-                    { name: 'risk-level', value: p.riskLevel || p.risk || 'medium', ns: 'https://poam-nexus.local' }
+                    { name: 'risk-level', value: p.riskLevel || p.risk || 'medium', ns: 'https://trace.local' }
                 ],
                 status: mapStatusToOSCAL(p.findingStatus || p.status || 'open'),
                 characterizations: [{
                     facets: [{
                         name: 'likelihood',
-                        system: 'https://poam-nexus.local',
+                        system: 'https://trace.local',
                         value: mapRiskToLikelihood(p.riskLevel || p.risk || 'medium')
                     }, {
                         name: 'impact',
-                        system: 'https://poam-nexus.local',
+                        system: 'https://trace.local',
                         value: p.riskLevel || p.risk || 'medium'
                     }]
                 }],
@@ -1418,16 +1418,16 @@ async function exportOSCALPOAM(options = {}) {
                     props: []
                 };
                 if (p.dueDate || p.updatedScheduledCompletionDate) {
-                    remediation.props.push({ name: 'planned-completion-date', value: p.updatedScheduledCompletionDate || p.dueDate, ns: 'https://poam-nexus.local' });
+                    remediation.props.push({ name: 'planned-completion-date', value: p.updatedScheduledCompletionDate || p.dueDate, ns: 'https://trace.local' });
                 }
                 if (p.initialScheduledCompletionDate) {
-                    remediation.props.push({ name: 'original-completion-date', value: p.initialScheduledCompletionDate, ns: 'https://poam-nexus.local' });
+                    remediation.props.push({ name: 'original-completion-date', value: p.initialScheduledCompletionDate, ns: 'https://trace.local' });
                 }
                 if (p.updatedScheduledCompletionDate && p.initialScheduledCompletionDate && p.updatedScheduledCompletionDate !== p.initialScheduledCompletionDate) {
-                    remediation.props.push({ name: 'adjusted-completion-date', value: p.updatedScheduledCompletionDate, ns: 'https://poam-nexus.local' });
+                    remediation.props.push({ name: 'adjusted-completion-date', value: p.updatedScheduledCompletionDate, ns: 'https://trace.local' });
                 }
                 if (p.actualCompletionDate) {
-                    remediation.props.push({ name: 'actual-completion-date', value: p.actualCompletionDate, ns: 'https://poam-nexus.local' });
+                    remediation.props.push({ name: 'actual-completion-date', value: p.actualCompletionDate, ns: 'https://trace.local' });
                 }
 
                 // Add milestones as tasks
@@ -1435,7 +1435,7 @@ async function exportOSCALPOAM(options = {}) {
                     remediation['required-assets'] = p.milestones.map(m => ({
                         uuid: generateOSCALUUID(),
                         description: m.name || m.description || 'Milestone',
-                        props: m.targetDate ? [{ name: 'target-date', value: m.targetDate, ns: 'https://poam-nexus.local' }] : []
+                        props: m.targetDate ? [{ name: 'target-date', value: m.targetDate, ns: 'https://trace.local' }] : []
                     }));
                 }
 
@@ -1450,10 +1450,10 @@ async function exportOSCALPOAM(options = {}) {
                 title: p.vulnerabilityName || p.title || `POAM Item ${p.id}`,
                 description: p.findingDescription || p.description || 'No description',
                 props: [
-                    { name: 'finding-id', value: p.id || '', ns: 'https://poam-nexus.local' },
-                    { name: 'status', value: p.findingStatus || p.status || 'open', ns: 'https://poam-nexus.local' },
-                    { name: 'control-id', value: p.controlFamily || '', ns: 'https://poam-nexus.local' },
-                    { name: 'date-created', value: p.createdDate || now, ns: 'https://poam-nexus.local' }
+                    { name: 'finding-id', value: p.id || '', ns: 'https://trace.local' },
+                    { name: 'status', value: p.findingStatus || p.status || 'open', ns: 'https://trace.local' },
+                    { name: 'control-id', value: p.controlFamily || '', ns: 'https://trace.local' },
+                    { name: 'date-created', value: p.createdDate || now, ns: 'https://trace.local' }
                 ],
                 'related-risks': [{ 'risk-uuid': riskUUID }]
             };
@@ -1505,8 +1505,8 @@ async function exportOSCALPOAM(options = {}) {
                 uuid: documentUUID,
                 metadata: buildOSCALMetadata(parties, now),
                 'system-id': {
-                    'identifier-type': 'https://poam-nexus.local',
-                    id: options.systemId || 'poam-nexus-default-system'
+                    'identifier-type': 'https://trace.local',
+                    id: options.systemId || 'trace-default-system'
                 },
                 'poam-items': poamItems,
                 risks: risks,
@@ -1545,7 +1545,7 @@ function buildOSCALMetadata(parties, timestamp) {
     });
 
     return {
-        title: 'POAM Nexus — Plan of Action and Milestones Export',
+        title: 'TRACE — Plan of Action and Milestones Export',
         'last-modified': timestamp,
         version: '1.0',
         'oscal-version': '1.1.2',
@@ -1557,7 +1557,7 @@ function buildOSCALMetadata(parties, timestamp) {
         parties: cleanParties.length > 0 ? cleanParties : [{
             uuid: generateOSCALUUID(),
             type: 'organization',
-            name: 'POAM Nexus Export'
+            name: 'TRACE Export'
         }]
     };
 }

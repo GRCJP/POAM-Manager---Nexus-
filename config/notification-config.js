@@ -9,7 +9,7 @@ window.NOTIFICATION_CONFIG = {
     // Email Configuration
     email: {
         enabled: false, // Controlled by feature flag
-        from: 'POAM Nexus <poam-nexus@agency.gov>',
+        from: 'TRACE <trace@agency.gov>',
         replyTo: 'security-team@agency.gov',
         
         // SMTP Settings (to be configured by admin)
@@ -33,7 +33,7 @@ window.NOTIFICATION_CONFIG = {
         
         // Email Templates
         templates: {
-            subject: '[POAM Nexus] Weekly Security Alert - {count} New POAMs Assigned to {team}',
+            subject: '[TRACE] Weekly Security Alert - {count} New POAMs Assigned to {team}',
             
             // Severity emoji mapping
             severityEmoji: {
@@ -86,10 +86,10 @@ window.NOTIFICATION_CONFIG = {
         },
         
         // Sync Configuration
-        autoSync: false, // Sync Jira status back to POAM Nexus
+        autoSync: false, // Sync Jira status back to TRACE
         syncInterval: 3600000, // 1 hour in milliseconds
         
-        // Webhook Configuration (for Jira → POAM Nexus updates)
+        // Webhook Configuration (for Jira → TRACE updates)
         webhook: {
             enabled: false,
             secret: '', // Webhook secret for validation
@@ -136,7 +136,7 @@ window.NOTIFICATION_CONFIG = {
         },
         
         // Feedback Form URL
-        formBaseUrl: 'https://poam-nexus.agency.gov/feedback'
+        formBaseUrl: 'https://trace.agency.gov/feedback'
     },
     
     // Recipients Configuration

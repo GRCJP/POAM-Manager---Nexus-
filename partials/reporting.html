@@ -1,0 +1,74 @@
+        <div id="reporting-module" class="module hidden">
+            <div class="ph">
+                <div>
+                    <div class="ph-title">Executive Reporting</div>
+                    <div class="ph-meta">Generate compliance reports from live POAM data — Excel/CSV primary, OSCAL secondary</div>
+                </div>
+                <div class="ph-actions">
+                    <button onclick="generateReport(document.getElementById('report-type-select').value)" class="btn-cta"><i class="fas fa-file-alt" style="margin-right:6px"></i>Generate Report</button>
+                </div>
+            </div>
+
+            <!-- Report Generator -->
+            <div class="card" style="margin-bottom:16px">
+                <div class="card-head">
+                    <span class="card-title">Generate Report</span>
+                </div>
+                <div style="height:1px;background:#F3F4F6;margin:0 20px"></div>
+                <div style="padding:20px">
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 160px;gap:14px;align-items:end">
+                        <div>
+                            <label style="display:block;font-size:11px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Report Type</label>
+                            <select id="report-type-select" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 10px;font-size:13px;color:#374151;font-family:inherit;outline:none">
+                                <option value="status-summary">POAM Status Summary</option>
+                                <option value="quarterly-compliance">Quarterly Compliance</option>
+                                <option value="executive-summary">Executive Summary</option>
+                                <option value="risk-assessment">Risk Assessment</option>
+                                <option value="team-performance">POC Team Performance</option>
+                                <option value="control-family">Control Family Analysis</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display:block;font-size:11px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Date From</label>
+                            <input type="date" id="report-date-from" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 10px;font-size:13px;color:#374151;font-family:inherit;outline:none;box-sizing:border-box">
+                        </div>
+                        <div>
+                            <label style="display:block;font-size:11px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Date To</label>
+                            <input type="date" id="report-date-to" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 10px;font-size:13px;color:#374151;font-family:inherit;outline:none;box-sizing:border-box">
+                        </div>
+                        <div>
+                            <button onclick="generateReport(document.getElementById('report-type-select').value)" class="btn-cta" style="width:100%"><i class="fas fa-file-alt" style="margin-right:6px"></i>Generate</button>
+                        </div>
+                    </div>
+                    <p id="report-gen-status" class="text-sm text-indigo-600 mt-2 hidden"></p>
+                </div>
+            </div>
+
+            <!-- Report Viewer -->
+            <div id="report-viewer" class="card" style="margin-bottom:16px;display:none"></div>
+
+            <!-- Report History -->
+            <div class="card">
+                <div class="card-head" style="display:flex;align-items:center;justify-content:space-between">
+                    <span class="card-title">Report History</span>
+                    <input type="text" placeholder="Search reports..." oninput="searchReports(this.value)" style="border:1px solid #D1D5DB;border-radius:6px;padding:6px 10px;font-size:12px;color:#374151;font-family:inherit;outline:none;width:200px">
+                </div>
+                <div style="height:1px;background:#F3F4F6;margin:0 20px"></div>
+                <div style="overflow-x:auto">
+                    <table style="width:100%;border-collapse:collapse">
+                        <thead>
+                            <tr>
+                                <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;padding:10px 20px;text-align:left">ID</th>
+                                <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;padding:10px 20px;text-align:left">Type</th>
+                                <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;padding:10px 20px;text-align:left">Generated</th>
+                                <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;padding:10px 20px;text-align:left">Scope</th>
+                                <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;padding:10px 20px;text-align:left">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="report-history-body">
+                            <tr><td colspan="5" style="padding:32px;text-align:center;color:#9CA3AF;font-size:13px">No reports generated yet</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>

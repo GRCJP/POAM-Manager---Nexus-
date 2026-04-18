@@ -1,0 +1,303 @@
+        <div id="dashboard-module" class="module">
+
+            <!-- Page Header -->
+            <div class="ph">
+                <div>
+                    <div class="ph-title">Dashboard</div>
+                    <div class="ph-meta">
+                        <span class="ph-tag">FY2025 Q2</span>
+                        <span class="ph-tag teal">FISMA High</span>
+                        <span id="dash-overdue-tag" class="ph-tag warn" style="display:none"></span>
+                        <span id="dash-last-updated" class="ph-fresh"></span>
+                    </div>
+                </div>
+                <div class="ph-actions">
+                    <button class="btn-sec">&#8595; Export Report</button>
+                    <button onclick="loadDashboardMetrics()" class="btn-sec">&#8635; Refresh</button>
+                </div>
+            </div>
+
+            <!-- Row 1: 4 KPI Tiles -->
+            <div class="kpi-row">
+
+                <div class="kpi" onclick="dashboardDrillDown('open')" style="cursor:pointer">
+                    <div class="kpi-top-bar" style="background:#0D7377"></div>
+                    <div class="kpi-lbl">Open POA&amp;Ms</div>
+                    <div class="kpi-num" id="dash-total-open">—</div>
+                    <div class="kpi-delta" id="dash-total-open-sub">Loading&hellip;</div>
+                </div>
+
+                <div class="kpi urgent" onclick="dashboardDrillDown('overdue')" style="cursor:pointer">
+                    <div class="kpi-lbl">Overdue Items</div>
+                    <div class="kpi-num" id="dash-overdue">—</div>
+                    <div class="kpi-delta"><span class="delta-bad">&#9888; Action required</span></div>
+                    <div class="kpi-sub warn-text" id="dash-overdue-sub"></div>
+                </div>
+
+                <div class="kpi" onclick="dashboardDrillDown('closed')" style="cursor:pointer">
+                    <div class="kpi-top-bar" style="background:#059669"></div>
+                    <div class="kpi-lbl">Closed This Month</div>
+                    <div class="kpi-num" id="dash-closed-month" style="color:#047857">—</div>
+                    <div class="kpi-delta" id="dash-closed-month-sub">Velocity indicator</div>
+                    <svg class="kpi-spark" viewBox="0 0 120 34" preserveAspectRatio="none">
+                        <rect x="0"   y="22" width="11" height="12" rx="2" fill="#D1FAE5"/>
+                        <rect x="15"  y="18" width="11" height="16" rx="2" fill="#D1FAE5"/>
+                        <rect x="30"  y="14" width="11" height="20" rx="2" fill="#D1FAE5"/>
+                        <rect x="45"  y="20" width="11" height="14" rx="2" fill="#D1FAE5"/>
+                        <rect x="60"  y="10" width="11" height="24" rx="2" fill="#D1FAE5"/>
+                        <rect x="75"  y="16" width="11" height="18" rx="2" fill="#D1FAE5"/>
+                        <rect x="90"  y="8"  width="11" height="26" rx="2" fill="#A7F3D0"/>
+                        <rect x="105" y="1"  width="15" height="33" rx="2" fill="#0D7377"/>
+                    </svg>
+                </div>
+
+                <div class="kpi" onclick="dashboardDrillDown('closed')" style="cursor:pointer">
+                    <div class="kpi-top-bar" style="background:#F59E0B"></div>
+                    <div class="kpi-lbl">Mean Time to Remediate</div>
+                    <div class="kpi-num-row" style="margin-top:2px">
+                        <span class="kpi-num" id="dash-mttr" style="font-size:44px">—</span>
+                        <span class="kpi-num-unit">days</span>
+                    </div>
+                    <div class="kpi-delta" id="dash-mttr-sub">Target: 30 days</div>
+                </div>
+
+            </div><!-- end kpi-row -->
+
+            <!-- Secondary Metrics Strip -->
+            <div class="metrics-strip">
+
+                <div class="ms-item">
+                    <svg width="38" height="38" viewBox="0 0 38 38" style="flex-shrink:0">
+                        <circle cx="19" cy="19" r="14" fill="none" stroke="#E5E7EB" stroke-width="5"/>
+                        <circle cx="19" cy="19" r="14" fill="none" stroke="#0D7377" stroke-width="5"
+                            id="dash-sla-ring-arc"
+                            stroke-dasharray="0 87.96" stroke-dashoffset="21.99"
+                            stroke-linecap="round" transform="rotate(-90 19 19)"/>
+                        <text x="19" y="23" text-anchor="middle" font-size="9" font-weight="800" fill="#111827" font-family="Inter,system-ui" id="dash-sla-ring-text">—</text>
+                    </svg>
+                    <div>
+                        <div class="ms-val" id="dash-sla-compliance">—%</div>
+                        <div class="ms-label">SLA Compliance</div>
+                        <div class="ms-sub" id="dash-sla-compliance-sub">within SLA window</div>
+                    </div>
+                </div>
+
+                <div class="ms-item">
+                    <div style="flex:1">
+                        <div class="ms-val" id="dash-crit-high" style="color:#991B1B">—</div>
+                        <div class="ms-label">Critical &amp; High</div>
+                        <div class="ms-sub red" id="dash-crit-high-sub">Severity exposure</div>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+                        <polyline points="17 11 12 6 7 11"/><polyline points="17 18 12 13 7 18"/>
+                    </svg>
+                </div>
+
+                <div class="ms-item">
+                    <div>
+                        <div class="ms-val" id="dash-risk-accepted">—</div>
+                        <div class="ms-label">Risk Accepted</div>
+                        <div class="ms-sub" id="dash-risk-accepted-sub">Acknowledged risks</div>
+                    </div>
+                </div>
+
+                <div class="ms-item">
+                    <div style="flex:1">
+                        <div class="ms-val" id="dash-scan-coverage">—%</div>
+                        <div class="ms-label">Scan Coverage</div>
+                        <div style="margin-top:6px;height:10px;width:90px;background:#E5E7EB;border-radius:6px;overflow:hidden">
+                            <div id="dash-scan-coverage-bar" style="height:100%;width:0%;background:#0D7377;border-radius:6px"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- end metrics-strip -->
+
+            <!-- Charts Row: 55 | 22 | 23 -->
+            <div class="charts-row" style="grid-template-columns:55fr 22fr 23fr">
+
+                <!-- Trend Line Chart (SVG — wired to real data later) -->
+                <div class="card">
+                    <div class="card-head">
+                        <div>
+                            <div class="card-title">POAM Trend &mdash; 12 Months</div>
+                            <div class="card-sub">New items opened vs. remediated per month</div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;margin-top:2px">
+                            <div style="display:flex;align-items:center;gap:5px">
+                                <div style="width:18px;height:2.5px;background:#1F2937;border-radius:2px"></div>
+                                <span style="font-size:10.5px;color:#374151;font-weight:600">Open Items</span>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:5px">
+                                <svg width="18" height="4" viewBox="0 0 18 4"><line x1="0" y1="2" x2="18" y2="2" stroke="#0D7377" stroke-width="2.5" stroke-dasharray="5 3"/></svg>
+                                <span style="font-size:10.5px;color:#374151;font-weight:600">Remediated</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="padding:8px 0 4px" id="dash-trend-svg-wrap">
+                        <svg width="100%" viewBox="0 0 580 175" preserveAspectRatio="xMidYMid meet" style="display:block">
+                            <defs>
+                                <linearGradient id="gOpen" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#1F2937" stop-opacity="0.08"/>
+                                    <stop offset="100%" stop-color="#1F2937" stop-opacity="0"/>
+                                </linearGradient>
+                                <linearGradient id="gClosed" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#0D7377" stop-opacity="0.08"/>
+                                    <stop offset="100%" stop-color="#0D7377" stop-opacity="0"/>
+                                </linearGradient>
+                            </defs>
+                            <line x1="44" y1="14"  x2="560" y2="14"  stroke="#F3F4F6" stroke-width="1"/>
+                            <line x1="44" y1="45"  x2="560" y2="45"  stroke="#F3F4F6" stroke-width="1"/>
+                            <line x1="44" y1="77"  x2="560" y2="77"  stroke="#F3F4F6" stroke-width="1"/>
+                            <line x1="44" y1="108" x2="560" y2="108" stroke="#F3F4F6" stroke-width="1"/>
+                            <line x1="44" y1="140" x2="560" y2="140" stroke="#E5E7EB" stroke-width="1"/>
+                            <text id="dash-trend-y-hi"  x="4" y="18"  fill="#9CA3AF" font-size="9" font-family="Inter,system-ui" font-weight="500">—</text>
+                            <text id="dash-trend-y-mid" x="4" y="81"  fill="#9CA3AF" font-size="9" font-family="Inter,system-ui" font-weight="500">—</text>
+                            <text id="dash-trend-y-lo"  x="4" y="144" fill="#9CA3AF" font-size="9" font-family="Inter,system-ui" font-weight="500">—</text>
+                            <polygon id="dash-trend-open-area" fill="url(#gOpen)" points="44,77 552,77 552,140 44,140"/>
+                            <polyline id="dash-trend-open-line" fill="none" stroke="#1F2937" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" points="44,77 552,77"/>
+                            <polygon id="dash-trend-closed-area" fill="url(#gClosed)" points="44,110 552,110 552,140 44,140"/>
+                            <polyline id="dash-trend-closed-line" fill="none" stroke="#0D7377" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6 3" points="44,110 552,110"/>
+                            <g id="dash-trend-dots-open"></g>
+                            <g id="dash-trend-dots-closed"></g>
+                            <g id="dash-trend-x-labels"></g>
+                        </svg>
+                        <p id="dash-trend-empty" style="display:none;text-align:center;font-size:13px;color:#9CA3AF;padding:12px 0">Import scan data to see trend analysis</p>
+                    </div>
+                </div>
+
+                <!-- Compliance Score Gauge (SVG) -->
+                <div class="card">
+                    <div class="card-head">
+                        <div>
+                            <div class="card-title">Compliance Score</div>
+                            <div class="card-sub">FISMA posture</div>
+                        </div>
+                    </div>
+                    <div class="gauge-inner">
+                        <svg class="gauge-svg" viewBox="0 0 200 120" width="180" height="108">
+                            <path d="M 20,100 A 80,80 0 0 1 180,100" fill="none" stroke="#E5E7EB" stroke-width="14" stroke-linecap="round"/>
+                            <path id="dash-compliance-arc" d="M 20,100 A 80,80 0 0 1 100,20" fill="none" stroke="#0D7377" stroke-width="14" stroke-linecap="round"/>
+                            <text id="dash-compliance-score" x="100" y="86" text-anchor="middle" font-size="40" font-weight="900" fill="#111827" font-family="Inter,system-ui">—</text>
+                            <text x="100" y="100" text-anchor="middle" font-size="11" fill="#6B7280" font-family="Inter,system-ui">out of 100</text>
+                        </svg>
+                        <div id="dash-compliance-grade" class="grade-pill">—</div>
+                        <div class="gauge-breakdown">
+                            <div class="gb-row">
+                                <span class="gb-label">Findings Resolved</span>
+                                <span class="gb-val" id="dash-compliance-resolved">—</span>
+                            </div>
+                            <div class="gb-divider"></div>
+                            <div class="gb-row">
+                                <span class="gb-label">SLA Rate</span>
+                                <span class="gb-val" id="dash-compliance-sla">—</span>
+                            </div>
+                            <div class="gb-divider"></div>
+                            <div class="gb-row">
+                                <span class="gb-label">Overdue Items</span>
+                                <span class="gb-val" id="dash-compliance-overdue">—</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Risk Distribution Donut (CSS conic-gradient) -->
+                <div class="card">
+                    <div class="card-head">
+                        <div>
+                            <div class="card-title">Risk Distribution</div>
+                            <div class="card-sub" id="dash-risk-donut-sub">Open items by severity</div>
+                        </div>
+                    </div>
+                    <div class="donut-inner">
+                        <div class="donut-wrap">
+                            <div class="donut-chart" id="dash-risk-donut-chart" style="background:conic-gradient(#991B1B 0% 20%,#B45309 20% 55%,#0D7377 55% 85%,#6B7280 85% 100%)">
+                                <div class="donut-hole">
+                                    <div class="dh-num" id="dash-risk-donut-num">—</div>
+                                    <div class="dh-lbl">Open</div>
+                                </div>
+                            </div>
+                            <div class="donut-legend">
+                                <div class="dl-item">
+                                    <div class="dl-swatch" style="background:#991B1B"></div>
+                                    <span class="dl-label">Critical</span>
+                                    <span class="dl-pct" id="dash-risk-pct-crit">—%</span>
+                                    <span class="dl-count" id="dash-risk-cnt-crit"></span>
+                                </div>
+                                <div class="dl-item">
+                                    <div class="dl-swatch" style="background:#B45309"></div>
+                                    <span class="dl-label">High</span>
+                                    <span class="dl-pct" id="dash-risk-pct-high">—%</span>
+                                    <span class="dl-count" id="dash-risk-cnt-high"></span>
+                                </div>
+                                <div class="dl-item">
+                                    <div class="dl-swatch" style="background:#0D7377"></div>
+                                    <span class="dl-label">Medium</span>
+                                    <span class="dl-pct" id="dash-risk-pct-med">—%</span>
+                                    <span class="dl-count" id="dash-risk-cnt-med"></span>
+                                </div>
+                                <div class="dl-item">
+                                    <div class="dl-swatch" style="background:#6B7280"></div>
+                                    <span class="dl-label">Low</span>
+                                    <span class="dl-pct" id="dash-risk-pct-low">—%</span>
+                                    <span class="dl-count" id="dash-risk-cnt-low"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- end charts-row -->
+
+            <!-- Bottom Row: Priority List 60% | Systems + Activity 40% -->
+            <div class="bottom-row">
+
+                <!-- Top Priority Items -->
+                <div class="card">
+                    <div class="plist-head">
+                        <div class="plist-title-row">
+                            <span class="plist-title">Top Priority Items</span>
+                            <span class="plist-count" id="dash-priority-count">Loading</span>
+                        </div>
+                        <span class="plist-link" onclick="dashboardDrillDown('overdue')" style="cursor:pointer">View all &rarr;</span>
+                    </div>
+                    <div id="dash-priority-list">
+                        <div style="padding:24px 18px;text-align:center;font-size:13px;color:#9CA3AF">Import scan data to see priority items</div>
+                    </div>
+                </div>
+
+                <!-- Right column -->
+                <div style="display:flex;flex-direction:column;gap:14px">
+
+                    <!-- Systems with most open POAMs -->
+                    <div class="card">
+                        <div class="card-head" style="padding-bottom:4px">
+                            <div>
+                                <div class="card-title">Systems with Most Open POAMs</div>
+                                <div class="card-sub">Ranked by open item count</div>
+                            </div>
+                        </div>
+                        <div class="sys-list" id="dash-systems-list">
+                            <div style="font-size:12px;color:#9CA3AF;padding:8px 0">No data available</div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="card">
+                        <div class="card-head" style="padding-bottom:4px">
+                            <div class="card-title">Recent Activity</div>
+                        </div>
+                        <div class="activity-list" id="dash-activity-feed">
+                            <div class="act-item">
+                                <div class="act-dot" style="background:#9CA3AF"></div>
+                                <div class="act-text">No recent activity</div>
+                                <div class="act-time">—</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div><!-- end right column -->
+
+            </div><!-- end bottom-row -->
+
+        </div><!-- end dashboard-module -->

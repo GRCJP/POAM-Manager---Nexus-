@@ -28,7 +28,7 @@ window.FEATURE_FLAGS = {
     
     // Jira Integration
     jiraIntegration: false,            // Create Jira tickets for new POAMs
-    jiraAutoSync: false,               // Sync status changes back to POAM Nexus
+    jiraAutoSync: false,               // Sync status changes back to TRACE
     
     // Future: LLM Assistant (Phase 2)
     llmAssistant: false,               // Use internal LLM for analysis

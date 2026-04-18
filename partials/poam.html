@@ -1,0 +1,266 @@
+        <div id="poam-module" class="module hidden">
+
+            <!-- Page Header -->
+            <div class="ph">
+                <div>
+                    <div class="ph-title">POAM Repository</div>
+                    <div class="ph-meta">
+                        <span class="ph-tag">Governance View</span>
+                        <span class="ph-tag teal">All Systems</span>
+                    </div>
+                </div>
+                <div class="ph-actions">
+                    <button onclick="openNewPOAMModal()" class="btn-cta"><i class="fas fa-plus" style="margin-right:6px"></i>New POAM</button>
+                </div>
+            </div>
+
+            <!-- System Selection Card -->
+            <div class="card" style="margin-bottom:14px">
+                <div class="card-head" style="padding-bottom:14px">
+                    <div>
+                        <div class="card-title"><i class="fas fa-server" style="color:#6B7280;margin-right:8px"></i>Select Application / System</div>
+                        <div class="card-sub">Click a system to filter POAMs by application</div>
+                    </div>
+                </div>
+                <div style="padding:0 20px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">
+                    <div class="application-card" onclick="selectApplication('hr-system')" style="background:#fff;border:1px solid #E2E4E8;border-radius:8px;padding:14px 16px;cursor:pointer;transition:border-color 0.15s,background 0.15s">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                            <i class="fas fa-users" style="color:#0D7377;width:14px"></i>
+                            <span style="font-size:13px;font-weight:600;color:#111827">HR System</span>
+                        </div>
+                        <div style="font-size:11.5px;color:#6B7280;margin-bottom:6px">Employee mgmt &amp; payroll</div>
+                        <div style="font-size:11px;color:#9CA3AF"><span class="poam-count" data-app="hr-system">0</span> POAMs</div>
+                    </div>
+                    <div class="application-card" onclick="selectApplication('financial-system')" style="background:#fff;border:1px solid #E2E4E8;border-radius:8px;padding:14px 16px;cursor:pointer;transition:border-color 0.15s,background 0.15s">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                            <i class="fas fa-dollar-sign" style="color:#10B981;width:14px"></i>
+                            <span style="font-size:13px;font-weight:600;color:#111827">Financial System</span>
+                        </div>
+                        <div style="font-size:11.5px;color:#6B7280;margin-bottom:6px">Accounting &amp; reporting</div>
+                        <div style="font-size:11px;color:#9CA3AF"><span class="poam-count" data-app="financial-system">0</span> POAMs</div>
+                    </div>
+                    <div class="application-card" onclick="selectApplication('crm-system')" style="background:#fff;border:1px solid #E2E4E8;border-radius:8px;padding:14px 16px;cursor:pointer;transition:border-color 0.15s,background 0.15s">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                            <i class="fas fa-address-book" style="color:#0D7377;width:14px"></i>
+                            <span style="font-size:13px;font-weight:600;color:#111827">CRM System</span>
+                        </div>
+                        <div style="font-size:11.5px;color:#6B7280;margin-bottom:6px">Customer relationship mgmt</div>
+                        <div style="font-size:11px;color:#9CA3AF"><span class="poam-count" data-app="crm-system">0</span> POAMs</div>
+                    </div>
+                    <div class="application-card" onclick="selectApplication('infrastructure')" style="background:#fff;border:1px solid #E2E4E8;border-radius:8px;padding:14px 16px;cursor:pointer;transition:border-color 0.15s,background 0.15s">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                            <i class="fas fa-network-wired" style="color:#F59E0B;width:14px"></i>
+                            <span style="font-size:13px;font-weight:600;color:#111827">Infrastructure</span>
+                        </div>
+                        <div style="font-size:11.5px;color:#6B7280;margin-bottom:6px">Network and servers</div>
+                        <div style="font-size:11px;color:#9CA3AF"><span class="poam-count" data-app="infrastructure">0</span> POAMs</div>
+                    </div>
+                    <div class="application-card" onclick="selectApplication('web-applications')" style="background:#fff;border:1px solid #E2E4E8;border-radius:8px;padding:14px 16px;cursor:pointer;transition:border-color 0.15s,background 0.15s">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                            <i class="fas fa-globe" style="color:#0D7377;width:14px"></i>
+                            <span style="font-size:13px;font-weight:600;color:#111827">Web Applications</span>
+                        </div>
+                        <div style="font-size:11.5px;color:#6B7280;margin-bottom:6px">Public &amp; internal sites</div>
+                        <div style="font-size:11px;color:#9CA3AF"><span class="poam-count" data-app="web-applications">0</span> POAMs</div>
+                    </div>
+                    <div class="application-card" onclick="selectApplication('databases')" style="background:#fff;border:1px solid #E2E4E8;border-radius:8px;padding:14px 16px;cursor:pointer;transition:border-color 0.15s,background 0.15s">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                            <i class="fas fa-database" style="color:#EF4444;width:14px"></i>
+                            <span style="font-size:13px;font-weight:600;color:#111827">Databases</span>
+                        </div>
+                        <div style="font-size:11.5px;color:#6B7280;margin-bottom:6px">Data storage &amp; mgmt</div>
+                        <div style="font-size:11px;color:#9CA3AF"><span class="poam-count" data-app="databases">0</span> POAMs</div>
+                    </div>
+                    <div class="application-card" onclick="selectApplication('api-services')" style="background:#fff;border:1px solid #E2E4E8;border-radius:8px;padding:14px 16px;cursor:pointer;transition:border-color 0.15s,background 0.15s">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                            <i class="fas fa-plug" style="color:#0D7377;width:14px"></i>
+                            <span style="font-size:13px;font-weight:600;color:#111827">API Services</span>
+                        </div>
+                        <div style="font-size:11.5px;color:#6B7280;margin-bottom:6px">REST APIs &amp; microservices</div>
+                        <div style="font-size:11px;color:#9CA3AF"><span class="poam-count" data-app="api-services">0</span> POAMs</div>
+                    </div>
+                    <div class="application-card" onclick="selectApplication('add-application')" style="background:#F9FAFB;border:1px dashed #D1D5DB;border-radius:8px;padding:14px 16px;cursor:pointer;transition:border-color 0.15s,background 0.15s">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                            <i class="fas fa-plus" style="color:#9CA3AF;width:14px"></i>
+                            <span style="font-size:13px;font-weight:600;color:#6B7280">Add Application</span>
+                        </div>
+                        <div style="font-size:11.5px;color:#9CA3AF">Create new system category</div>
+                    </div>
+                </div>
+
+                <!-- Current Selection -->
+                <div style="margin:0 20px 20px;padding:12px 16px;background:#E6F7F7;border-radius:8px;border:1px solid #CCEEEE" id="current-selection" style="display: none;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                        <div>
+                            <div style="font-size:12px;font-weight:700;color:#0A5E62">Currently Viewing: <span id="selected-app-name"></span></div>
+                            <div style="font-size:11.5px;color:#374151;margin-top:2px" id="selected-app-description"></div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <button onclick="toggleViewMode()" class="btn-sec" id="view-mode-toggle" style="font-size:11.5px;padding:5px 10px">
+                                <i class="fas fa-exchange-alt" style="margin-right:4px"></i>Switch to App View
+                            </button>
+                            <button onclick="resetApplicationSelection()" class="btn-sec" style="font-size:11.5px;padding:5px 10px;color:#6B7280">
+                                <i class="fas fa-times" style="margin-right:4px"></i>Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Governance View -->
+            <div id="governance-view" class="poam-view">
+                <div id="poam-table-container" style="display: none;">
+                    <div class="card" style="margin-bottom:14px">
+                        <div class="card-head" style="padding-bottom:12px">
+                            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                                <input type="text" placeholder="Search findings..." style="border:1px solid #D1D5DB;border-radius:6px;padding:7px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none;width:200px">
+                                <select style="border:1px solid #D1D5DB;border-radius:6px;padding:7px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none">
+                                    <option>All Risk Levels</option>
+                                    <option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
+                                </select>
+                                <select style="border:1px solid #D1D5DB;border-radius:6px;padding:7px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none">
+                                    <option>All Status</option>
+                                    <option>Open</option><option>In Progress</option><option>Completed</option><option>Overdue</option>
+                                </select>
+                                <select style="border:1px solid #D1D5DB;border-radius:6px;padding:7px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none">
+                                    <option>All Sources</option>
+                                    <option>Scan</option><option>Manual</option><option>Control</option>
+                                </select>
+                                <select style="border:1px solid #D1D5DB;border-radius:6px;padding:7px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none">
+                                    <option>All Controls</option>
+                                    <option>AC-2</option><option>AC-3</option><option>SC-8</option><option>SI-2</option><option>RA-5</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="height:1px;background:#F3F4F6;margin:0 20px"></div>
+                        <div style="overflow-x:auto;padding:0 20px 20px">
+                            <table style="width:100%;border-collapse:collapse;min-width:900px">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6">POAM ID</th>
+                                        <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6">Finding Description</th>
+                                        <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6">Risk</th>
+                                        <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6">Source</th>
+                                        <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6" id="framework-controls-header">NIST Controls</th>
+                                        <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6">POC</th>
+                                        <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6">Due Date</th>
+                                        <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6">Status</th>
+                                        <th style="text-align:left;padding:10px 12px;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="poam-table-body">
+                                    <tr style="border-bottom:1px solid #F3F4F6">
+                                        <td style="padding:10px 12px;font-size:12px;font-family:monospace;color:#374151">V-001234</td>
+                                        <td style="padding:10px 12px;font-size:13px;color:#111827;max-width:260px"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="Unencrypted sensitive data transmission over network channels">Unencrypted sensitive data transmission over network channels</div></td>
+                                        <td style="padding:10px 12px"><span class="sev-badge bh">High</span></td>
+                                        <td style="padding:10px 12px"><span style="font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:4px;background:#F3E8FF;color:#6B21A8">Manual</span></td>
+                                        <td style="padding:10px 12px"><div style="display:flex;gap:4px;flex-wrap:wrap"><span style="font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;background:#E6F7F7;color:#0A5E62">SC-8</span><span style="font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;background:#E6F7F7;color:#0A5E62">SC-12</span></div></td>
+                                        <td style="padding:10px 12px"><div style="font-size:12px;font-weight:600;color:#111827">Security Team</div><div style="font-size:11px;color:#9CA3AF">sec-team@company.com</div></td>
+                                        <td style="padding:10px 12px;font-size:12px;color:#374151">2024-02-15</td>
+                                        <td style="padding:10px 12px"><span style="font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:4px;background:#FFF3E0;color:#9A3412">In Progress</span></td>
+                                        <td style="padding:10px 12px;white-space:nowrap"><button style="color:#0D7377;background:none;border:none;cursor:pointer;font-size:13px;margin-right:8px" title="Edit"><i class="fas fa-edit"></i></button><button style="color:#6B7280;background:none;border:none;cursor:pointer;font-size:13px;margin-right:8px" title="View Details"><i class="fas fa-eye"></i></button><button style="color:#059669;background:none;border:none;cursor:pointer;font-size:13px" title="Add Evidence"><i class="fas fa-paperclip"></i></button></td>
+                                    </tr>
+                                    <tr style="border-bottom:1px solid #F3F4F6">
+                                        <td style="padding:10px 12px;font-size:12px;font-family:monospace;color:#374151">V-001235</td>
+                                        <td style="padding:10px 12px;font-size:13px;color:#111827;max-width:260px"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="Missing security patches on web servers exposing critical vulnerabilities">Missing security patches on web servers exposing critical vulnerabilities</div></td>
+                                        <td style="padding:10px 12px"><span class="sev-badge bc">Critical</span></td>
+                                        <td style="padding:10px 12px"><span style="font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:4px;background:#DCFCE7;color:#166534">Scan</span></td>
+                                        <td style="padding:10px 12px"><div style="display:flex;gap:4px;flex-wrap:wrap"><span style="font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;background:#E6F7F7;color:#0A5E62">SI-2</span><span style="font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;background:#E6F7F7;color:#0A5E62">RA-5</span></div></td>
+                                        <td style="padding:10px 12px"><div style="font-size:12px;font-weight:600;color:#111827">IT Operations</div><div style="font-size:11px;color:#9CA3AF">it-ops@company.com</div></td>
+                                        <td style="padding:10px 12px;font-size:12px;color:#DC2626;font-weight:600">2024-01-30</td>
+                                        <td style="padding:10px 12px"><span class="sev-badge bc" style="font-size:10.5px">Overdue</span></td>
+                                        <td style="padding:10px 12px;white-space:nowrap"><button style="color:#0D7377;background:none;border:none;cursor:pointer;font-size:13px;margin-right:8px" title="Edit"><i class="fas fa-edit"></i></button><button style="color:#6B7280;background:none;border:none;cursor:pointer;font-size:13px;margin-right:8px" title="View Details"><i class="fas fa-eye"></i></button><button style="color:#059669;background:none;border:none;cursor:pointer;font-size:13px" title="Add Evidence"><i class="fas fa-paperclip"></i></button></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding:10px 12px;font-size:12px;font-family:monospace;color:#374151">V-001236</td>
+                                        <td style="padding:10px 12px;font-size:13px;color:#111827;max-width:260px"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="Insufficient access control mechanisms in application layer">Insufficient access control mechanisms in application layer</div></td>
+                                        <td style="padding:10px 12px"><span class="sev-badge bt">Medium</span></td>
+                                        <td style="padding:10px 12px"><span style="font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:4px;background:#E6F7F7;color:#0A5E62">Control</span></td>
+                                        <td style="padding:10px 12px"><div style="display:flex;gap:4px;flex-wrap:wrap"><span style="font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;background:#E6F7F7;color:#0A5E62">AC-2</span><span style="font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;background:#E6F7F7;color:#0A5E62">AC-3</span></div></td>
+                                        <td style="padding:10px 12px"><div style="font-size:12px;font-weight:600;color:#111827">App Development</div><div style="font-size:11px;color:#9CA3AF">app-dev@company.com</div></td>
+                                        <td style="padding:10px 12px;font-size:12px;color:#374151">2024-03-01</td>
+                                        <td style="padding:10px 12px"><span class="sev-badge bl">Open</span></td>
+                                        <td style="padding:10px 12px;white-space:nowrap"><button style="color:#0D7377;background:none;border:none;cursor:pointer;font-size:13px;margin-right:8px" title="Edit"><i class="fas fa-edit"></i></button><button style="color:#6B7280;background:none;border:none;cursor:pointer;font-size:13px;margin-right:8px" title="View Details"><i class="fas fa-eye"></i></button><button style="color:#059669;background:none;border:none;cursor:pointer;font-size:13px" title="Add Evidence"><i class="fas fa-paperclip"></i></button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Application View (Simplified for App Teams) -->
+            <div id="application-view" class="poam-view" style="display: none;">
+                <div class="kpi-row" id="app-dashboard">
+                    <div class="kpi">
+                        <div class="kpi-top-bar" style="background:#0D7377"></div>
+                        <div class="kpi-lbl">Total POAMs</div>
+                        <div class="kpi-num" id="app-total-poams">0</div>
+                        <div class="kpi-sub">All findings</div>
+                    </div>
+                    <div class="kpi urgent">
+                        <div class="kpi-lbl">Critical Risk</div>
+                        <div class="kpi-num" id="app-critical-poams">0</div>
+                        <div class="kpi-sub warn-text">Immediate action required</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-top-bar" style="background:#F59E0B"></div>
+                        <div class="kpi-lbl">Open Items</div>
+                        <div class="kpi-num" id="app-open-poams" style="color:#B45309">0</div>
+                        <div class="kpi-sub">Pending resolution</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-top-bar" style="background:#059669"></div>
+                        <div class="kpi-lbl">Completed</div>
+                        <div class="kpi-num" id="app-completed-poams" style="color:#047857">0</div>
+                        <div class="kpi-sub">Resolved this month</div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:14px">
+                    <div class="card-head" style="padding-bottom:12px">
+                        <div>
+                            <div class="card-title">Your Security Findings</div>
+                            <div class="card-sub">Findings linked to your application</div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <input type="text" placeholder="Quick search..." style="border:1px solid #D1D5DB;border-radius:6px;padding:6px 10px;font-size:12px;color:#374151;font-family:inherit;outline:none">
+                            <select style="border:1px solid #D1D5DB;border-radius:6px;padding:6px 10px;font-size:12px;color:#374151;font-family:inherit;outline:none">
+                                <option>All Status</option><option>Open</option><option>In Progress</option><option>Completed</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="height:1px;background:#F3F4F6;margin:0 20px"></div>
+                    <div id="app-poam-list" style="padding:8px 0">
+                        <div style="padding:32px;text-align:center;color:#9CA3AF">
+                            <i class="fas fa-shield-alt" style="font-size:32px;display:block;margin-bottom:10px;opacity:0.4"></i>
+                            <div style="font-size:13px;font-weight:600;color:#374151">No security findings found</div>
+                            <div style="font-size:12px;color:#9CA3AF;margin-top:4px">Your application is in good standing!</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-head" style="padding-bottom:14px">
+                        <div class="card-title">Quick Actions</div>
+                    </div>
+                    <div style="padding:0 20px 20px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+                        <button onclick="requestSecurityScan()" style="background:#fff;border:1px solid #E2E4E8;border-radius:8px;padding:16px;cursor:pointer;text-align:left;transition:background 0.12s">
+                            <i class="fas fa-search" style="color:#0D7377;display:block;margin-bottom:8px"></i>
+                            <div style="font-size:13px;font-weight:600;color:#111827">Request Security Scan</div>
+                            <div style="font-size:12px;color:#6B7280;margin-top:3px">Schedule a security assessment</div>
+                        </button>
+                        <button onclick="uploadEvidence()" style="background:#fff;border:1px solid #E2E4E8;border-radius:8px;padding:16px;cursor:pointer;text-align:left;transition:background 0.12s">
+                            <i class="fas fa-upload" style="color:#0D7377;display:block;margin-bottom:8px"></i>
+                            <div style="font-size:13px;font-weight:600;color:#111827">Upload Evidence</div>
+                            <div style="font-size:12px;color:#6B7280;margin-top:3px">Provide remediation proof</div>
+                        </button>
+                        <button onclick="contactSecurityTeam()" style="background:#fff;border:1px solid #E2E4E8;border-radius:8px;padding:16px;cursor:pointer;text-align:left;transition:background 0.12s">
+                            <i class="fas fa-comments" style="color:#0D7377;display:block;margin-bottom:8px"></i>
+                            <div style="font-size:13px;font-weight:600;color:#111827">Contact Security Team</div>
+                            <div style="font-size:12px;color:#6B7280;margin-top:3px">Get help with findings</div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>

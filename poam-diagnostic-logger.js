@@ -1,5 +1,5 @@
 /**
- * POAM Nexus Diagnostic Logger
+ * TRACE Diagnostic Logger
  * Comprehensive system check to identify all issues
  */
 

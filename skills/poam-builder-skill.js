@@ -434,17 +434,30 @@ class POAMBuilderSkill extends BaseSkill {
         if (rem.remediationType === 'risk_acceptance') {
             return 'risk-accepted';
         }
-        
-        // Check if any findings are risk accepted
+
+        // Risk Accepted detection — any finding in the group with:
+        //   • Qualys Ignored column = Yes  (boolean flag)
+        //   • OR status string matching 'risk accepted' / 'ignored'
+        // Even ONE risk-accepted finding in a remediation group means the whole
+        // POAM is risk-accepted (shouldn't be mixed with open findings in same POAM).
         const hasRiskAccepted = group.findings.some(f => {
-            const status = (f.status || '').toLowerCase();
-            return status === 'risk accepted' || status === 'risk-accepted' || status === 'ignored';
+            if (f.ignored === true) return true;
+            const status = (f.status || '').toLowerCase().trim();
+            return status === 'risk accepted' || status === 'risk-accepted' || status === 'ignored' || status === 'yes';
         });
-        
+
         if (hasRiskAccepted) {
             return 'risk-accepted';
         }
-        
+
+        // If every finding has a Last Fixed date and no active breach, treat as completed
+        const allFixed = group.findings.length > 0 && group.findings.every(f => {
+            return f.lastFixed && f.lastFixed.toString().trim().length > 0;
+        });
+        if (allFixed) {
+            return 'completed';
+        }
+
         // Default to open
         return 'open';
     }

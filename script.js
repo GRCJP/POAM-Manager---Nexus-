@@ -1,4 +1,4 @@
-// POAM Nexus JavaScript functionality
+// TRACE - Tracking Remediation & Compliance Efficiently
 
 // Cache-busting mechanism: Force reload when storage is cleared
 (function initCacheBuster() {
@@ -20,6 +20,13 @@
 
 // Module navigation
 function showModule(moduleName) {
+    // Scan History is now inside Evidence Vault — redirect before any DOM work
+    if (moduleName === 'scan-history') {
+        showModule('evidence');
+        showEvidenceTab('scan-history');
+        return;
+    }
+
     // Save current module to localStorage for page refresh persistence
     localStorage.setItem('currentModule', moduleName);
     
@@ -66,16 +73,14 @@ function showModule(moduleName) {
         // Load POAM ID configuration when POAM Repository is shown
         loadPOAMIdConfig();
         updateApplicationPOAMCounts();
-    } else if (moduleName === 'scan-history') {
-        // Load scan history when history module is shown
-        renderScanHistory();
     } else if (moduleName === 'vulnerability' || moduleName === 'vulnerability-tracking') {
         // Initialize vulnerability tracking and load existing POAMs
         if (typeof showVulnerabilityTab === 'function') showVulnerabilityTab('upload');
         if (typeof displayVulnerabilityPOAMs === 'function') displayVulnerabilityPOAMs();
         if (typeof updateVulnerabilityModuleMetrics === 'function') updateVulnerabilityModuleMetrics();
     } else if (moduleName === 'evidence') {
-        // Load evidence vault data
+        // Load evidence vault data, default to evidence tab
+        showEvidenceTab('evidence');
         loadEvidenceFiles();
     } else if (moduleName === 'reporting') {
         // Load reporting data
@@ -92,18 +97,35 @@ function showModule(moduleName) {
     }
     
     // Highlight active sidebar link
-    // First remove highlight from all sidebar links
-    const allSidebarLinks = document.querySelectorAll('.sidebar-link');
+    const allSidebarLinks = document.querySelectorAll('.sidebar-link, .sb-item');
     allSidebarLinks.forEach(link => {
-        link.classList.remove('bg-indigo-600', 'text-white');
-        link.classList.add('text-slate-400');
+        link.classList.remove('active', 'bg-indigo-600', 'text-white', 'text-slate-400', 'text-slate-100');
     });
-    
-    // Then add highlight to the active module link
+
+    // Add active state to the matching sidebar link
     const activeLink = document.querySelector(`[onclick="showModule('${moduleName}')"]`);
-    if (activeLink && activeLink.classList.contains('sidebar-link')) {
-        activeLink.classList.remove('text-slate-400');
-        activeLink.classList.add('bg-indigo-600', 'text-white');
+    if (activeLink) {
+        activeLink.classList.add('active');
+    }
+}
+
+// Switch tabs within the Evidence Vault module
+function showEvidenceTab(tab) {
+    const evidencePanel = document.getElementById('evidence-panel-evidence');
+    const scanHistoryPanel = document.getElementById('evidence-panel-scan-history');
+    const evTab = document.getElementById('ev-tab-evidence');
+    const shTab = document.getElementById('ev-tab-scan-history');
+    if (tab === 'scan-history') {
+        if (evidencePanel) evidencePanel.classList.add('hidden');
+        if (scanHistoryPanel) scanHistoryPanel.classList.remove('hidden');
+        if (evTab) evTab.classList.remove('active');
+        if (shTab) shTab.classList.add('active');
+        renderScanHistory();
+    } else {
+        if (evidencePanel) evidencePanel.classList.remove('hidden');
+        if (scanHistoryPanel) scanHistoryPanel.classList.add('hidden');
+        if (evTab) evTab.classList.add('active');
+        if (shTab) shTab.classList.remove('active');
     }
 }
 
@@ -1794,7 +1816,7 @@ function openNewPOAMModal() {
     document.getElementById('poam-modal').classList.remove('hidden');
 }
 
-// Vulnerability Tracking Functions - Unified POAM Manager
+// Vulnerability Tracking Functions - TRACE
 function showVulnerabilityTab(tabName) {
     // Hide all vulnerability content
     const contents = document.querySelectorAll('.vulnerability-content');
@@ -1967,7 +1989,7 @@ function createSLAPOAM(violation) {
         
         // Metadata
         created_date: new Date().toISOString(),
-        created_by: 'POAM Nexus - SLA Processing',
+        created_by: 'TRACE - SLA Processing',
         source_file: 'SLA Violation Detection'
     };
 }
@@ -2327,10 +2349,38 @@ async function initializeModule(moduleName) {
     }
 }
 
+async function loadModulePartials() {
+    const modules = [
+        'dashboard',
+        'poam',
+        'evidence',
+        'vulnerability-tracking',
+        'security-control-monitoring',
+        'reporting',
+        'audit',
+        'settings',
+        'admin'
+    ];
+    await Promise.all(modules.map(async name => {
+        try {
+            const res = await fetch(`partials/${name}.html`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const html = await res.text();
+            const el = document.getElementById(`${name}-module`);
+            if (el) el.outerHTML = html;
+        } catch (e) {
+            console.error(`Failed to load partial: ${name}`, e);
+        }
+    }));
+}
+
 // Initialize the application
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     console.log('🚀 Application initializing...');
-    
+
+    // Replace old inline module HTML with new mockup-C partials
+    await loadModulePartials();
+
     // Always start with dashboard for consistent user experience
     // Hide all modules first
     document.querySelectorAll('.module').forEach(module => {
@@ -2348,7 +2398,24 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Set dashboard as current module
     localStorage.setItem('currentModule', 'dashboard');
-    
+
+    // Auto-seed mock POA&M Workbook data on first run so the app has
+    // something meaningful to display before a real scan is imported.
+    try {
+        if (typeof window.seedMockPOAMs === 'function') {
+            const alreadySeeded = localStorage.getItem('mockPOAMsSeeded') === '1';
+            if (!alreadySeeded) {
+                const result = await window.seedMockPOAMs();
+                if (result && !result.error) {
+                    localStorage.setItem('mockPOAMsSeeded', '1');
+                    console.log('✅ Mock POA&M data seeded on first run');
+                }
+            }
+        }
+    } catch (e) {
+        console.warn('Mock seed on first run failed:', e.message);
+    }
+
     // Load dashboard metrics
     try {
         if (typeof loadDashboardMetrics === 'function') {

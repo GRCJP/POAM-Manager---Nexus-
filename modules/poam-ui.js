@@ -1204,7 +1204,7 @@ async function exportPOAMBackup() {
     const backup = {
         exportVersion: 2,
         exportedAt: new Date().toISOString(),
-        source: 'POAM Nexus',
+        source: 'TRACE',
         counts: {
             poams: lightPoams.length,
             scanRuns: scanRuns.length,
