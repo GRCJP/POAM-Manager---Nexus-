@@ -45,8 +45,17 @@ function updateSidebarActiveState(moduleName) {
 
 // Show specific settings tab
 function showSettingsTab(tabName) {
-    // If the requested tab is 'systems', redirect to the consolidated view in 'preferences'
-    const finalTabName = tabName === 'systems' ? 'preferences' : tabName;
+    // Backwards-compatibility mapping from old tab names to new consolidated tabs
+    const tabMapping = {
+        'sla': 'general',
+        'preferences': 'general',
+        'systems': 'general',
+        'risk-framework': 'compliance',
+        'poam-id': 'compliance',
+        'api-config': 'integrations',
+        'jira-config': 'integrations'
+    };
+    const finalTabName = tabMapping[tabName] || tabName;
 
     // First, show the settings module
     const settingsModule = document.getElementById('settings-module');
@@ -76,18 +85,15 @@ function showSettingsTab(tabName) {
     updateSettingsSubmenuActiveState(finalTabName);
 
     // Load tab-specific data
-    if (finalTabName === 'sla') {
+    if (finalTabName === 'general') {
         loadSLAConfig();
-    } else if (finalTabName === 'preferences') {
-        // Preference tab now contains systems, ensure they are rendered
         if (typeof settingsManager !== 'undefined') {
             settingsManager.renderSystemsSettings();
         }
     } else if (finalTabName === 'critical-assets') {
         if (typeof loadCriticalAssetsRegistry === 'function') loadCriticalAssetsRegistry();
-    } else if (finalTabName === 'api-config') {
+    } else if (finalTabName === 'integrations') {
         if (typeof renderAPISettingsTab === 'function') renderAPISettingsTab();
-    } else if (finalTabName === 'jira-config') {
         if (typeof loadJiraConfig === 'function') loadJiraConfig();
     }
 
