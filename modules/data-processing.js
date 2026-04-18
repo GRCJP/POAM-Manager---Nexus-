@@ -917,96 +917,163 @@ function loadEvidenceFiles() {
     displayEvidenceRepository();
 }
 
-// Populate POAM dropdown with available POAMs
-function populatePOAMDropdown() {
-    const poamSelect = document.getElementById('evidence-poam-select');
-    if (!poamSelect) return;
-    
-    // Clear existing options except the first one
-    poamSelect.innerHTML = '<option value="">Choose a POAM to link evidence...</option>';
-    
-    // Get all POAMs from storage
-    const poamData = JSON.parse(localStorage.getItem('poamData') || '{}');
-    
-    // Add POAMs to dropdown, grouped by status
+// Populate POAM list from Workbook — open POAMs only
+async function populatePOAMDropdown() {
     const openPOAMs = [];
-    const inProgressPOAMs = [];
-    const otherPOAMs = [];
-    
-    Object.entries(poamData).forEach(([id, poam]) => {
-        const status = poam.status || 'open';
-        const poamOption = {
-            id: id,
-            text: `${id} - ${poam.finding_description?.substring(0, 60) || 'No description'}...`,
-            status: status,
-            risk: poam.risk_level || 'unknown',
-            due: poam.scheduled_completion_date || 'N/A'
-        };
-        
-        if (status === 'open') {
-            openPOAMs.push(poamOption);
-        } else if (status === 'in_progress') {
-            inProgressPOAMs.push(poamOption);
-        } else if (status !== 'completed' && status !== 'closed') {
-            otherPOAMs.push(poamOption);
+
+    try {
+        if (window.poamWorkbookDB) {
+            await window.poamWorkbookDB.init();
+            const systems = await window.poamWorkbookDB.getSystems();
+            for (const sys of (systems || [])) {
+                const items = await window.poamWorkbookDB.getItemsBySystem(sys.id);
+                (items || []).forEach(item => {
+                    const status = (item['Status'] || 'Open').toLowerCase();
+                    if (status === 'completed' || status === 'closed' || status === 'risk accepted') return;
+                    const title = item['Vulnerability Name'] || 'Workbook item';
+                    const itemNum = item['Item number'] || item.id;
+                    const control = item['Impacted Security Controls'] || item['Control Family'] || '';
+                    openPOAMs.push({
+                        id: item.id,
+                        itemNum,
+                        text: `${itemNum} — ${title.substring(0, 70)} [${sys.name}]`,
+                        title,
+                        systemName: sys.name,
+                        control,
+                        status,
+                        risk: item['Severity Value'] || 'Medium',
+                        due: item['Scheduled Completion Date'] || 'N/A',
+                        source: 'workbook'
+                    });
+                });
+            }
         }
-    });
-    
-    // Add grouped options
-    if (openPOAMs.length > 0) {
-        const optgroup = document.createElement('optgroup');
-        optgroup.label = '🔴 Open POAMs';
-        openPOAMs.forEach(poam => {
-            const option = document.createElement('option');
-            option.value = poam.id;
-            option.textContent = poam.text;
-            option.dataset.status = poam.status;
-            option.dataset.risk = poam.risk;
-            option.dataset.due = poam.due;
-            optgroup.appendChild(option);
-        });
-        poamSelect.appendChild(optgroup);
-    }
-    
-    if (inProgressPOAMs.length > 0) {
-        const optgroup = document.createElement('optgroup');
-        optgroup.label = '🟡 In Progress POAMs';
-        inProgressPOAMs.forEach(poam => {
-            const option = document.createElement('option');
-            option.value = poam.id;
-            option.textContent = poam.text;
-            option.dataset.status = poam.status;
-            option.dataset.risk = poam.risk;
-            option.dataset.due = poam.due;
-            optgroup.appendChild(option);
-        });
-        poamSelect.appendChild(optgroup);
-    }
-    
-    if (otherPOAMs.length > 0) {
-        const optgroup = document.createElement('optgroup');
-        optgroup.label = '⚪ Other POAMs';
-        otherPOAMs.forEach(poam => {
-            const option = document.createElement('option');
-            option.value = poam.id;
-            option.textContent = poam.text;
-            option.dataset.status = poam.status;
-            option.dataset.risk = poam.risk;
-            option.dataset.due = poam.due;
-            optgroup.appendChild(option);
-        });
-        poamSelect.appendChild(optgroup);
-    }
+    } catch (e) { console.warn('populatePOAMDropdown: workbook load failed', e); }
+
+    // Store flat list for typeahead search
+    window._evidencePOAMList = openPOAMs;
+    console.log(`Evidence POAM list: ${openPOAMs.length} open workbook POAMs loaded`);
 }
 
-// Update selected POAM info display
+// ── POAM Typeahead Search ──
+
+function filterPOAMSearchResults(query) {
+    const dropdown = document.getElementById('poam-search-dropdown');
+    if (!dropdown) return;
+    const list = window._evidencePOAMList || [];
+    const q = (query || '').toLowerCase().trim();
+
+    if (!q) {
+        // Show all (max 20)
+        renderPOAMSearchResults(list.slice(0, 20), dropdown);
+        dropdown.style.display = 'block';
+        return;
+    }
+
+    const matches = list.filter(p =>
+        (p.itemNum || '').toLowerCase().includes(q) ||
+        (p.control || '').toLowerCase().includes(q) ||
+        (p.title || '').toLowerCase().includes(q) ||
+        (p.systemName || '').toLowerCase().includes(q) ||
+        (p.risk || '').toLowerCase().includes(q)
+    ).slice(0, 15);
+
+    renderPOAMSearchResults(matches, dropdown);
+    dropdown.style.display = 'block';
+}
+
+function renderPOAMSearchResults(matches, dropdown) {
+    if (matches.length === 0) {
+        dropdown.innerHTML = '<div style="padding:14px 16px;font-size:12px;color:#6B7280;text-align:center">No matching POAMs found</div>';
+        return;
+    }
+
+    const sevColor = { critical: '#991B1B', high: '#B45309', medium: '#0D7377', moderate: '#0D7377', low: '#6B7280' };
+    const statusColor = { open: '#0D7377', 'in-progress': '#92400E', 'in progress': '#92400E', delayed: '#991B1B', extended: '#92400E', 'risk-accepted': '#374151', 'risk accepted': '#374151' };
+
+    dropdown.innerHTML = matches.map(p => {
+        const sColor = sevColor[(p.risk || '').toLowerCase()] || '#6B7280';
+        const stColor = statusColor[(p.status || '').toLowerCase()] || '#0D7377';
+        const ctrl = p.control ? escapeHtml(p.control) : '';
+        const num = escapeHtml(p.itemNum || p.id);
+        return `
+            <div onclick="selectPOAMFromSearch('${p.id}', '${p.source}')"
+                 style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #F3F4F6;transition:background 0.1s"
+                 onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background=''">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+                    <span style="font-size:12px;font-weight:700;color:#111827;font-family:monospace">${num}</span>
+                    ${ctrl ? `<span style="font-size:10px;font-weight:700;color:#0D7377;background:#E6F7F7;padding:1px 6px;border-radius:3px">${ctrl}</span>` : ''}
+                    <span style="font-size:10px;font-weight:600;color:${sColor};text-transform:capitalize">${p.risk}</span>
+                    <span style="font-size:10px;color:#6B7280;margin-left:auto">${escapeHtml(p.systemName || '')}</span>
+                </div>
+                <div style="font-size:12px;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(p.text.split('—').pop().trim().substring(0,80))}</div>
+            </div>`;
+    }).join('');
+}
+
+function showPOAMSearchDropdown() {
+    const input = document.getElementById('evidence-poam-search');
+    filterPOAMSearchResults(input ? input.value : '');
+}
+
+function selectPOAMFromSearch(poamId, source) {
+    const hidden = document.getElementById('evidence-poam-select');
+    const input = document.getElementById('evidence-poam-search');
+    const dropdown = document.getElementById('poam-search-dropdown');
+    const list = window._evidencePOAMList || [];
+
+    if (hidden) hidden.value = poamId;
+    const match = list.find(p => p.id === poamId);
+    if (input && match) input.value = match.text;
+    if (dropdown) dropdown.style.display = 'none';
+
+    // Update the POAM info card
+    updateSelectedPOAMInfoFromData(match);
+}
+
+function clearPOAMSelection() {
+    const hidden = document.getElementById('evidence-poam-select');
+    const input = document.getElementById('evidence-poam-search');
+    const info = document.getElementById('selected-poam-info');
+    if (hidden) hidden.value = '';
+    if (input) input.value = '';
+    if (info) info.style.display = 'none';
+}
+
+function updateSelectedPOAMInfoFromData(poam) {
+    const infoDiv = document.getElementById('selected-poam-info');
+    if (!infoDiv || !poam) { if (infoDiv) infoDiv.style.display = 'none'; return; }
+
+    const idEl = document.getElementById('selected-poam-id');
+    const statusEl = document.getElementById('selected-poam-status-badge');
+    const descEl = document.getElementById('selected-poam-description');
+    const riskEl = document.getElementById('selected-poam-risk');
+    const dueEl = document.getElementById('selected-poam-due');
+
+    if (idEl) idEl.textContent = poam.itemNum || poam.id;
+    if (statusEl) statusEl.textContent = poam.status || 'open';
+    if (descEl) descEl.textContent = (poam.title || '') + (poam.control ? ` [${poam.control}]` : '');
+    if (riskEl) riskEl.textContent = poam.risk || 'medium';
+    if (dueEl) dueEl.textContent = poam.due || 'N/A';
+
+    infoDiv.style.display = 'block';
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('poam-search-dropdown');
+    const input = document.getElementById('evidence-poam-search');
+    if (dropdown && input && !input.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.style.display = 'none';
+    }
+});
+
+// Legacy compat — old code may call updateSelectedPOAMInfo
 function updateSelectedPOAMInfo() {
     const poamSelect = document.getElementById('evidence-poam-select');
-    const selectedOption = poamSelect.options[poamSelect.selectedIndex];
     const infoDiv = document.getElementById('selected-poam-info');
-    
-    if (!selectedOption || !selectedOption.value) {
-        infoDiv.style.display = 'none';
+    if (!poamSelect || !poamSelect.value) {
+        if (infoDiv) infoDiv.style.display = 'none';
         return;
     }
     
@@ -1162,13 +1229,21 @@ function saveEvidenceFiles(files) {
             // Save to evidence vault
             evidenceVault[evidenceId] = evidenceRecord;
             localStorage.setItem('evidenceVault', JSON.stringify(evidenceVault));
-            
+
+            // Audit log: evidence uploaded
+            if (typeof auditEvidenceUpload === 'function') {
+                auditEvidenceUpload(poamId, file.name);
+            }
+
+            // Link evidence to the POAM in IndexedDB
+            linkEvidenceToPOAM(poamId, evidenceId);
+
             // If this is the last file, trigger auto-close if enabled
             if (index === files.length - 1) {
                 if (autoClose) {
                     closePOAMWithEvidence(poamId, evidenceId);
                 }
-                
+
                 // Show success message
                 showEvidenceUploadSuccess(files.length, poamId, autoClose);
                 
@@ -1184,30 +1259,103 @@ function saveEvidenceFiles(files) {
     });
 }
 
-// Auto-close POAM when evidence is submitted
-function closePOAMWithEvidence(poamId, evidenceId) {
-    const poamData = JSON.parse(localStorage.getItem('poamData') || '{}');
-    
-    if (poamData[poamId]) {
-        // Update POAM status to completed
-        poamData[poamId].status = 'completed';
-        poamData[poamId].completion_date = new Date().toISOString().split('T')[0];
-        poamData[poamId].closure_evidence = evidenceId;
-        poamData[poamId].auto_closed = true;
-        
-        // Save updated POAM data
-        localStorage.setItem('poamData', JSON.stringify(poamData));
-        
-        // Update POAM table if visible
-        updatePOAMTableRow(poamId);
-        
-        // Update metrics
-        if (typeof updateSLAMetrics === 'function') {
-            updateSLAMetrics();
+// Auto-close POAM when evidence is submitted — updates the correct IndexedDB store
+async function closePOAMWithEvidence(poamId, evidenceId) {
+    const now = new Date().toISOString();
+    let closed = false;
+
+    // Try findings store (poamDB) first
+    try {
+        if (typeof poamDB !== 'undefined' && poamDB) {
+            if (!poamDB.db) await poamDB.init();
+            const poam = await poamDB.getPOAM(poamId);
+            if (poam) {
+                const prevStatus = poam.findingStatus || poam.status || 'open';
+                poam.findingStatus = 'completed';
+                poam.status = 'completed';
+                poam.actualCompletionDate = now.split('T')[0];
+                poam.closureEvidence = evidenceId;
+                poam.autoClosed = true;
+                poam.lastModifiedDate = now;
+                if (!poam.evidenceLinks) poam.evidenceLinks = [];
+                poam.evidenceLinks.push({ evidenceId, linkedDate: now });
+                await poamDB.savePOAM(poam);
+                closed = true;
+                // Audit log
+                if (typeof auditStatusChange === 'function') {
+                    auditStatusChange(poamId, prevStatus, 'completed');
+                }
+                console.log(`Finding ${poamId} auto-closed with evidence ${evidenceId}`);
+            }
         }
-        
-        console.log(`POAM ${poamId} automatically closed with evidence ${evidenceId}`);
+    } catch (e) { console.warn('closePOAMWithEvidence: findings update failed', e); }
+
+    // Try workbook store (poamWorkbookDB) if not found in findings
+    if (!closed) {
+        try {
+            if (window.poamWorkbookDB) {
+                await window.poamWorkbookDB.init();
+                const item = await window.poamWorkbookDB.getItem(poamId);
+                if (item) {
+                    const prevStatus = item['Status'] || 'Open';
+                    item['Status'] = 'Completed';
+                    item['Actual Completion Date'] = now.split('T')[0];
+                    item['closure_evidence'] = evidenceId;
+                    item.updatedAt = now;
+                    if (!item.evidenceLinks) item.evidenceLinks = [];
+                    item.evidenceLinks.push({ evidenceId, linkedDate: now });
+                    await window.poamWorkbookDB.saveItem(item);
+                    closed = true;
+                    if (typeof auditStatusChange === 'function') {
+                        auditStatusChange(poamId, prevStatus, 'Completed');
+                    }
+                    console.log(`Workbook POAM ${poamId} auto-closed with evidence ${evidenceId}`);
+                }
+            }
+        } catch (e) { console.warn('closePOAMWithEvidence: workbook update failed', e); }
     }
+
+    // Refresh displays
+    if (closed) {
+        if (typeof displayVulnerabilityPOAMs === 'function') displayVulnerabilityPOAMs();
+        if (typeof renderWorkbookOverview === 'function') renderWorkbookOverview();
+    }
+}
+
+// Link evidence to POAM in IndexedDB (bidirectional)
+async function linkEvidenceToPOAM(poamId, evidenceId) {
+    const now = new Date().toISOString();
+    // Try findings DB
+    try {
+        if (typeof poamDB !== 'undefined' && poamDB) {
+            if (!poamDB.db) await poamDB.init();
+            const poam = await poamDB.getPOAM(poamId);
+            if (poam) {
+                if (!poam.evidenceLinks) poam.evidenceLinks = [];
+                if (!poam.evidenceLinks.some(l => l.evidenceId === evidenceId)) {
+                    poam.evidenceLinks.push({ evidenceId, linkedDate: now });
+                    poam.lastModifiedDate = now;
+                    await poamDB.savePOAM(poam);
+                }
+                return;
+            }
+        }
+    } catch (e) { /* try workbook next */ }
+    // Try workbook DB
+    try {
+        if (window.poamWorkbookDB) {
+            await window.poamWorkbookDB.init();
+            const item = await window.poamWorkbookDB.getItem(poamId);
+            if (item) {
+                if (!item.evidenceLinks) item.evidenceLinks = [];
+                if (!item.evidenceLinks.some(l => l.evidenceId === evidenceId)) {
+                    item.evidenceLinks.push({ evidenceId, linkedDate: now });
+                    item.updatedAt = now;
+                    await window.poamWorkbookDB.saveItem(item);
+                }
+            }
+        }
+    } catch (e) { console.warn('linkEvidenceToPOAM failed:', e); }
 }
 
 // Update POAM table row status
@@ -1242,6 +1390,8 @@ function showEvidenceUploadSuccess(fileCount, poamId, autoClosed) {
 // Reset evidence form
 function resetEvidenceForm() {
     document.getElementById('evidence-poam-select').value = '';
+    var searchInput = document.getElementById('evidence-poam-search');
+    if (searchInput) searchInput.value = '';
     document.getElementById('evidence-type-select').value = '';
     document.getElementById('evidence-owner').value = '';
     document.getElementById('evidence-submitter').value = '';
@@ -1261,8 +1411,8 @@ function displayEvidenceRepository() {
     if (!evidenceList) return;
     
     const evidenceVault = JSON.parse(localStorage.getItem('evidenceVault') || '{}');
-    const evidenceArray = Object.values(evidenceVault);
-    
+    const evidenceArray = Object.values(evidenceVault).filter(e => !e.deleted);
+
     if (evidenceArray.length === 0) {
         evidenceList.innerHTML = `
             <div class="text-center py-12 text-slate-400">
@@ -1502,16 +1652,37 @@ function downloadEvidence(evidenceId) {
 
 // Delete evidence
 function deleteEvidence(evidenceId) {
-    if (!confirm('Are you sure you want to delete this evidence? This action cannot be undone.')) {
+    if (!confirm('Are you sure you want to delete this evidence? This will archive the record but retain the audit trail.')) {
         return;
     }
-    
+
     const evidenceVault = JSON.parse(localStorage.getItem('evidenceVault') || '{}');
-    delete evidenceVault[evidenceId];
+    const evidence = evidenceVault[evidenceId];
+
+    if (evidence) {
+        // Soft-delete: mark as archived, remove file data but keep metadata
+        evidence.deleted = true;
+        evidence.deletedAt = new Date().toISOString();
+        evidence.deletedBy = 'Current User';
+        delete evidence.fileData; // free storage but keep the record
+        evidenceVault[evidenceId] = evidence;
+
+        // Audit log
+        if (typeof recordAuditEvent === 'function') {
+            recordAuditEvent({
+                type: 'evidence_deleted',
+                action: `Evidence archived: ${evidenceId}`,
+                details: `File: ${evidence.filename || 'unknown'}, linked to POAM: ${evidence.linkedPOAM || 'none'}`,
+                metadata: { evidenceId, poamId: evidence.linkedPOAM, filename: evidence.filename }
+            });
+        }
+    } else {
+        delete evidenceVault[evidenceId];
+    }
+
     localStorage.setItem('evidenceVault', JSON.stringify(evidenceVault));
-    
     displayEvidenceRepository();
-    alert('Evidence deleted successfully');
+    showUpdateFeedback('Evidence archived successfully', 'success');
 }
 
 // Get file icon based on filename
@@ -1538,3 +1709,211 @@ function getFileIcon(filename) {
     
     return iconMap[ext] || 'fas fa-file text-slate-500';
 }
+
+// ═══════════════════════════════════════════════════════════════
+// EVIDENCE LIFECYCLE TEST SEEDER
+// Exercises the full POAM lifecycle: creates evidence, links to
+// real POAMs, transitions statuses, and builds an audit trail.
+// Idempotent — skips if evidence already exists.
+// ═══════════════════════════════════════════════════════════════
+
+async function seedTestEvidence(options = {}) {
+    const force = options.force === true;
+    const vault = JSON.parse(localStorage.getItem('evidenceVault') || '{}');
+    const activeRecords = Object.values(vault).filter(e => !e.deleted);
+    if (activeRecords.length > 0 && !force) {
+        console.log('[evidence-seeder] Evidence already exists. Use {force:true} to re-seed.');
+        return { skipped: true, count: activeRecords.length };
+    }
+
+    // Gather open POAMs from Workbook only
+    const poams = [];
+
+    try {
+        if (window.poamWorkbookDB) {
+            await window.poamWorkbookDB.init();
+            const systems = await window.poamWorkbookDB.getSystems();
+            for (const sys of (systems || [])) {
+                const items = await window.poamWorkbookDB.getItemsBySystem(sys.id);
+                (items || []).forEach(item => {
+                    const st = (item['Status'] || 'Open').toLowerCase();
+                    if (st === 'completed' || st === 'closed' || st === 'risk accepted') return;
+                    poams.push({
+                        id: item.id,
+                        title: item['Vulnerability Name'] || 'Workbook POAM',
+                        itemNum: item['Item number'] || item.id,
+                        systemName: sys.name,
+                        status: st,
+                        risk: item['Severity Value'] || 'Medium',
+                        source: 'workbook',
+                        ref: item
+                    });
+                });
+            }
+        }
+    } catch (e) { console.warn('[evidence-seeder] workbook load:', e.message); }
+
+    if (poams.length === 0) {
+        console.warn('[evidence-seeder] No open POAMs found to link evidence to.');
+        return { error: 'no_poams' };
+    }
+
+    console.log(`[evidence-seeder] Found ${poams.length} open POAMs. Seeding evidence...`);
+
+    // Evidence templates — realistic remediation artifacts
+    const evidenceTemplates = [
+        {
+            type: 'remediation',
+            filename: 'patch-deployment-report.pdf',
+            owner: 'J. Martinez — Systems Engineering',
+            submitter: 'K. Davis — Security Operations',
+            description: 'Patch deployment verification report showing successful application of critical security patches across all in-scope servers. Includes pre/post scan comparison.',
+            fileSize: 245760
+        },
+        {
+            type: 'validation',
+            filename: 'nessus-rescan-validation.csv',
+            owner: 'Security Operations Center',
+            submitter: 'A. Patel — Vulnerability Management',
+            description: 'Post-remediation Nessus rescan results confirming vulnerability is no longer detected on target hosts. Scan date matches remediation window.',
+            fileSize: 183200
+        },
+        {
+            type: 'screenshot',
+            filename: 'gpo-mfa-enforcement-screenshot.png',
+            owner: 'Identity Services Team',
+            submitter: 'S. Okafor — IAM Lead',
+            description: 'Screenshot of Group Policy Object showing MFA enforcement enabled for all VPN authentication paths. No password-only fallback permitted.',
+            fileSize: 524288
+        },
+        {
+            type: 'remediation',
+            filename: 'stig-compliance-scan-results.xlsx',
+            owner: 'Configuration Management Team',
+            submitter: 'R. Chen — CM Analyst',
+            description: 'STIG compliance scan results showing all 23 previously drifted servers now meeting approved baseline. Zero critical deviations.',
+            fileSize: 412672
+        },
+        {
+            type: 'validation',
+            filename: 'firewall-rule-audit-report.pdf',
+            owner: 'Network Security Team',
+            submitter: 'T. Brown — Network Engineer',
+            description: 'Firewall rule audit report documenting removal of 12 overly permissive rules. New deny-by-default policy verified by independent review.',
+            fileSize: 198400
+        },
+        {
+            type: 'remediation',
+            filename: 'ids-signature-update-verification.txt',
+            owner: 'SOC Watch Floor',
+            submitter: 'M. Johnson — SOC Analyst',
+            description: 'IDS signature database update confirmation showing current signatures as of today. Daily update pipeline restored and monitored.',
+            fileSize: 12800
+        },
+        {
+            type: 'screenshot',
+            filename: 'account-lifecycle-automation.png',
+            owner: 'IAM Operations',
+            submitter: 'S. Okafor — IAM Lead',
+            description: 'Screenshot of automated account lifecycle workflow showing 90-day inactivity disable rule active and processing. 3 dormant accounts auto-disabled this cycle.',
+            fileSize: 389120
+        },
+        {
+            type: 'validation',
+            filename: 'mtls-service-mesh-config.yaml',
+            owner: 'Platform Engineering',
+            submitter: 'L. Park — DevSecOps',
+            description: 'Service mesh configuration showing mTLS enforced for all internal microservice communications. Certificate rotation set to 24h automatic.',
+            fileSize: 8192
+        }
+    ];
+
+    const newVault = force ? {} : { ...vault };
+    const now = new Date();
+    let created = 0;
+    let closed = 0;
+
+    // Pick up to 8 POAMs for evidence, prioritize variety
+    const picks = poams.slice(0, Math.min(8, poams.length));
+
+    for (let i = 0; i < picks.length; i++) {
+        const poam = picks[i];
+        const tmpl = evidenceTemplates[i % evidenceTemplates.length];
+        const daysAgo = Math.floor(Math.random() * 14) + 1;
+        const uploadDate = new Date(now.getTime() - daysAgo * 86400000);
+        const refId = `EV-${uploadDate.getFullYear()}-${String(uploadDate.getMonth()+1).padStart(2,'0')}-${String(created+1).padStart(3,'0')}`;
+        const evidenceId = `${refId}-1`;
+
+        const record = {
+            id: evidenceId,
+            linkedPOAM: poam.id,
+            evidenceType: tmpl.type,
+            filename: tmpl.filename,
+            fileSize: tmpl.fileSize,
+            fileData: null, // No actual file data for seeds — just metadata
+            owner: tmpl.owner,
+            submitter: tmpl.submitter,
+            submissionDate: uploadDate.toISOString().split('T')[0],
+            uploadDate: uploadDate.toISOString(),
+            description: tmpl.description,
+            email: tmpl.submitter.split('—')[0].trim().toLowerCase().replace(/\s/g, '.').replace(/[^a-z.]/g, '') + '@agency.gov',
+            reference: refId,
+            autoClose: false,
+            chainOfCustody: {
+                submitted: { by: tmpl.submitter, date: uploadDate.toISOString().split('T')[0], timestamp: uploadDate.toISOString() },
+                processed: { by: 'TRACE System', date: uploadDate.toISOString().split('T')[0], timestamp: uploadDate.toISOString() },
+                verified: i < 4, // First 4 are verified
+                verificationDate: i < 4 ? new Date(uploadDate.getTime() + 86400000).toISOString().split('T')[0] : null,
+                verifiedBy: i < 4 ? 'ISSM — J. Lee' : null
+            }
+        };
+
+        newVault[evidenceId] = record;
+        created++;
+
+        // Audit log: evidence upload
+        if (typeof auditEvidenceUpload === 'function') {
+            auditEvidenceUpload(poam.id, tmpl.filename);
+        }
+
+        // Link evidence to POAM in IndexedDB
+        await linkEvidenceToPOAM(poam.id, evidenceId);
+
+        // Close first 3 POAMs with evidence (full lifecycle demo)
+        if (i < 3) {
+            await closePOAMWithEvidence(poam.id, evidenceId);
+            closed++;
+            console.log(`[evidence-seeder] CLOSED: ${poam.id} — "${poam.title.substring(0,50)}" with ${tmpl.filename}`);
+        } else {
+            // For the rest: transition to 'in-progress' if currently 'open'
+            if (poam.status === 'open' && window.poamWorkbookDB) {
+                try {
+                    const item = await window.poamWorkbookDB.getItem(poam.id);
+                    if (item) {
+                        const prev = item['Status'] || 'Open';
+                        item['Status'] = 'In Progress';
+                        item.updatedAt = new Date().toISOString();
+                        await window.poamWorkbookDB.saveItem(item);
+                        if (typeof auditStatusChange === 'function') auditStatusChange(poam.id, prev, 'In Progress');
+                    }
+                } catch (e) { /* non-critical */ }
+            }
+            console.log(`[evidence-seeder] LINKED: ${poam.id} — evidence attached, status in-progress`);
+        }
+    }
+
+    // Save all evidence to localStorage
+    localStorage.setItem('evidenceVault', JSON.stringify(newVault));
+
+    // Refresh evidence display
+    if (typeof displayEvidenceRepository === 'function') displayEvidenceRepository();
+    if (typeof populatePOAMDropdown === 'function') populatePOAMDropdown();
+
+    const summary = `Seeded ${created} evidence records, closed ${closed} POAMs, ${created - closed} in-progress with evidence attached`;
+    console.log(`[evidence-seeder] ${summary}`);
+
+    return { created, closed, inProgress: created - closed, total: created };
+}
+
+// Expose globally
+window.seedTestEvidence = seedTestEvidence;

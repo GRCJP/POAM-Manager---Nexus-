@@ -133,9 +133,7 @@ function showEvidenceTab(tab) {
 }
 
 // Placeholder functions for other modules
-function loadEvidenceFiles() {
-    console.log('Loading evidence files...');
-}
+// loadEvidenceFiles lives in modules/data-processing.js
 
 function loadReportingData() {
     console.log('Loading reporting data...');
@@ -795,347 +793,19 @@ function updateVulnerabilityApplicationPOAMCounts() {
     });
 }
 
-// Evidence Vault with POAM Integration and Chain of Custody
-let evidenceDatabase = {};
-let selectedPOAMForEvidence = null;
+// Evidence Vault — all functions live in modules/data-processing.js
+// These stubs exist only as fallbacks if data-processing.js hasn't loaded yet.
 
-function loadEvidenceFiles() {
-    // Load evidence from localStorage
-    const savedEvidence = localStorage.getItem('evidenceVault');
-    if (savedEvidence) {
-        evidenceDatabase = JSON.parse(savedEvidence);
-    }
-    
-    // Load POAMs for selection
-    loadPOAMsForEvidenceSelection();
-    
-    // Display evidence list
-    displayEvidenceList('all');
-    
-    // Set today's date as default
-    document.getElementById('evidence-date').value = new Date().toISOString().split('T')[0];
-}
+// (Stale evidence functions removed — all live in modules/data-processing.js now)
 
-function loadPOAMsForEvidenceSelection() {
-    const allPOAMs = JSON.parse(localStorage.getItem('poamData') || '{}');
-    const poamSelect = document.getElementById('evidence-poam-select');
-    
-    // Clear existing options
-    poamSelect.innerHTML = '<option value="">Choose a POAM to link evidence...</option>';
-    
-    // Add POAMs to dropdown
-    Object.values(allPOAMs).forEach(poam => {
-        const option = document.createElement('option');
-        option.value = poam.poam_id;
-        option.textContent = `${poam.poam_id} - ${poam.risk_level.toUpperCase()} - ${poam.finding_description.substring(0, 50)}...`;
-        poamSelect.appendChild(option);
-    });
-}
-
-function updateSelectedPOAMInfo() {
-    const poamId = document.getElementById('evidence-poam-select').value;
-    
-    if (!poamId) {
-        document.getElementById('selected-poam-info').style.display = 'none';
-        selectedPOAMForEvidence = null;
-        return;
-    }
-    
-    const allPOAMs = JSON.parse(localStorage.getItem('poamData') || '{}');
-    const poam = allPOAMs[poamId];
-    
-    if (poam) {
-        selectedPOAMForEvidence = poam;
-        document.getElementById('selected-poam-id').textContent = poam.poam_id;
-        document.getElementById('selected-poam-description').textContent = poam.finding_description.substring(0, 100) + '...';
-        document.getElementById('selected-poam-info').style.display = 'block';
-    }
-}
-
-function clearPOAMSelection() {
-    document.getElementById('evidence-poam-select').value = '';
-    document.getElementById('selected-poam-info').style.display = 'none';
-    selectedPOAMForEvidence = null;
-}
-
-function handleEvidenceUpload(event) {
-    const files = event.target.files;
-    if (files.length === 0) return;
-    
-    // Validate chain of custody fields
-    const submitter = document.getElementById('evidence-submitter').value.trim();
-    const submissionDate = document.getElementById('evidence-date').value;
-    const evidenceReference = document.getElementById('evidence-reference').value.trim();
-    const evidenceType = document.getElementById('evidence-type-select').value;
-    
-    if (!submitter || !submissionDate || !evidenceReference) {
-        alert('Please fill in all chain of custody fields before uploading.');
-        return;
-    }
-    
-    // Process each file
-    Array.from(files).forEach(file => {
-        const evidenceId = 'EV_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        
-        const evidenceItem = {
-            id: evidenceId,
-            filename: file.name,
-            size: file.size,
-            type: file.type,
-            evidenceType: evidenceType,
-            uploadDate: new Date().toISOString(),
-            submitter: submitter,
-            submissionDate: submissionDate,
-            reference: evidenceReference,
-            
-            // POAM Integration
-            linkedPOAM: selectedPOAMForEvidence ? selectedPOAMForEvidence.poam_id : null,
-            linkedPOAMDescription: selectedPOAMForEvidence ? selectedPOAMForEvidence.finding_description : null,
-            
-            // Chain of Custody
-            chainOfCustody: {
-                submitted: {
-                    by: submitter,
-                    date: submissionDate,
-                    timestamp: new Date().toISOString()
-                },
-                processed: {
-                    by: submitter,
-                    date: new Date().toISOString().split('T')[0],
-                    timestamp: new Date().toISOString()
-                },
-                verified: false,
-                verificationDate: null,
-                verifiedBy: null
-            },
-            
-            // File handling (in real implementation, would upload to server)
-            fileData: null, // Would contain file data
-            status: 'uploaded'
-        };
-        
-        // Store evidence
-        evidenceDatabase[evidenceId] = evidenceItem;
-        
-        // If linked to POAM, update POAM evidence links
-        if (selectedPOAMForEvidence) {
-            updatePOAMEvidenceLinks(selectedPOAMForEvidence.poam_id, evidenceId);
-        }
-    });
-    
-    // Save to localStorage
-    localStorage.setItem('evidenceVault', JSON.stringify(evidenceDatabase));
-    
-    // Refresh display
-    displayEvidenceList('all');
-    
-    // Clear form
-    document.getElementById('evidence-file-upload').value = '';
-    
-    alert(`Successfully uploaded ${files.length} evidence file(s)!`);
-}
-
-function updatePOAMEvidenceLinks(poamId, evidenceId) {
-    const allPOAMs = JSON.parse(localStorage.getItem('poamData') || '{}');
-    
-    if (allPOAMs[poamId]) {
-        if (!allPOAMs[poamId].evidenceLinks) {
-            allPOAMs[poamId].evidenceLinks = [];
-        }
-        allPOAMs[poamId].evidenceLinks.push({
-            evidenceId: evidenceId,
-            linkedDate: new Date().toISOString()
-        });
-        
-        localStorage.setItem('poamData', JSON.stringify(allPOAMs));
-    }
-}
-
-function displayEvidenceList(filter = 'all') {
-    const evidenceList = document.getElementById('evidence-list');
-    const evidenceArray = Object.values(evidenceDatabase);
-    
-    // Apply filter
-    let filteredEvidence = evidenceArray;
-    if (filter === 'linked') {
-        filteredEvidence = evidenceArray.filter(e => e.linkedPOAM);
-    } else if (filter === 'unlinked') {
-        filteredEvidence = evidenceArray.filter(e => !e.linkedPOAM);
-    }
-    
-    if (filteredEvidence.length === 0) {
-        evidenceList.innerHTML = `
-            <div class="text-center py-8 text-slate-500">
-                <i class="fas fa-folder-open text-4xl mb-4"></i>
-                <p>No evidence files found</p>
-            </div>
-        `;
-        return;
-    }
-    
-    // Sort by upload date (newest first)
-    filteredEvidence.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
-    
-    // Generate HTML
-    let html = '';
-    filteredEvidence.forEach(evidence => {
-        const fileIcon = getFileIcon(evidence.filename);
-        const linkedBadge = evidence.linkedPOAM ? 
-            `<span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-semibold">${evidence.linkedPOAM}</span>` :
-            `<span class="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-semibold">Unlinked</span>`;
-        
-        html += `
-            <div class="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50">
-                <div class="flex items-center gap-4">
-                    <i class="${fileIcon} text-2xl"></i>
-                    <div>
-                        <p class="font-semibold text-slate-800">${evidence.filename}</p>
-                        <p class="text-sm text-slate-500">
-                            Uploaded ${formatDate(evidence.uploadDate)} • ${formatFileSize(evidence.size)} • 
-                            Ref: ${evidence.reference} • By: ${evidence.submitter}
-                        </p>
-                        ${evidence.linkedPOAM ? `<p class="text-xs text-indigo-600 mt-1">Linked to: ${evidence.linkedPOAMDescription.substring(0, 60)}...</p>` : ''}
-                    </div>
-                </div>
-                <div class="flex items-center gap-2">
-                    ${linkedBadge}
-                    <span class="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs">${evidence.evidenceType}</span>
-                    <button onclick="viewEvidenceDetails('${evidence.id}')" class="text-indigo-600 hover:text-indigo-800">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button onclick="downloadEvidence('${evidence.id}')" class="text-green-600 hover:text-green-800">
-                        <i class="fas fa-download"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-    });
-    
-    evidenceList.innerHTML = html;
-}
-
-function filterEvidence(filter) {
-    displayEvidenceList(filter);
-}
-
-function viewEvidenceDetails(evidenceId) {
-    const evidence = evidenceDatabase[evidenceId];
-    if (!evidence) return;
-    
-    // Create details modal
-    const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-    modal.innerHTML = `
-        <div class="bg-white rounded-2xl p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-slate-900">Evidence Details</h2>
-                <button onclick="this.closest('.fixed').remove()" class="text-slate-400 hover:text-slate-600">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
-            
-            <div class="space-y-6">
-                <!-- Evidence Information -->
-                <div class="bg-slate-50 rounded-lg p-4">
-                    <h3 class="font-semibold text-slate-800 mb-3">Evidence Information</h3>
-                    <div class="grid grid-cols-2 gap-4 text-sm">
-                        <div><strong>File Name:</strong> ${evidence.filename}</div>
-                        <div><strong>Reference:</strong> ${evidence.reference}</div>
-                        <div><strong>Type:</strong> ${evidence.evidenceType}</div>
-                        <div><strong>Size:</strong> ${formatFileSize(evidence.size)}</div>
-                        <div><strong>Upload Date:</strong> ${formatDate(evidence.uploadDate)}</div>
-                        <div><strong>Status:</strong> ${evidence.status}</div>
-                    </div>
-                </div>
-                
-                <!-- Chain of Custody -->
-                <div class="bg-blue-50 rounded-lg p-4">
-                    <h3 class="font-semibold text-slate-800 mb-3">Chain of Custody</h3>
-                    <div class="space-y-3 text-sm">
-                        <div class="flex justify-between">
-                            <span><strong>Submitted By:</strong> ${evidence.chainOfCustody.submitted.by}</span>
-                            <span>${formatDate(evidence.chainOfCustody.submitted.timestamp)}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span><strong>Processed By:</strong> ${evidence.chainOfCustody.processed.by}</span>
-                            <span>${formatDate(evidence.chainOfCustody.processed.timestamp)}</span>
-                        </div>
-                        ${evidence.chainOfCustody.verified ? `
-                            <div class="flex justify-between text-green-700">
-                                <span><strong>Verified By:</strong> ${evidence.chainOfCustody.verifiedBy}</span>
-                                <span>${formatDate(evidence.chainOfCustody.verificationDate)}</span>
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-                
-                <!-- POAM Link -->
-                ${evidence.linkedPOAM ? `
-                    <div class="bg-indigo-50 rounded-lg p-4">
-                        <h3 class="font-semibold text-slate-800 mb-3">Linked POAM</h3>
-                        <div class="text-sm">
-                            <div><strong>POAM ID:</strong> ${evidence.linkedPOAM}</div>
-                            <div><strong>Description:</strong> ${evidence.linkedPOAMDescription}</div>
-                        </div>
-                    </div>
-                ` : ''}
-            </div>
-            
-            <div class="mt-6 flex justify-end gap-3">
-                <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">
-                    Close
-                </button>
-                <button onclick="downloadEvidence('${evidence.id}')" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-                    <i class="fas fa-download mr-2"></i>Download
-                </button>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-}
-
-function downloadEvidence(evidenceId) {
-    const evidence = evidenceDatabase[evidenceId];
-    if (!evidence) return;
-    
-    // In a real implementation, this would download the actual file
-    // For now, we'll create a placeholder download
-    alert(`Downloading evidence: ${evidence.filename}\nReference: ${evidence.reference}\n\nIn production, this would download the actual file.`);
-}
-
-function getFileIcon(filename) {
-    const extension = filename.split('.').pop().toLowerCase();
-    const iconMap = {
-        'pdf': 'fas fa-file-pdf text-red-500',
-        'doc': 'fas fa-file-word text-blue-500',
-        'docx': 'fas fa-file-word text-blue-500',
-        'xls': 'fas fa-file-excel text-green-500',
-        'xlsx': 'fas fa-file-excel text-green-500',
-        'ppt': 'fas fa-file-powerpoint text-orange-500',
-        'pptx': 'fas fa-file-powerpoint text-orange-500',
-        'txt': 'fas fa-file-alt text-slate-500',
-        'png': 'fas fa-file-image text-purple-500',
-        'jpg': 'fas fa-file-image text-purple-500',
-        'jpeg': 'fas fa-file-image text-purple-500',
-        'zip': 'fas fa-file-archive text-yellow-500',
-        'rar': 'fas fa-file-archive text-yellow-500'
-    };
-    
-    return iconMap[extension] || 'fas fa-file text-slate-500';
-}
-
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-}
-
-function formatFileSize(bytes) {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+function _removedEvidencePlaceholder() {
+    // This block intentionally left empty. Evidence functions:
+    // loadEvidenceFiles, populatePOAMDropdown, displayEvidenceRepository,
+    // handleEvidenceUpload, filterEvidence, viewEvidenceDetails,
+    // downloadEvidence, deleteEvidence, closePOAMWithEvidence,
+    // linkEvidenceToPOAM, seedTestEvidence
+    // ALL live in modules/data-processing.js
+    void 0;
 }
 
 // Risk Management Framework System
@@ -2418,6 +2088,48 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     } catch (e) {
         console.warn('Mock seed on first run failed:', e.message);
+    }
+
+    // Auto-seed test evidence after workbook POAMs are ready
+    try {
+        // One-time reset to re-seed with workbook-only evidence (v4)
+        if (localStorage.getItem('testEvidenceV4') !== '1') {
+            localStorage.removeItem('testEvidenceSeeded');
+            localStorage.removeItem('evidenceVault');
+            localStorage.removeItem('testEvidenceV2');
+            localStorage.removeItem('testEvidenceV3');
+            localStorage.setItem('testEvidenceV4', '1');
+        }
+        if (typeof window.seedTestEvidence === 'function' && localStorage.getItem('testEvidenceSeeded') !== '1') {
+            // Wait for workbook DB to be ready, then seed
+            const waitAndSeed = async (attempts) => {
+                if (attempts <= 0) { console.warn('Evidence seed: gave up waiting for workbook POAMs'); return; }
+                try {
+                    if (!window.poamWorkbookDB) { setTimeout(() => waitAndSeed(attempts - 1), 1000); return; }
+                    await window.poamWorkbookDB.init();
+                    const systems = await window.poamWorkbookDB.getSystems();
+                    if (!systems || systems.length === 0) {
+                        console.log('Evidence seed: no workbook systems yet, retrying...');
+                        setTimeout(() => waitAndSeed(attempts - 1), 1500);
+                        return;
+                    }
+                    const result = await window.seedTestEvidence({ force: true });
+                    if (result && !result.error) {
+                        localStorage.setItem('testEvidenceSeeded', '1');
+                        console.log(`✅ Test evidence seeded: ${result.created} records, ${result.closed} closed`);
+                        // Refresh evidence display if user is already on that tab
+                        if (typeof displayEvidenceRepository === 'function') displayEvidenceRepository();
+                        if (typeof populatePOAMDropdown === 'function') populatePOAMDropdown();
+                    }
+                } catch (e) {
+                    console.warn('Evidence seed attempt failed:', e.message);
+                    setTimeout(() => waitAndSeed(attempts - 1), 1500);
+                }
+            };
+            waitAndSeed(10);
+        }
+    } catch (e) {
+        console.warn('Evidence seed check failed:', e.message);
     }
 
     // Load dashboard metrics

@@ -38,9 +38,19 @@
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
                         <div>
                             <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px">Select POAM *</label>
-                            <select id="evidence-poam-select" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none;background:#fff" onchange="updateSelectedPOAMInfo()" required>
-                                <option value="">Choose a POAM to link evidence...</option>
-                            </select>
+                            <div style="position:relative">
+                                <input type="text" id="evidence-poam-search"
+                                    style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 12px 8px 34px;font-size:13px;color:#374151;font-family:inherit;outline:none;background:#fff;box-sizing:border-box"
+                                    placeholder="Search by ID, title, or system..."
+                                    oninput="filterPOAMSearchResults(this.value)"
+                                    onfocus="showPOAMSearchDropdown()"
+                                    autocomplete="off">
+                                <i class="fas fa-search" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#9CA3AF;font-size:12px;pointer-events:none"></i>
+                                <input type="hidden" id="evidence-poam-select" value="">
+                                <div id="poam-search-dropdown"
+                                    style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:#fff;border:1px solid #E2E4E8;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.1);max-height:280px;overflow-y:auto;z-index:100">
+                                </div>
+                            </div>
                         </div>
                         <div>
                             <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px">Evidence Category *</label>
