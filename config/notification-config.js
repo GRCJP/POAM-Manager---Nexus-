@@ -295,6 +295,59 @@ window.validateNotificationConfig = function() {
 // Initialize
 loadPersistedConfig();
 
+// Resolve notification recipients for an event using the role-based matrix
+window.getNotificationRecipients = function(eventKey, poam) {
+    const saved = localStorage.getItem('notificationRules');
+    if (!saved) return [];
+
+    const rules = JSON.parse(saved);
+    const eventRules = rules[eventKey];
+    if (!eventRules) return [];
+
+    const recipients = [];
+    const roleContacts = JSON.parse(localStorage.getItem('roleContacts') || '{}');
+    const userRoles = JSON.parse(localStorage.getItem('userNotificationRoles') || '{}');
+
+    // POC — resolved from POA&M
+    if (eventRules.poc && poam) {
+        const pocTeam = poam.pocTeam || poam.poc;
+        if (pocTeam) recipients.push({ role: 'poc', contact: pocTeam, source: 'poam' });
+    }
+
+    // App Owner — resolved from system assignment
+    if (eventRules.appOwner && poam && poam.systemId) {
+        // Find users with appOwner role (future: resolve from System Inventory owner field)
+        Object.entries(userRoles).forEach(([userId, role]) => {
+            if (role === 'appOwner') recipients.push({ role: 'appOwner', contact: userId, source: 'user' });
+        });
+    }
+
+    // Static roles — resolved from role contacts + user list
+    ['isso', 'issm', 'ciso', 'analyst', 'auditor'].forEach(roleKey => {
+        if (!eventRules[roleKey]) return;
+
+        // Add from role contacts (distribution list)
+        if (roleContacts[roleKey]) {
+            recipients.push({ role: roleKey, contact: roleContacts[roleKey], source: 'roleContacts' });
+        }
+
+        // Add individual users assigned this role
+        Object.entries(userRoles).forEach(([userId, userRole]) => {
+            if (userRole === roleKey) {
+                recipients.push({ role: roleKey, contact: userId, source: 'user' });
+            }
+        });
+    });
+
+    // Deduplicate by contact
+    const seen = new Set();
+    return recipients.filter(r => {
+        if (seen.has(r.contact)) return false;
+        seen.add(r.contact);
+        return true;
+    });
+};
+
 console.log('✅ Notification Configuration Ready');
 console.log('💡 Use window.updateNotificationConfig("path.to.key", value) to update');
 console.log('💡 Use window.validateNotificationConfig() to check configuration');

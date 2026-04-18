@@ -21,24 +21,58 @@
                     <div class="card-head mb-4">
                         <h2 class="card-title flex items-center gap-2">
                             <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
-                            SLA Configuration
+                            Remediation SLA Thresholds
                         </h2>
+                        <p class="card-sub mt-1">Maximum days allowed to remediate a finding from detection before it is flagged overdue</p>
                     </div>
                     <div class="px-5 pb-5">
-                        <p class="text-sm text-slate-500 mb-6">Define Service Level Agreement (SLA) thresholds for remediation timelines.</p>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                            <div class="bg-red-50 rounded-lg p-4 border border-red-200">
-                                <label class="block text-sm font-semibold text-red-900 mb-2">Critical Risk (days)</label>
-                                <input type="number" id="sla-critical" class="w-full px-4 py-2 border border-red-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" value="15" min="1">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-red-600"></span>Critical
+                                </label>
+                                <div class="relative">
+                                    <input type="number" id="sla-critical" class="w-full px-3 py-2 pr-12 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" value="15" min="1">
+                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">days</span>
+                                </div>
                             </div>
-                            <div class="bg-amber-50 rounded-lg p-4 border border-amber-200">
-                                <label class="block text-sm font-semibold text-amber-900 mb-2">High Risk (days)</label>
-                                <input type="number" id="sla-high" class="w-full px-4 py-2 border border-amber-300 rounded-lg focus:outline-none focus:ring-2 teal-focus" value="30" min="1">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-amber-600"></span>High
+                                </label>
+                                <div class="relative">
+                                    <input type="number" id="sla-high" class="w-full px-3 py-2 pr-12 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" value="30" min="1">
+                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">days</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-teal-600"></span>Moderate
+                                </label>
+                                <div class="relative">
+                                    <input type="number" id="sla-medium" class="w-full px-3 py-2 pr-12 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" value="60" min="1">
+                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">days</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-slate-400"></span>Low
+                                </label>
+                                <div class="relative">
+                                    <input type="number" id="sla-low" class="w-full px-3 py-2 pr-12 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" value="90" min="1">
+                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">days</span>
+                                </div>
                             </div>
                         </div>
 
+                        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200 mb-6">
+                            <p class="text-xs text-slate-500"><strong class="text-slate-600">How it works:</strong> Findings that exceed their severity threshold appear as overdue in the dashboard and trigger SLA violation alerts. The pipeline will not promote a finding to a POA&M until it has aged past its SLA window.</p>
+                        </div>
+
                         <div class="flex justify-end gap-3">
+                            <button onclick="resetSLADefaults()" class="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50">
+                                <i class="fas fa-redo mr-2"></i>Reset Defaults
+                            </button>
                             <button onclick="saveSLAConfig()" class="px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800">
                                 <i class="fas fa-save mr-2"></i>Save SLA Settings
                             </button>
@@ -50,46 +84,166 @@
                     <div class="card-head mb-4">
                         <h2 class="card-title flex items-center gap-2">
                             <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
-                            Notification Preferences
+                            Notification Rules
                         </h2>
+                        <p class="card-sub mt-1">Configure which roles receive in-app notifications for each event type</p>
                     </div>
                     <div class="px-5 pb-5">
-                        <p class="text-sm text-slate-500 mb-6">Customize your personal experience and notification settings.</p>
-                        <div class="space-y-4">
-                            <div class="flex items-center justify-between py-3 border-b border-slate-100">
-                                <div>
-                                    <p class="text-sm font-medium text-slate-700">Email Notifications</p>
-                                    <p class="text-xs text-slate-500">Receive email updates for POAM changes and assignments</p>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" class="sr-only peer" checked>
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-700"></div>
-                                </label>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm" id="notification-matrix-table">
+                                <thead>
+                                    <tr class="border-b border-slate-200">
+                                        <th class="text-left py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Event</th>
+                                        <th class="text-center py-2.5 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">POC</th>
+                                        <th class="text-center py-2.5 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">App Owner</th>
+                                        <th class="text-center py-2.5 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">ISSO</th>
+                                        <th class="text-center py-2.5 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">ISSM</th>
+                                        <th class="text-center py-2.5 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">CISO/AO</th>
+                                        <th class="text-center py-2.5 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Analyst</th>
+                                        <th class="text-center py-2.5 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Auditor</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="notification-matrix-body" class="divide-y divide-slate-100">
+                                    <!-- Populated by loadNotificationRules() -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200 mt-6 mb-6">
+                            <p class="text-xs text-slate-500"><strong class="text-slate-600">How it works:</strong> When an event occurs on a POA&amp;M, all roles with a checked box receive an in-app notification. POC is resolved from the POA&amp;M assignment. App Owner is resolved from the system in Settings &gt; System Inventory.</p>
+                        </div>
+
+                        <div class="flex justify-end gap-3">
+                            <button onclick="resetNotificationDefaults()" class="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50">
+                                <i class="fas fa-redo mr-2"></i>Reset Defaults
+                            </button>
+                            <button onclick="saveNotificationRules()" class="px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800">
+                                <i class="fas fa-save mr-2"></i>Save Notification Rules
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-6">
+                    <div class="card-head mb-4">
+                        <h2 class="card-title flex items-center gap-2">
+                            <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                            Role Contacts
+                        </h2>
+                        <p class="card-sub mt-1">Map organizational roles to contacts for notification routing</p>
+                    </div>
+                    <div class="px-5 pb-5">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="border-b border-slate-200">
+                                        <th class="text-left py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-1/3">Role</th>
+                                        <th class="text-left py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Contact / Distribution Group</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    <tr>
+                                        <td class="py-3 px-3 text-sm font-medium text-slate-700">ISSO</td>
+                                        <td class="py-3 px-3"><input type="text" id="role-contact-isso" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="e.g. isso@agency.gov"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-3 text-sm font-medium text-slate-700">ISSM</td>
+                                        <td class="py-3 px-3"><input type="text" id="role-contact-issm" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="e.g. issm@agency.gov"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-3 text-sm font-medium text-slate-700">CISO / AO</td>
+                                        <td class="py-3 px-3"><input type="text" id="role-contact-ciso" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="e.g. ciso@agency.gov"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-3 text-sm font-medium text-slate-700">Security Analyst</td>
+                                        <td class="py-3 px-3"><input type="text" id="role-contact-analyst" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="e.g. security-team@agency.gov"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-3 text-sm font-medium text-slate-700">Auditor</td>
+                                        <td class="py-3 px-3"><input type="text" id="role-contact-auditor" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="e.g. audit@agency.gov"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200 mt-4 mb-6">
+                            <p class="text-xs text-slate-500"><strong class="text-slate-600">Note:</strong> POC and App Owner are not listed here. POC contacts are resolved from the POA&amp;M's assigned team. App Owner contacts are resolved from the system owner in System Inventory.</p>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <button onclick="saveRoleContacts()" class="px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800">
+                                <i class="fas fa-save mr-2"></i>Save Contacts
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-6">
+                    <div class="card-head mb-4">
+                        <h2 class="card-title flex items-center gap-2">
+                            <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                            Email Delivery
+                        </h2>
+                        <p class="card-sub mt-1">Configure SMTP settings for email notification delivery</p>
+                    </div>
+                    <div class="px-5 pb-5">
+                        <div class="flex items-center justify-between py-3 mb-4 border-b border-slate-100">
+                            <div>
+                                <p class="text-sm font-medium text-slate-700">Enable Email Notifications</p>
+                                <p class="text-xs text-slate-500">Send email alerts in addition to in-app notifications</p>
                             </div>
-                            <div class="flex items-center justify-between py-3 border-b border-slate-100">
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="email-delivery-enabled" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-700"></div>
+                            </label>
+                        </div>
+
+                        <div id="email-smtp-fields">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <div>
-                                    <p class="text-sm font-medium text-slate-700">Desktop Notifications</p>
-                                    <p class="text-xs text-slate-500">Show browser notifications for critical updates</p>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">SMTP Host</label>
+                                    <input type="text" id="smtp-host" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="e.g. smtp.agency.gov">
                                 </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" class="sr-only peer">
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-700"></div>
-                                </label>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">SMTP Port</label>
+                                    <input type="number" id="smtp-port" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="587" value="587">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">From Address</label>
+                                    <input type="email" id="smtp-from" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="e.g. trace-noreply@agency.gov">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Reply-To Address</label>
+                                    <input type="email" id="smtp-reply-to" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="e.g. security-team@agency.gov">
+                                </div>
                             </div>
-                            <div class="flex items-center justify-between py-3">
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <div>
-                                    <p class="text-sm font-medium text-slate-700">SLA Violation Alerts</p>
-                                    <p class="text-xs text-slate-500">Get notified when POAMs exceed SLA thresholds</p>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Digest Schedule</label>
+                                    <select id="email-digest-schedule" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none">
+                                        <option value="daily">Daily (8:00 AM)</option>
+                                        <option value="weekly" selected>Weekly (Monday 8:00 AM)</option>
+                                        <option value="immediate">Immediate (per event)</option>
+                                    </select>
                                 </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" class="sr-only peer" checked>
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-700"></div>
-                                </label>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Always BCC</label>
+                                    <input type="text" id="email-bcc" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="e.g. audit-trail@agency.gov">
+                                </div>
                             </div>
                         </div>
-                        <div class="flex justify-end mt-6">
-                            <button onclick="saveUserPreferences()" class="px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800">
-                                <i class="fas fa-save mr-2"></i>Save Preferences
+
+                        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200 mb-6">
+                            <p class="text-xs text-slate-500"><strong class="text-slate-600">Note:</strong> Email delivery uses the same role-based notification rules configured above. Recipients are resolved from Role Contacts and user notification role assignments in Admin.</p>
+                        </div>
+
+                        <div class="flex justify-end gap-3">
+                            <button onclick="testEmailConnection()" class="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50">
+                                <i class="fas fa-plug mr-2"></i>Test Connection
+                            </button>
+                            <button onclick="saveEmailConfig()" class="px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800">
+                                <i class="fas fa-save mr-2"></i>Save Email Settings
                             </button>
                         </div>
                     </div>

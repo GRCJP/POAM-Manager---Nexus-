@@ -14,43 +14,25 @@
                             <span class="card-title"><i class="fas fa-users" style="color:#0D7377;margin-right:8px"></i>User Management</span>
                             <span class="card-sub">Manage user accounts, roles, and access permissions</span>
                         </div>
-                        <button class="btn-cta"><i class="fas fa-user-plus" style="margin-right:6px"></i>Add User</button>
+                        <button class="btn-cta" onclick="openAddUserModal()"><i class="fas fa-user-plus" style="margin-right:6px"></i>Add User</button>
                     </div>
                     <div style="height:1px;background:#F3F4F6;margin:0 20px"></div>
                     <div style="padding:16px 20px">
-                        <input type="text" placeholder="Search users..." style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none;box-sizing:border-box;margin-bottom:16px">
+                        <input type="text" id="admin-user-search" placeholder="Search users..." oninput="renderAdminUserTable()" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none;box-sizing:border-box;margin-bottom:16px">
                         <div style="overflow-x:auto">
                             <table style="width:100%;border-collapse:collapse">
                                 <thead>
                                     <tr>
                                         <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;padding:10px 12px;text-align:left">User</th>
                                         <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;padding:10px 12px;text-align:left">Role</th>
+                                        <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;padding:10px 12px;text-align:left">Notification Role</th>
                                         <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;padding:10px 12px;text-align:left">Department</th>
                                         <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;padding:10px 12px;text-align:left">Status</th>
-                                        <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;padding:10px 12px;text-align:left">Last Active</th>
                                         <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;padding:10px 12px;text-align:right">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <tr style="border-bottom:1px solid #F9FAFB">
-                                        <td style="padding:12px">
-                                            <div style="display:flex;align-items:center;gap:10px">
-                                                <div style="width:36px;height:36px;background:#E6F7F7;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#0D7377;flex-shrink:0">AU</div>
-                                                <div>
-                                                    <p style="font-size:13px;font-weight:600;color:#1F2937;margin:0">Admin User</p>
-                                                    <p style="font-size:11px;color:#6B7280;margin:0">admin@poamnexus.com</p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td style="padding:12px"><span style="font-size:11px;font-weight:700;color:#0A5E62;background:#E6F7F7;padding:3px 8px;border-radius:4px">Administrator</span></td>
-                                        <td style="padding:12px;font-size:13px;color:#374151">Security Operations</td>
-                                        <td style="padding:12px"><span style="font-size:11px;font-weight:700;color:#047857;background:#D1FAE5;padding:3px 8px;border-radius:4px">Active</span></td>
-                                        <td style="padding:12px;font-size:13px;color:#6B7280">Just now</td>
-                                        <td style="padding:12px;text-align:right">
-                                            <button style="background:none;border:none;cursor:pointer;color:#0D7377;font-size:14px;margin-right:8px"><i class="fas fa-edit"></i></button>
-                                            <button style="background:none;border:none;cursor:pointer;color:#6B7280;font-size:14px"><i class="fas fa-ellipsis-v"></i></button>
-                                        </td>
-                                    </tr>
+                                <tbody id="admin-user-table-body">
+                                    <!-- Rendered by renderAdminUserTable() -->
                                 </tbody>
                             </table>
                         </div>
@@ -104,39 +86,152 @@
             <!-- Roles & Permissions Tab -->
             <div id="admin-roles" class="admin-tab hidden">
                 <div class="card">
-                    <div class="card-head" style="display:flex;align-items:center;justify-content:space-between">
-                        <div>
-                            <span class="card-title"><i class="fas fa-user-shield" style="color:#0D7377;margin-right:8px"></i>Roles &amp; Permissions</span>
-                            <span class="card-sub">Define user roles and their access permissions</span>
-                        </div>
-                        <button class="btn-cta"><i class="fas fa-plus" style="margin-right:6px"></i>Create Role</button>
+                    <div class="card-head">
+                        <span class="card-title"><i class="fas fa-user-shield" style="color:#0D7377;margin-right:8px"></i>Roles &amp; Permissions</span>
+                        <span class="card-sub">System access roles and what each role can do. Notification roles are assigned per user in the Users tab.</span>
                     </div>
                     <div style="height:1px;background:#F3F4F6;margin:0 20px"></div>
-                    <div style="padding:20px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
-                        <div style="border:1px solid #E2E4E8;border-radius:8px;padding:16px;cursor:pointer">
-                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                                <p style="font-size:13px;font-weight:700;color:#1F2937;margin:0">Administrator</p>
-                                <span style="font-size:10px;font-weight:700;color:#0A5E62;background:#E6F7F7;padding:2px 8px;border-radius:4px">Full Access</span>
-                            </div>
-                            <p style="font-size:12px;color:#6B7280;margin:0 0 10px">Complete system access and configuration</p>
-                            <p style="font-size:11px;color:#6B7280;margin:0"><i class="fas fa-users" style="margin-right:4px"></i>3 users</p>
+                    <div style="padding:20px">
+                        <div style="overflow-x:auto">
+                            <table style="width:100%;border-collapse:collapse">
+                                <thead>
+                                    <tr>
+                                        <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #E2E4E8;padding:10px 12px;text-align:left">Permission</th>
+                                        <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #E2E4E8;padding:10px 12px;text-align:center">Administrator</th>
+                                        <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #E2E4E8;padding:10px 12px;text-align:center">Security Analyst</th>
+                                        <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #E2E4E8;padding:10px 12px;text-align:center">Auditor</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr style="border-bottom:1px solid #F3F4F6">
+                                        <td style="padding:10px 12px;font-size:13px;color:#374151;font-weight:600">View Dashboard</td>
+                                        <td style="padding:10px 12px;text-align:center;color:#047857"><i class="fas fa-check"></i></td>
+                                        <td style="padding:10px 12px;text-align:center;color:#047857"><i class="fas fa-check"></i></td>
+                                        <td style="padding:10px 12px;text-align:center;color:#047857"><i class="fas fa-check"></i></td>
+                                    </tr>
+                                    <tr style="border-bottom:1px solid #F3F4F6">
+                                        <td style="padding:10px 12px;font-size:13px;color:#374151;font-weight:600">View Findings</td>
+                                        <td style="padding:10px 12px;text-align:center;color:#047857"><i class="fas fa-check"></i></td>
+                                        <td style="padding:10px 12px;text-align:center;color:#047857"><i class="fas fa-check"></i></td>
+                                        <td style="padding:10px 12px;text-align:center;color:#047857"><i class="fas fa-check"></i></td>
+                                    </tr>
+                                    <tr style="border-bottom:1px solid #F3F4F6">
+                                        <td style="padding:10px 12px;font-size:13px;color:#374151;font-weight:600">Import Scan Data</td>
+                                        <td style="padding:10px 12px;text-align:center;color:#047857"><i class="fas fa-check"></i></td>
+                                        <td style="padding:10px 12px;text-align:center;color:#047857"><i class="fas fa-check"></i></td>
+                                        <td style="padding:10px 12px;text-align:center;color:#9CA3AF"><i class="fas fa-minus"></i></td>
+                                    </tr>
+                                    <tr style="border-bottom:1px solid #F3F4F6">
+                                        <td style="padding:10px 12px;font-size:13px;color:#374151;font-weight:600">Manage POA&amp;M Workbook</td>
+                                        <td style="padding:10px 12px;text-align:center;color:#047857"><i class="fas fa-check"></i></td>
+                                        <td style="padding:10px 12px;text-align:center;color:#047857"><i class="fas fa-check"></i></td>
+                                        <td style="padding:10px 12px;text-align:center;color:#9CA3AF"><i class="fas fa-minus"></i></td>
+                                    </tr>
+                                    <tr style="border-bottom:1px solid #F3F4F6">
+                                        <td style="padding:10px 12px;font-size:13px;color:#374151;font-weight:600">Submit Evidence</td>
+                                        <td style="padding:10px 12px;text-align:center;color:#047857"><i class="fas fa-check"></i></td>
+                                        <td style="padding:10px 12px;text-align:center;color:#047857"><i class="fas fa-check"></i></td>
+                                        <td style="padding:10px 12px;text-align:center;color:#9CA3AF"><i class="fas fa-minus"></i></td>
+                                    </tr>
+                                    <tr style="border-bottom:1px solid #F3F4F6">
+                                        <td style="padding:10px 12px;font-size:13px;color:#374151;font-weight:600">View Reports</td>
+                                        <td style="padding:10px 12px;text-align:center;color:#047857"><i class="fas fa-check"></i></td>
+                                        <td style="padding:10px 12px;text-align:center;color:#047857"><i class="fas fa-check"></i></td>
+                                        <td style="padding:10px 12px;text-align:center;color:#047857"><i class="fas fa-check"></i></td>
+                                    </tr>
+                                    <tr style="border-bottom:1px solid #F3F4F6">
+                                        <td style="padding:10px 12px;font-size:13px;color:#374151;font-weight:600">Export Data</td>
+                                        <td style="padding:10px 12px;text-align:center;color:#047857"><i class="fas fa-check"></i></td>
+                                        <td style="padding:10px 12px;text-align:center;color:#047857"><i class="fas fa-check"></i></td>
+                                        <td style="padding:10px 12px;text-align:center;color:#047857"><i class="fas fa-check"></i></td>
+                                    </tr>
+                                    <tr style="border-bottom:1px solid #F3F4F6">
+                                        <td style="padding:10px 12px;font-size:13px;color:#374151;font-weight:600">View Audit Logs</td>
+                                        <td style="padding:10px 12px;text-align:center;color:#047857"><i class="fas fa-check"></i></td>
+                                        <td style="padding:10px 12px;text-align:center;color:#9CA3AF"><i class="fas fa-minus"></i></td>
+                                        <td style="padding:10px 12px;text-align:center;color:#047857"><i class="fas fa-check"></i></td>
+                                    </tr>
+                                    <tr style="border-bottom:1px solid #F3F4F6">
+                                        <td style="padding:10px 12px;font-size:13px;color:#374151;font-weight:600">Manage Users</td>
+                                        <td style="padding:10px 12px;text-align:center;color:#047857"><i class="fas fa-check"></i></td>
+                                        <td style="padding:10px 12px;text-align:center;color:#9CA3AF"><i class="fas fa-minus"></i></td>
+                                        <td style="padding:10px 12px;text-align:center;color:#9CA3AF"><i class="fas fa-minus"></i></td>
+                                    </tr>
+                                    <tr style="border-bottom:1px solid #F3F4F6">
+                                        <td style="padding:10px 12px;font-size:13px;color:#374151;font-weight:600">Configure Settings</td>
+                                        <td style="padding:10px 12px;text-align:center;color:#047857"><i class="fas fa-check"></i></td>
+                                        <td style="padding:10px 12px;text-align:center;color:#9CA3AF"><i class="fas fa-minus"></i></td>
+                                        <td style="padding:10px 12px;text-align:center;color:#9CA3AF"><i class="fas fa-minus"></i></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding:10px 12px;font-size:13px;color:#374151;font-weight:600">Manage Integrations</td>
+                                        <td style="padding:10px 12px;text-align:center;color:#047857"><i class="fas fa-check"></i></td>
+                                        <td style="padding:10px 12px;text-align:center;color:#9CA3AF"><i class="fas fa-minus"></i></td>
+                                        <td style="padding:10px 12px;text-align:center;color:#9CA3AF"><i class="fas fa-minus"></i></td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
-                        <div style="border:1px solid #E2E4E8;border-radius:8px;padding:16px;cursor:pointer">
-                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                                <p style="font-size:13px;font-weight:700;color:#1F2937;margin:0">Security Analyst</p>
-                                <span style="font-size:10px;font-weight:700;color:#0A5E62;background:#E6F7F7;padding:2px 8px;border-radius:4px">Read/Write</span>
-                            </div>
-                            <p style="font-size:12px;color:#6B7280;margin:0 0 10px">Manage POAMs and evidence</p>
-                            <p style="font-size:11px;color:#6B7280;margin:0"><i class="fas fa-users" style="margin-right:4px"></i>12 users</p>
+                        <div style="display:flex;gap:14px;margin-top:20px" id="admin-role-summary-cards">
+                            <!-- Rendered by renderRoleSummaryCards() -->
                         </div>
-                        <div style="border:1px solid #E2E4E8;border-radius:8px;padding:16px;cursor:pointer">
-                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                                <p style="font-size:13px;font-weight:700;color:#1F2937;margin:0">Auditor</p>
-                                <span style="font-size:10px;font-weight:700;color:#047857;background:#D1FAE5;padding:2px 8px;border-radius:4px">Read Only</span>
-                            </div>
-                            <p style="font-size:12px;color:#6B7280;margin:0 0 10px">View reports and audit logs</p>
-                            <p style="font-size:11px;color:#6B7280;margin:0"><i class="fas fa-users" style="margin-right:4px"></i>5 users</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add User Modal -->
+        <div id="add-user-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+            <div class="bg-white rounded-xl max-w-lg w-full mx-4" style="box-shadow:0 4px 24px rgba(0,0,0,0.12)">
+                <div style="padding:20px 24px;border-bottom:1px solid #F3F4F6;display:flex;align-items:center;justify-content:space-between">
+                    <h3 style="font-size:16px;font-weight:700;color:#1F2937;margin:0">Add User</h3>
+                    <button onclick="closeAddUserModal()" style="background:none;border:none;cursor:pointer;color:#6B7280;font-size:18px"><i class="fas fa-times"></i></button>
+                </div>
+                <div style="padding:24px">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+                        <div>
+                            <label style="display:block;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">First Name</label>
+                            <input type="text" id="add-user-first" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none;box-sizing:border-box" placeholder="e.g. Jane">
                         </div>
+                        <div>
+                            <label style="display:block;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Last Name</label>
+                            <input type="text" id="add-user-last" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none;box-sizing:border-box" placeholder="e.g. Smith">
+                        </div>
+                    </div>
+                    <div style="margin-bottom:16px">
+                        <label style="display:block;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Email</label>
+                        <input type="email" id="add-user-email" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none;box-sizing:border-box" placeholder="e.g. jane.smith@agency.gov">
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+                        <div>
+                            <label style="display:block;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">System Role</label>
+                            <select id="add-user-role" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none;box-sizing:border-box">
+                                <option value="Security Analyst">Security Analyst</option>
+                                <option value="Administrator">Administrator</option>
+                                <option value="Auditor">Auditor</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display:block;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Notification Role</label>
+                            <select id="add-user-notif-role" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none;box-sizing:border-box">
+                                <option value="">(none)</option>
+                                <option value="isso">ISSO</option>
+                                <option value="issm">ISSM</option>
+                                <option value="ciso">CISO / AO</option>
+                                <option value="appOwner">App Owner</option>
+                                <option value="analyst">Security Analyst</option>
+                                <option value="auditor">Auditor</option>
+                                <option value="poc">POC</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="margin-bottom:20px">
+                        <label style="display:block;font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Department</label>
+                        <input type="text" id="add-user-dept" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none;box-sizing:border-box" placeholder="e.g. Security Operations">
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:10px">
+                        <button onclick="closeAddUserModal()" style="padding:8px 16px;border:1px solid #D1D5DB;border-radius:6px;font-size:13px;font-weight:600;color:#374151;background:#fff;cursor:pointer;font-family:inherit">Cancel</button>
+                        <button onclick="addUserFromModal()" class="btn-cta" style="padding:8px 16px;font-size:13px"><i class="fas fa-user-plus" style="margin-right:6px"></i>Add User</button>
                     </div>
                 </div>
             </div>
