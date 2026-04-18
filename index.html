@@ -269,7 +269,15 @@
     </style>
 </head>
 <body>
-    
+    <script>
+    // Auth guard — redirect to login if no session
+    (function() {
+        var auth = sessionStorage.getItem('trace_auth');
+        if (!auth) { window.location.href = 'login.html'; return; }
+        try { var p = JSON.parse(auth); if (!p.token) throw 0; } catch(e) { window.location.href = 'login.html'; }
+    })();
+    </script>
+
     <!-- Upload Modal -->
     <div id="upload-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
         <div class="flex items-center justify-center min-h-screen p-4">
@@ -451,12 +459,22 @@
           <div class="bn-badge"></div>
         </div>
         <button class="btn-cta" onclick="openUploadModal()">+ Import Scan</button>
-        <div class="user-block">
-          <div class="u-avatar">AU</div>
+        <div class="user-block" id="user-block" onclick="toggleUserMenu()">
+          <div class="u-avatar" id="u-avatar-initials">AU</div>
           <div class="u-info">
-            <div class="u-name">Admin User</div>
-            <div class="u-role">ISSO</div>
+            <div class="u-name" id="u-display-name">Admin User</div>
+            <div class="u-role" id="u-display-role">ISSO</div>
           </div>
+          <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:#6B7280;fill:none;stroke-width:2;margin-left:2px"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <!-- User dropdown -->
+        <div id="user-menu" style="display:none;position:absolute;top:50px;right:22px;background:#fff;border:1px solid #E2E4E8;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.1);min-width:180px;z-index:999;overflow:hidden">
+          <div style="padding:12px 14px;border-bottom:1px solid #F3F4F6">
+            <div style="font-size:12.5px;font-weight:600;color:#111827" id="menu-user-name">Admin User</div>
+            <div style="font-size:11px;color:#6B7280" id="menu-user-email">admin</div>
+          </div>
+          <a href="#" onclick="showModule('settings');closeUserMenu();return false" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:12.5px;color:#374151;text-decoration:none;transition:background 0.1s"><i class="fas fa-cog" style="width:14px;color:#6B7280"></i>Settings</a>
+          <a href="#" onclick="handleLogout();return false" style="display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:12.5px;color:#DC2626;text-decoration:none;border-top:1px solid #F3F4F6;transition:background 0.1s"><i class="fas fa-sign-out-alt" style="width:14px"></i>Sign Out</a>
         </div>
       </div>
     </header>
@@ -3540,6 +3558,50 @@
     <script src="vulnerability-tracking-milestones.js?v=20260120-1"></script>
     <script src="sidebar-navigation.js"></script>
     <script src="script.js?v=20260120-3"></script>
+
+    <!-- Session / user menu -->
+    <script>
+    // Hydrate user block from session
+    (function hydrateUser() {
+        try {
+            var auth = JSON.parse(sessionStorage.getItem('trace_auth') || '{}');
+            if (auth.name) {
+                var initials = auth.name.split(' ').map(function(w){return w[0]}).join('').toUpperCase().slice(0,2);
+                if (initials.length < 2) initials = auth.name.slice(0,2).toUpperCase();
+                var el = document.getElementById('u-avatar-initials'); if (el) el.textContent = initials;
+                var nm = document.getElementById('u-display-name'); if (nm) nm.textContent = auth.name;
+                var mn = document.getElementById('menu-user-name'); if (mn) mn.textContent = auth.name;
+            }
+            if (auth.role) {
+                var rl = document.getElementById('u-display-role'); if (rl) rl.textContent = auth.role;
+            }
+            if (auth.user) {
+                var em = document.getElementById('menu-user-email'); if (em) em.textContent = auth.user;
+            }
+        } catch(e) {}
+    })();
+
+    function toggleUserMenu() {
+        var m = document.getElementById('user-menu');
+        m.style.display = m.style.display === 'none' ? 'block' : 'none';
+    }
+    function closeUserMenu() {
+        document.getElementById('user-menu').style.display = 'none';
+    }
+    // Close menu on outside click
+    document.addEventListener('click', function(e) {
+        var block = document.getElementById('user-block');
+        var menu = document.getElementById('user-menu');
+        if (block && menu && !block.contains(e.target) && !menu.contains(e.target)) {
+            menu.style.display = 'none';
+        }
+    });
+
+    function handleLogout() {
+        sessionStorage.removeItem('trace_auth');
+        window.location.href = 'login.html';
+    }
+    </script>
 
 </body>
 </html>

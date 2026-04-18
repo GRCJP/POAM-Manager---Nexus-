@@ -1,54 +1,151 @@
         <div id="settings-module" class="module hidden">
-            <div class="ph">
+            <!-- Page Header -->
+            <div class="ph mb-6">
                 <div>
-                    <div class="ph-title">Settings &amp; Configuration</div>
-                    <div class="ph-meta">Manage system settings, preferences, and configurations</div>
+                    <h1 class="ph-title">Settings & Configuration</h1>
+                    <p class="text-sm text-slate-500 mt-1">Manage SLA thresholds, API connections, and system preferences</p>
                 </div>
             </div>
 
-            <!-- SLA Configuration Tab -->
-            <div id="settings-sla" class="settings-tab">
-                <div class="card">
-                    <div class="card-head">
-                        <span class="card-title"><i class="fas fa-clock" style="color:#0D7377;margin-right:8px"></i>User Preferences &amp; SLA Configuration</span>
-                        <span class="card-sub">Define Service Level Agreement (SLA) thresholds and general user preferences.</span>
+            <!-- Tab Navigation for Settings -->
+            <div class="mod-tabs mb-6 flex gap-1 border-b border-slate-200">
+                <button class="mod-tab active" onclick="showSettingsTab('general')" data-tab="general">General</button>
+                <button class="mod-tab" onclick="showSettingsTab('compliance')" data-tab="compliance">Compliance</button>
+                <button class="mod-tab" onclick="showSettingsTab('integrations')" data-tab="integrations">Integrations</button>
+                <button class="mod-tab" onclick="showSettingsTab('critical-assets')" data-tab="critical-assets">Critical Assets</button>
+            </div>
+
+            <!-- General Tab (SLA + Preferences + Systems) -->
+            <div id="settings-general" class="settings-tab">
+                <div class="card mb-6">
+                    <div class="card-head mb-4">
+                        <h2 class="card-title flex items-center gap-2">
+                            <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                            SLA Configuration
+                        </h2>
                     </div>
-                    <div style="height:1px;background:#F3F4F6;margin:0 20px"></div>
-                    <div style="padding:20px">
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
-                            <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:16px">
-                                <label style="display:block;font-size:12px;font-weight:700;color:#991B1B;margin-bottom:8px">Critical Risk (days)</label>
-                                <input type="number" id="sla-critical" value="15" min="1" style="width:100%;border:1px solid #FECACA;border-radius:6px;padding:8px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none;box-sizing:border-box">
+                    <div class="px-5 pb-5">
+                        <p class="text-sm text-slate-500 mb-6">Define Service Level Agreement (SLA) thresholds for remediation timelines.</p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+                                <label class="block text-sm font-semibold text-red-900 mb-2">Critical Risk (days)</label>
+                                <input type="number" id="sla-critical" class="w-full px-4 py-2 border border-red-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" value="15" min="1">
                             </div>
-                            <div style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:8px;padding:16px">
-                                <label style="display:block;font-size:12px;font-weight:700;color:#92400E;margin-bottom:8px">High Risk (days)</label>
-                                <input type="number" id="sla-high" value="30" min="1" style="width:100%;border:1px solid #FED7AA;border-radius:6px;padding:8px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none;box-sizing:border-box">
+                            <div class="bg-amber-50 rounded-lg p-4 border border-amber-200">
+                                <label class="block text-sm font-semibold text-amber-900 mb-2">High Risk (days)</label>
+                                <input type="number" id="sla-high" class="w-full px-4 py-2 border border-amber-300 rounded-lg focus:outline-none focus:ring-2 teal-focus" value="30" min="1">
                             </div>
                         </div>
-                        <div style="display:flex;justify-content:flex-end;gap:10px;padding-bottom:24px;border-bottom:1px solid #F3F4F6;margin-bottom:24px">
-                            <button onclick="saveSLAConfig()" class="btn-cta"><i class="fas fa-save" style="margin-right:6px"></i>Save Preferences</button>
+
+                        <div class="flex justify-end gap-3">
+                            <button onclick="saveSLAConfig()" class="px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800">
+                                <i class="fas fa-save mr-2"></i>Save SLA Settings
+                            </button>
                         </div>
-                        <div>
-                            <p style="font-size:14px;font-weight:700;color:#1F2937;margin:0 0 4px"><i class="fas fa-server" style="color:#0D7377;margin-right:8px"></i>User Access Permissions</p>
-                            <p style="font-size:13px;color:#6B7280;margin:0">Manage organization and group access permissions for the enclave.</p>
+                    </div>
+                </div>
+
+                <div class="card mb-6">
+                    <div class="card-head mb-4">
+                        <h2 class="card-title flex items-center gap-2">
+                            <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                            Notification Preferences
+                        </h2>
+                    </div>
+                    <div class="px-5 pb-5">
+                        <p class="text-sm text-slate-500 mb-6">Customize your personal experience and notification settings.</p>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between py-3 border-b border-slate-100">
+                                <div>
+                                    <p class="text-sm font-medium text-slate-700">Email Notifications</p>
+                                    <p class="text-xs text-slate-500">Receive email updates for POAM changes and assignments</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer" checked>
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-700"></div>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between py-3 border-b border-slate-100">
+                                <div>
+                                    <p class="text-sm font-medium text-slate-700">Desktop Notifications</p>
+                                    <p class="text-xs text-slate-500">Show browser notifications for critical updates</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-700"></div>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between py-3">
+                                <div>
+                                    <p class="text-sm font-medium text-slate-700">SLA Violation Alerts</p>
+                                    <p class="text-xs text-slate-500">Get notified when POAMs exceed SLA thresholds</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer" checked>
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-700"></div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="flex justify-end mt-6">
+                            <button onclick="saveUserPreferences()" class="px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800">
+                                <i class="fas fa-save mr-2"></i>Save Preferences
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-head mb-4">
+                        <h2 class="card-title flex items-center gap-2">
+                            <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                            System Inventory
+                        </h2>
+                    </div>
+                    <div class="px-5 pb-5">
+                        <p class="text-sm text-slate-500 mb-4">Manage system inventory and tie them to organization/group access permissions.</p>
+
+                        <div class="border border-slate-200 rounded-lg overflow-hidden mb-4">
+                            <div class="px-5 py-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Registered Systems</span>
+                                <button onclick="openAddSystemModal()" class="px-3 py-1.5 bg-teal-700 text-white rounded-lg hover:bg-teal-800 text-xs font-bold transition-all">
+                                    <i class="fas fa-plus mr-1"></i> Add System
+                                </button>
+                            </div>
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-50 border-b border-slate-200">
+                                    <tr>
+                                        <th class="px-5 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">System ID</th>
+                                        <th class="px-5 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Display Name</th>
+                                        <th class="px-5 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Group/Permissions</th>
+                                        <th class="px-5 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="systems-settings-list" class="divide-y divide-slate-100">
+                                    <!-- Populated via settings-manager.js -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Risk Framework Tab -->
-            <div id="settings-risk-framework" class="settings-tab hidden">
-                <div class="card">
-                    <div class="card-head">
-                        <span class="card-title"><i class="fas fa-shield-alt" style="color:#0D7377;margin-right:8px"></i>Risk Management Framework</span>
-                        <span class="card-sub">Select the risk assessment framework to be used for POAMs and control mappings.</span>
+            <!-- Compliance Tab (Risk Framework + POAM ID) -->
+            <div id="settings-compliance" class="settings-tab hidden">
+                <div class="card mb-6">
+                    <div class="card-head mb-4">
+                        <h2 class="card-title flex items-center gap-2">
+                            <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                            Risk Management Framework
+                        </h2>
                     </div>
-                    <div style="height:1px;background:#F3F4F6;margin:0 20px"></div>
-                    <div style="padding:20px">
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+                    <div class="px-5 pb-5">
+                        <p class="text-sm text-slate-500 mb-6">Select the risk assessment framework to be used for POAMs and control mappings.</p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
-                                <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px">Active Framework</label>
-                                <select id="risk-framework-select" onchange="updateFrameworkInfo()" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none">
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Active Framework</label>
+                                <select id="risk-framework-select" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" onchange="updateFrameworkInfo()">
                                     <option value="nist">NIST 800-53 / RMF</option>
                                     <option value="csf">NIST Cybersecurity Framework</option>
                                     <option value="iso27001">ISO 27001</option>
@@ -60,291 +157,209 @@
                                 </select>
                             </div>
                             <div>
-                                <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px">Control Mapping Mode</label>
-                                <select id="control-mapper-select" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none">
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Control Mapping Mode</label>
+                                <select id="control-mapper-select" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none">
                                     <option value="enhanced">Enhanced Control Mapper</option>
                                     <option value="basic">Basic Control Mapper</option>
                                     <option value="custom">Custom Mapping</option>
                                 </select>
                             </div>
                         </div>
-                        <div id="framework-info" style="background:#E6F7F7;border:1px solid #0D7377;border-radius:8px;padding:20px;margin-bottom:20px">
-                            <p style="font-size:15px;font-weight:700;color:#0D7377;margin:0 0 6px">NIST 800-53 / RMF</p>
-                            <p style="font-size:13px;color:#374151;margin:0 0 16px">Federal risk management framework with comprehensive security controls and assessment procedures for information systems.</p>
-                            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
-                                <div style="background:#fff;border-radius:6px;padding:12px;border:1px solid #E2E4E8">
-                                    <p style="font-size:11px;font-weight:700;color:#0D7377;margin:0 0 4px">Control Families</p>
-                                    <p style="font-size:13px;color:#374151;margin:0">20 control families</p>
+
+                        <div id="framework-info" class="bg-teal-50 rounded-lg p-4 border border-teal-200 mb-4">
+                            <h4 class="font-bold text-teal-900 mb-2 text-sm">NIST 800-53 / RMF</h4>
+                            <p class="text-xs text-teal-800 mb-3">Federal risk management framework with comprehensive security controls and assessment procedures for information systems.</p>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                                <div class="bg-white rounded-lg p-2.5">
+                                    <strong class="text-teal-900">Control Families:</strong>
+                                    <p class="text-slate-600">20 control families</p>
                                 </div>
-                                <div style="background:#fff;border-radius:6px;padding:12px;border:1px solid #E2E4E8">
-                                    <p style="font-size:11px;font-weight:700;color:#0D7377;margin:0 0 4px">Total Controls</p>
-                                    <p style="font-size:13px;color:#374151;margin:0">1000+ security controls</p>
+                                <div class="bg-white rounded-lg p-2.5">
+                                    <strong class="text-teal-900">Total Controls:</strong>
+                                    <p class="text-slate-600">1000+ security controls</p>
                                 </div>
-                                <div style="background:#fff;border-radius:6px;padding:12px;border:1px solid #E2E4E8">
-                                    <p style="font-size:11px;font-weight:700;color:#0D7377;margin:0 0 4px">Impact Levels</p>
-                                    <p style="font-size:13px;color:#374151;margin:0">High, Moderate, Low</p>
+                                <div class="bg-white rounded-lg p-2.5">
+                                    <strong class="text-teal-900">Impact Levels:</strong>
+                                    <p class="text-slate-600">High, Moderate, Low</p>
                                 </div>
                             </div>
                         </div>
-                        <div style="display:flex;justify-content:flex-end">
-                            <button onclick="saveRiskFramework()" class="btn-cta"><i class="fas fa-save" style="margin-right:6px"></i>Save Framework</button>
+
+                        <div class="flex justify-end">
+                            <button onclick="saveRiskFramework()" class="px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800">
+                                <i class="fas fa-save mr-2"></i>Save Framework
+                            </button>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- POAM ID Structure Tab -->
-            <div id="settings-poam-id" class="settings-tab hidden">
                 <div class="card">
-                    <div class="card-head">
-                        <span class="card-title"><i class="fas fa-hashtag" style="color:#0D7377;margin-right:8px"></i>POAM ID Structure</span>
-                        <span class="card-sub">Configure how POAM identifiers are generated and formatted in your system.</span>
+                    <div class="card-head mb-4">
+                        <h2 class="card-title flex items-center gap-2">
+                            <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                            POAM ID Structure
+                        </h2>
                     </div>
-                    <div style="height:1px;background:#F3F4F6;margin:0 20px"></div>
-                    <div style="padding:20px">
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+                    <div class="px-5 pb-5">
+                        <p class="text-sm text-slate-500 mb-6">Configure how POAM identifiers are generated and formatted in your system.</p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
-                                <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px">POAM ID Prefix</label>
-                                <input type="text" id="settings-poam-id-prefix" placeholder="e.g., POAM-2024-" onchange="updateSettingsIDPreview()" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none;box-sizing:border-box">
-                                <p style="font-size:11px;color:#9CA3AF;margin:4px 0 0">Prefix for all POAM identifiers</p>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">POAM ID Prefix</label>
+                                <input type="text" id="settings-poam-id-prefix" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="e.g., POAM-2024-" onchange="updateSettingsIDPreview()">
+                                <p class="text-xs text-slate-500 mt-1">Prefix for all POAM identifiers</p>
                             </div>
                             <div>
-                                <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px">Starting Number</label>
-                                <input type="number" id="settings-poam-id-start" placeholder="e.g., 001" min="1" onchange="updateSettingsIDPreview()" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:8px 12px;font-size:13px;color:#374151;font-family:inherit;outline:none;box-sizing:border-box">
-                                <p style="font-size:11px;color:#9CA3AF;margin:4px 0 0">Initial counter value for new POAMs</p>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Starting Number</label>
+                                <input type="number" id="settings-poam-id-start" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="e.g., 001" min="1" onchange="updateSettingsIDPreview()">
+                                <p class="text-xs text-slate-500 mt-1">Initial counter value for new POAMs</p>
                             </div>
                         </div>
-                        <div style="background:#F9FAFB;border:1px solid #E2E4E8;border-radius:8px;padding:20px;margin-bottom:20px">
-                            <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:10px">Current ID Structure Preview</label>
-                            <div id="settings-id-preview" style="padding:14px 20px;background:#fff;border:2px solid #0D7377;border-radius:6px;font-family:monospace;font-size:16px;text-align:center;color:#0D7377;font-weight:700">POAM-2024-001</div>
+
+                        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200 mb-4">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Current ID Structure Preview</label>
+                            <div class="px-4 py-3 bg-white rounded-lg font-mono text-lg border-2 border-teal-200 text-center" id="settings-id-preview">
+                                POAM-2024-001
+                            </div>
                         </div>
-                        <div style="display:flex;justify-content:flex-end;gap:10px">
-                            <button onclick="resetPOAMIdCounter()" class="btn-sec"><i class="fas fa-redo" style="margin-right:6px"></i>Reset Counter</button>
-                            <button onclick="savePOAMIdConfigFromSettings()" class="btn-cta"><i class="fas fa-save" style="margin-right:6px"></i>Update Configuration</button>
+
+                        <div class="flex justify-end gap-3">
+                            <button onclick="resetPOAMIdCounter()" class="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50">
+                                <i class="fas fa-redo mr-2"></i>Reset Counter
+                            </button>
+                            <button onclick="savePOAMIdConfigFromSettings()" class="px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800">
+                                <i class="fas fa-save mr-2"></i>Update Configuration
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- API Configuration Tab -->
-            <div id="settings-api-config" class="settings-tab hidden">
+            <!-- Integrations Tab (API + Jira) -->
+            <div id="settings-integrations" class="settings-tab hidden">
+                <!-- API settings content rendered by api-settings-ui.js -->
+                <div id="api-settings-content" class="mb-6">
+                    <div class="card">
+                        <div class="text-center py-8">
+                            <i class="fas fa-spinner fa-spin text-slate-400 text-3xl mb-3"></i>
+                            <p class="text-slate-500 text-sm">Loading API settings...</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card">
-                    <div class="card-head">
-                        <span class="card-title"><i class="fas fa-sync-alt" style="color:#0D7377;margin-right:8px"></i>API Configuration</span>
-                        <span class="card-sub">Configure automated vulnerability scan retrieval from scanner APIs</span>
+                    <div class="card-head mb-4">
+                        <h2 class="card-title flex items-center gap-2">
+                            <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                            Jira Integration
+                        </h2>
                     </div>
-                    <div style="height:1px;background:#F3F4F6;margin:0 20px"></div>
-                    <div style="padding:20px">
-                        <p style="font-size:13px;font-weight:700;color:#374151;margin:0 0 14px">Scanner Connections</p>
-
-                        <!-- Qualys VM -->
-                        <div style="background:#F9FAFB;border:1px solid #E2E4E8;border-radius:8px;padding:16px;margin-bottom:12px">
-                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-                                <div style="display:flex;align-items:center;gap:12px">
-                                    <i class="fas fa-chart-line" style="color:#0D7377;font-size:20px"></i>
-                                    <div>
-                                        <p style="font-size:13px;font-weight:700;color:#1F2937;margin:0">Qualys VM</p>
-                                        <p style="font-size:11px;color:#9CA3AF;margin:0">Vulnerability Management Platform</p>
-                                    </div>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="qualys-enabled" class="sr-only peer" checked>
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
-                                </label>
+                    <div class="px-5 pb-5">
+                        <p class="text-sm text-slate-500 mb-6">Configure Jira integration for creating and tracking remediation tickets from POAMs.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Jira Instance URL</label>
+                                <input type="text" id="jira-base-url" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="https://your-org.atlassian.net">
                             </div>
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-                                <div>
-                                    <label style="display:block;font-size:11px;font-weight:700;color:#6B7280;margin-bottom:5px">API URL</label>
-                                    <input type="text" id="qualys-url" placeholder="https://qualysapi.qualys.com" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:7px 10px;font-size:12px;color:#374151;font-family:inherit;outline:none;box-sizing:border-box">
-                                </div>
-                                <div>
-                                    <label style="display:block;font-size:11px;font-weight:700;color:#6B7280;margin-bottom:5px">API Key</label>
-                                    <input type="password" id="qualys-key" placeholder="Enter API key" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:7px 10px;font-size:12px;color:#374151;font-family:inherit;outline:none;box-sizing:border-box">
-                                </div>
-                                <div>
-                                    <label style="display:block;font-size:11px;font-weight:700;color:#6B7280;margin-bottom:5px">Schedule</label>
-                                    <select id="qualys-schedule" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:7px 10px;font-size:12px;color:#374151;font-family:inherit;outline:none">
-                                        <option value="daily">Daily at 2:00 AM</option>
-                                        <option value="weekly">Weekly on Monday</option>
-                                        <option value="monthly">Monthly on 1st</option>
-                                        <option value="manual">Manual Only</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label style="display:block;font-size:11px;font-weight:700;color:#6B7280;margin-bottom:5px">Last Pull</label>
-                                    <input type="text" value="Never" disabled style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:7px 10px;font-size:12px;color:#9CA3AF;font-family:inherit;outline:none;background:#F3F4F6;box-sizing:border-box">
-                                </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Project Key</label>
+                                <input type="text" id="jira-project-key" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="e.g., POAM">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Email</label>
+                                <input type="email" id="jira-email" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="your-email@org.com">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">API Token</label>
+                                <input type="password" id="jira-api-token" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="Enter Jira API token">
                             </div>
                         </div>
-
-                        <!-- Tenable/Nessus -->
-                        <div style="background:#F9FAFB;border:1px solid #E2E4E8;border-radius:8px;padding:16px;margin-bottom:12px">
-                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-                                <div style="display:flex;align-items:center;gap:12px">
-                                    <i class="fas fa-shield-alt" style="color:#10B981;font-size:20px"></i>
-                                    <div>
-                                        <p style="font-size:13px;font-weight:700;color:#1F2937;margin:0">Tenable/Nessus</p>
-                                        <p style="font-size:11px;color:#9CA3AF;margin:0">Security Center &amp; Nessus Professional</p>
-                                    </div>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="tenable-enabled" class="sr-only peer">
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
-                                </label>
-                            </div>
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-                                <div>
-                                    <label style="display:block;font-size:11px;font-weight:700;color:#6B7280;margin-bottom:5px">API URL</label>
-                                    <input type="text" id="tenable-url" placeholder="https://cloud.tenable.com" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:7px 10px;font-size:12px;color:#374151;font-family:inherit;outline:none;box-sizing:border-box">
-                                </div>
-                                <div>
-                                    <label style="display:block;font-size:11px;font-weight:700;color:#6B7280;margin-bottom:5px">Access Key</label>
-                                    <input type="password" id="tenable-key" placeholder="Enter access key" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:7px 10px;font-size:12px;color:#374151;font-family:inherit;outline:none;box-sizing:border-box">
-                                </div>
-                                <div>
-                                    <label style="display:block;font-size:11px;font-weight:700;color:#6B7280;margin-bottom:5px">Schedule</label>
-                                    <select id="tenable-schedule" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:7px 10px;font-size:12px;color:#374151;font-family:inherit;outline:none">
-                                        <option value="daily">Daily at 2:00 AM</option>
-                                        <option value="weekly" selected>Weekly on Monday</option>
-                                        <option value="monthly">Monthly on 1st</option>
-                                        <option value="manual">Manual Only</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label style="display:block;font-size:11px;font-weight:700;color:#6B7280;margin-bottom:5px">Last Pull</label>
-                                    <input type="text" value="Never" disabled style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:7px 10px;font-size:12px;color:#9CA3AF;font-family:inherit;outline:none;background:#F3F4F6;box-sizing:border-box">
-                                </div>
-                            </div>
+                        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200 mb-4">
+                            <p class="text-xs text-slate-500">Tickets are created manually by selecting POAMs and clicking "Create Jira Ticket". The Remediation Identity hash ensures no duplicate tickets are created.</p>
                         </div>
-
-                        <!-- Wiz Cloud -->
-                        <div style="background:#F9FAFB;border:1px solid #E2E4E8;border-radius:8px;padding:16px;margin-bottom:20px">
-                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-                                <div style="display:flex;align-items:center;gap:12px">
-                                    <i class="fas fa-cloud" style="color:#0D7377;font-size:20px"></i>
-                                    <div>
-                                        <p style="font-size:13px;font-weight:700;color:#1F2937;margin:0">Wiz Cloud Security</p>
-                                        <p style="font-size:11px;color:#9CA3AF;margin:0">Cloud Security Platform</p>
-                                    </div>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="wiz-enabled" class="sr-only peer">
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
-                                </label>
-                            </div>
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-                                <div>
-                                    <label style="display:block;font-size:11px;font-weight:700;color:#6B7280;margin-bottom:5px">API Endpoint</label>
-                                    <input type="text" id="wiz-url" placeholder="https://api.wiz.io" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:7px 10px;font-size:12px;color:#374151;font-family:inherit;outline:none;box-sizing:border-box">
-                                </div>
-                                <div>
-                                    <label style="display:block;font-size:11px;font-weight:700;color:#6B7280;margin-bottom:5px">Client Secret</label>
-                                    <input type="password" id="wiz-secret" placeholder="Enter client secret" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:7px 10px;font-size:12px;color:#374151;font-family:inherit;outline:none;box-sizing:border-box">
-                                </div>
-                                <div>
-                                    <label style="display:block;font-size:11px;font-weight:700;color:#6B7280;margin-bottom:5px">Schedule</label>
-                                    <select id="wiz-schedule" style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:7px 10px;font-size:12px;color:#374151;font-family:inherit;outline:none">
-                                        <option value="daily">Daily at 2:00 AM</option>
-                                        <option value="weekly">Weekly on Monday</option>
-                                        <option value="monthly">Monthly on 1st</option>
-                                        <option value="manual" selected>Manual Only</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label style="display:block;font-size:11px;font-weight:700;color:#6B7280;margin-bottom:5px">Last Pull</label>
-                                    <input type="text" value="Never" disabled style="width:100%;border:1px solid #D1D5DB;border-radius:6px;padding:7px 10px;font-size:12px;color:#9CA3AF;font-family:inherit;outline:none;background:#F3F4F6;box-sizing:border-box">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div style="display:flex;justify-content:flex-end;gap:10px">
-                            <button onclick="testAPIConnections()" class="btn-sec"><i class="fas fa-plug" style="margin-right:6px"></i>Test Connections</button>
-                            <button onclick="saveAPIConfig()" class="btn-cta"><i class="fas fa-save" style="margin-right:6px"></i>Save Configuration</button>
+                        <div class="flex justify-end gap-3">
+                            <button onclick="testJiraConnection()" class="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50">
+                                <i class="fas fa-plug mr-2"></i>Test Connection
+                            </button>
+                            <button onclick="saveJiraConfig()" class="px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800">
+                                <i class="fas fa-save mr-2"></i>Save
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- User Preferences Tab -->
-            <div id="settings-preferences" class="settings-tab hidden">
+            <!-- Critical Assets Tab -->
+            <div id="settings-critical-assets" class="settings-tab hidden">
                 <div class="card">
-                    <div class="card-head">
-                        <span class="card-title"><i class="fas fa-sliders-h" style="color:#0D7377;margin-right:8px"></i>User Preferences</span>
-                        <span class="card-sub">Customize your personal experience and notification settings.</span>
+                    <div class="card-head mb-4">
+                        <h2 class="card-title flex items-center gap-2">
+                            <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                            Critical Asset Registry
+                        </h2>
                     </div>
-                    <div style="height:1px;background:#F3F4F6;margin:0 20px"></div>
-                    <div style="padding:20px">
-                        <p style="font-size:13px;font-weight:700;color:#374151;margin:0 0 14px">Notifications</p>
-                        <div style="display:flex;flex-direction:column;gap:0;border:1px solid #E2E4E8;border-radius:8px;overflow:hidden;margin-bottom:24px">
-                            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #F3F4F6">
-                                <div>
-                                    <p style="font-size:13px;font-weight:600;color:#1F2937;margin:0 0 2px">Email Notifications</p>
-                                    <p style="font-size:12px;color:#6B7280;margin:0">Receive email updates for POAM changes and assignments</p>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" class="sr-only peer" checked>
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
-                                </label>
-                            </div>
-                            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #F3F4F6">
-                                <div>
-                                    <p style="font-size:13px;font-weight:600;color:#1F2937;margin:0 0 2px">Desktop Notifications</p>
-                                    <p style="font-size:12px;color:#6B7280;margin:0">Show browser notifications for critical updates</p>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" class="sr-only peer">
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
-                                </label>
-                            </div>
-                            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px">
-                                <div>
-                                    <p style="font-size:13px;font-weight:600;color:#1F2937;margin:0 0 2px">SLA Violation Alerts</p>
-                                    <p style="font-size:12px;color:#6B7280;margin:0">Get notified when POAMs exceed SLA thresholds</p>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" class="sr-only peer" checked>
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
-                                </label>
-                            </div>
-                        </div>
+                    <div class="px-5 pb-5">
+                    <p class="text-sm text-slate-500 mb-6">Tag assets as critical to prioritize open POAMs. Works with all finding sources: scans, assessments, pen tests, and CM findings.</p>
 
-                        <!-- System Configuration Section -->
-                        <div style="padding-top:20px;border-top:1px solid #F3F4F6">
-                            <p style="font-size:14px;font-weight:700;color:#1F2937;margin:0 0 4px"><i class="fas fa-server" style="color:#0D7377;margin-right:8px"></i>System Configuration</p>
-                            <p style="font-size:13px;color:#6B7280;margin:0 0 16px">Manage system inventory and tie them to organization/group access permissions.</p>
-                            <div class="card" style="margin-bottom:0">
-                                <div class="card-head" style="display:flex;align-items:center;justify-content:space-between">
-                                    <span class="card-title">System Inventory</span>
-                                    <button onclick="openAddSystemModal()" class="btn-cta" style="font-size:12px;padding:6px 12px"><i class="fas fa-plus" style="margin-right:5px"></i>Add System</button>
-                                </div>
-                                <div style="height:1px;background:#F3F4F6;margin:0 20px"></div>
-                                <div style="overflow-x:auto">
-                                    <table style="width:100%;border-collapse:collapse">
-                                        <thead>
-                                            <tr>
-                                                <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;padding:10px 20px;text-align:left">System ID</th>
-                                                <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;padding:10px 20px;text-align:left">Display Name</th>
-                                                <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;padding:10px 20px;text-align:left">Group/Permissions</th>
-                                                <th style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #F3F4F6;padding:10px 20px;text-align:right">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="systems-settings-list">
-                                            <!-- Populated via settings-manager.js -->
-                                        </tbody>
-                                    </table>
-                                </div>
+                    <!-- Add Critical Asset Form -->
+                    <div class="bg-slate-50 rounded-lg p-4 mb-4 border border-slate-200">
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3">Add Critical Asset</p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Asset Name / Hostname</label>
+                                <input type="text" id="ca-name" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="e.g. web-server-prod-01">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">IP Address (optional)</label>
+                                <input type="text" id="ca-ip" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="e.g. 10.0.1.50">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Notes</label>
+                                <input type="text" id="ca-notes" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" placeholder="e.g. Internet-facing payment server">
                             </div>
                         </div>
-
-                        <div style="display:flex;justify-content:flex-end;margin-top:20px">
-                            <button onclick="saveUserPreferences()" class="btn-cta"><i class="fas fa-save" style="margin-right:6px"></i>Save Settings</button>
+                        <div class="mb-3">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Tags</label>
+                            <div class="flex flex-wrap gap-2">
+                                <label class="inline-flex items-center gap-1.5 text-xs bg-white border border-slate-200 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-teal-50 hover:border-teal-200 transition-colors">
+                                    <input type="checkbox" class="ca-tag-checkbox rounded text-teal-700 focus:ring-teal-500" value="publicly-exposed"> Publicly Exposed
+                                </label>
+                                <label class="inline-flex items-center gap-1.5 text-xs bg-white border border-slate-200 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-teal-50 hover:border-teal-200 transition-colors">
+                                    <input type="checkbox" class="ca-tag-checkbox rounded text-teal-700 focus:ring-teal-500" value="critical-infrastructure"> Critical Infrastructure
+                                </label>
+                                <label class="inline-flex items-center gap-1.5 text-xs bg-white border border-slate-200 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-teal-50 hover:border-teal-200 transition-colors">
+                                    <input type="checkbox" class="ca-tag-checkbox rounded text-teal-700 focus:ring-teal-500" value="pii-phi"> PII / PHI
+                                </label>
+                                <label class="inline-flex items-center gap-1.5 text-xs bg-white border border-slate-200 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-teal-50 hover:border-teal-200 transition-colors">
+                                    <input type="checkbox" class="ca-tag-checkbox rounded text-teal-700 focus:ring-teal-500" value="high-value-target"> High-Value Target
+                                </label>
+                            </div>
                         </div>
+                        <button onclick="addCriticalAssetFromForm()" class="px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800">
+                            <i class="fas fa-plus mr-2"></i>Add Critical Asset
+                        </button>
+                    </div>
+
+                    <!-- Critical Assets Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-slate-200">
+                                    <th class="text-left py-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Name / Hostname</th>
+                                    <th class="text-left py-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">IP</th>
+                                    <th class="text-left py-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tags</th>
+                                    <th class="text-left py-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Notes</th>
+                                    <th class="text-left py-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Added</th>
+                                    <th class="text-center py-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ca-registry-table-body">
+                                <tr><td colspan="6" class="py-6 text-center text-slate-400 text-xs">No critical assets registered</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                     </div>
                 </div>
             </div>
 
-            <!-- System Configuration Tab -->
-            <div id="settings-systems" class="settings-tab hidden">
-                <!-- Redirected to User Preferences tab -->
-            </div>
         </div>

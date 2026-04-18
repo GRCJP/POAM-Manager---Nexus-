@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>TRACE | Sign In</title>
+    <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        background: #F1F0EE;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        color: #1F2937;
+    }
+
+    /* Banner — matches app banner exactly */
+    .banner {
+        height: 54px; background: #1F2937;
+        display: flex; align-items: center;
+        padding: 0 22px; gap: 16px; flex-shrink: 0;
+        border-bottom: 1px solid #151C27;
+    }
+    .brand { display: flex; align-items: center; gap: 11px; }
+    .bmark {
+        width: 30px; height: 30px; background: #0D7377; border-radius: 7px;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .bmark-t {
+        font-size: 15px; font-weight: 900; color: #fff;
+        font-family: Georgia, 'Times New Roman', serif; letter-spacing: -0.5px;
+    }
+    .bname { display: flex; flex-direction: column; gap: 1px; }
+    .bname-top { font-size: 14px; font-weight: 700; color: #F3F4F6; letter-spacing: 0.1px; }
+    .bname-sub { font-size: 9px; font-weight: 600; color: #4B5563; letter-spacing: 1.3px; text-transform: uppercase; }
+
+    /* Page layout */
+    .page { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
+
+    /* Login card */
+    .login-card {
+        background: #FFFFFF;
+        border: 1px solid #E2E4E8;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.05);
+        width: 100%;
+        max-width: 420px;
+        overflow: hidden;
+    }
+    .login-header {
+        padding: 32px 32px 0;
+        text-align: center;
+    }
+    .login-header .icon-wrap {
+        width: 52px; height: 52px; background: #E6F7F7; border-radius: 12px;
+        display: inline-flex; align-items: center; justify-content: center;
+        margin-bottom: 16px;
+    }
+    .login-header .icon-wrap i { font-size: 22px; color: #0D7377; }
+    .login-header h1 {
+        font-size: 21px; font-weight: 800; color: #111827; margin-bottom: 6px;
+    }
+    .login-header p {
+        font-size: 13px; color: #6B7280; line-height: 1.5;
+    }
+
+    /* Form */
+    .login-form { padding: 28px 32px 32px; }
+    .form-group { margin-bottom: 18px; }
+    .form-group label {
+        display: block; font-size: 10px; font-weight: 700; color: #6B7280;
+        text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+    }
+    .input-wrap {
+        position: relative; display: flex; align-items: center;
+        border: 1px solid #D1D5DB; border-radius: 8px;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .input-wrap:focus-within {
+        border-color: #0D7377;
+        box-shadow: 0 0 0 3px rgba(13, 115, 119, 0.12);
+    }
+    .input-wrap i {
+        position: absolute; left: 12px;
+        font-size: 14px; color: #9CA3AF; pointer-events: none;
+    }
+    .input-wrap input {
+        width: 100%; border: none; outline: none; background: none;
+        padding: 10px 12px 10px 38px;
+        font-size: 13px; font-family: inherit; color: #111827;
+    }
+    .input-wrap input::placeholder { color: #9CA3AF; }
+    .input-wrap .toggle-pw {
+        position: absolute; right: 10px; cursor: pointer;
+        background: none; border: none; padding: 4px;
+        color: #9CA3AF; font-size: 14px;
+        pointer-events: auto;
+    }
+    .input-wrap .toggle-pw:hover { color: #6B7280; }
+
+    /* Remember + forgot */
+    .form-options {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 22px;
+    }
+    .remember-me {
+        display: flex; align-items: center; gap: 7px; cursor: pointer;
+    }
+    .remember-me input {
+        accent-color: #0D7377; width: 14px; height: 14px; cursor: pointer;
+    }
+    .remember-me span { font-size: 12.5px; color: #374151; }
+    .forgot-link {
+        font-size: 12.5px; color: #0D7377; text-decoration: none; font-weight: 600;
+    }
+    .forgot-link:hover { text-decoration: underline; }
+
+    /* Submit button */
+    .btn-login {
+        width: 100%; padding: 11px; border: none; border-radius: 8px;
+        background: #0D7377; color: #fff; font-size: 13.5px;
+        font-weight: 600; font-family: inherit; cursor: pointer;
+        letter-spacing: 0.1px; transition: background 0.15s;
+    }
+    .btn-login:hover { background: #0A5E62; }
+    .btn-login:disabled { background: #9CA3AF; cursor: not-allowed; }
+    .btn-login i { margin-right: 6px; }
+
+    /* SSO divider */
+    .divider {
+        display: flex; align-items: center; gap: 12px;
+        margin: 22px 0;
+    }
+    .divider::before, .divider::after {
+        content: ''; flex: 1; height: 1px; background: #E2E4E8;
+    }
+    .divider span {
+        font-size: 10px; font-weight: 700; color: #9CA3AF;
+        text-transform: uppercase; letter-spacing: 0.5px;
+    }
+
+    /* SSO button */
+    .btn-sso {
+        width: 100%; padding: 10px; border: 1px solid #D1D5DB; border-radius: 8px;
+        background: #FFFFFF; color: #374151; font-size: 13px;
+        font-weight: 600; font-family: inherit; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        transition: background 0.15s, border-color 0.15s;
+    }
+    .btn-sso:hover { background: #F9FAFB; border-color: #9CA3AF; }
+    .btn-sso i { font-size: 16px; }
+
+    /* Error message */
+    .login-error {
+        display: none; margin-bottom: 16px;
+        background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px;
+        padding: 10px 14px; font-size: 12.5px; color: #991B1B;
+        align-items: center; gap: 8px;
+    }
+    .login-error.visible { display: flex; }
+    .login-error i { flex-shrink: 0; }
+
+    /* Footer */
+    .login-footer {
+        padding: 16px 32px 24px; text-align: center;
+        border-top: 1px solid #F3F4F6;
+    }
+    .login-footer p {
+        font-size: 11.5px; color: #9CA3AF;
+    }
+    .login-footer a { color: #0D7377; font-weight: 600; text-decoration: none; }
+    .login-footer a:hover { text-decoration: underline; }
+
+    /* Page footer */
+    .page-footer {
+        text-align: center; padding: 16px 20px;
+        font-size: 10.5px; color: #9CA3AF; letter-spacing: 0.2px;
+    }
+    </style>
+</head>
+<body>
+    <!-- Banner -->
+    <header class="banner">
+        <div class="brand">
+            <div class="bmark"><span class="bmark-t">T</span></div>
+            <div class="bname">
+                <div class="bname-top">TRACE</div>
+                <div class="bname-sub">POAM Manager</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Login Page -->
+    <main class="page">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="icon-wrap"><i class="fas fa-shield-alt"></i></div>
+                <h1>Sign In</h1>
+                <p>Access the TRACE compliance management platform</p>
+            </div>
+
+            <form class="login-form" id="login-form" onsubmit="handleLogin(event)">
+                <!-- Error Banner -->
+                <div class="login-error" id="login-error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span id="login-error-msg">Invalid email or password.</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="login-email">Username or Email</label>
+                    <div class="input-wrap">
+                        <i class="fas fa-envelope"></i>
+                        <input type="text" id="login-email" placeholder="Username or email" required autocomplete="username">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <div class="input-wrap">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="login-password" placeholder="Enter your password" required autocomplete="current-password">
+                        <button type="button" class="toggle-pw" onclick="togglePasswordVisibility()" aria-label="Toggle password visibility">
+                            <i class="fas fa-eye" id="pw-toggle-icon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox" id="remember-me">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="#" class="forgot-link" onclick="showForgotPassword(event)">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="btn-login" id="btn-login">
+                    <i class="fas fa-arrow-right"></i>Sign In
+                </button>
+
+                <div class="divider"><span>Or continue with</span></div>
+
+                <button type="button" class="btn-sso" onclick="handleSSOLogin()">
+                    <i class="fas fa-building"></i>
+                    Sign in with SSO / Active Directory
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <p>By signing in you agree to your organization's acceptable use policy.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="page-footer">
+        TRACE v1.0 &mdash; Tracking Remediation & Compliance Efficiently
+    </footer>
+
+    <script>
+    function handleLogin(e) {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value.trim();
+        const password = document.getElementById('login-password').value;
+        const btn = document.getElementById('btn-login');
+        const errorEl = document.getElementById('login-error');
+
+        // Hide any previous error
+        errorEl.classList.remove('visible');
+
+        // Basic client-side validation
+        if (!email || !password) {
+            showError('Please enter both email and password.');
+            return;
+        }
+
+        // Show loading state
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:6px"></i>Signing in...';
+
+        // Simulate auth call — replace with real API call to /api/auth/login
+        setTimeout(() => {
+            // Demo accounts — replace with real API call to /api/auth/login
+            const demoAccounts = {
+                'admin': { password: 'admin', name: 'Admin', role: 'Administrator' },
+            };
+
+            const acct = demoAccounts[email] || demoAccounts[email.toLowerCase()];
+            const govMatch = email.endsWith('.gov') && password === 'trace2024';
+
+            if ((acct && password === acct.password) || govMatch) {
+                const name = acct ? acct.name : email.split('@')[0].replace('.', ' ');
+                const role = acct ? acct.role : 'ISSM';
+                sessionStorage.setItem('trace_auth', JSON.stringify({
+                    user: email,
+                    name: name,
+                    role: role,
+                    token: 'demo-token',
+                    loginAt: new Date().toISOString()
+                }));
+                window.location.href = 'index.html';
+            } else {
+                showError('Invalid email or password. Please try again.');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-arrow-right" style="margin-right:6px"></i>Sign In';
+            }
+        }, 800);
+    }
+
+    function showError(msg) {
+        const errorEl = document.getElementById('login-error');
+        document.getElementById('login-error-msg').textContent = msg;
+        errorEl.classList.add('visible');
+    }
+
+    function togglePasswordVisibility() {
+        const input = document.getElementById('login-password');
+        const icon = document.getElementById('pw-toggle-icon');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.replace('fa-eye', 'fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.replace('fa-eye-slash', 'fa-eye');
+        }
+    }
+
+    function handleSSOLogin() {
+        // Placeholder — will redirect to AD federation endpoint
+        alert('SSO integration will connect to Active Directory via your organization\'s identity provider.');
+    }
+
+    function showForgotPassword(e) {
+        e.preventDefault();
+        alert('Password reset will be handled through your organization\'s Active Directory administrator.');
+    }
+
+    // Redirect to app if already authenticated
+    (function checkAuth() {
+        const auth = sessionStorage.getItem('trace_auth');
+        if (auth) {
+            try {
+                const parsed = JSON.parse(auth);
+                if (parsed.token) window.location.href = 'index.html';
+            } catch (e) { /* ignore */ }
+        }
+    })();
+    </script>
+</body>
+</html>
