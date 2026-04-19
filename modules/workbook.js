@@ -1007,6 +1007,7 @@ async function renderWorkbookSystemTable(systemId) {
     .map(item => {
       const id = item.id;
       const checked = window.poamWorkbookState.selectedItemIds.has(id);
+      const dueDate = item['Updated Scheduled Completion Date'] || item['Scheduled Completion Date'] || '';
       return `
       <tr class="border-b border-slate-100 hover:bg-teal-50 transition-colors group">
         <td class="px-3 py-2" onclick="event.stopPropagation()">
@@ -1015,7 +1016,7 @@ async function renderWorkbookSystemTable(systemId) {
         <td class="px-3 py-2 text-xs text-slate-700 font-mono">
           <div class="flex items-center gap-2">
             ${escapeHtml(item['Item number'] || '')}
-            <button onclick="event.stopPropagation(); showQuickEditPOAMModal('${id}', '${systemId}')" 
+            <button onclick="event.stopPropagation(); showQuickEditPOAMModal('${id}', '${systemId}')"
                     class="opacity-0 group-hover:opacity-100 transition-opacity text-teal-700 hover:text-teal-900"
                     title="Quick Edit">
               <i class="fas fa-edit text-xs"></i>
@@ -1023,12 +1024,7 @@ async function renderWorkbookSystemTable(systemId) {
           </div>
         </td>
         <td class="px-3 py-2 text-sm text-slate-900 cursor-pointer" onclick="poamWorkbookOpenItemDetails('${id}')">${escapeHtml(item['Vulnerability Name'] || '')}</td>
-        <td class="px-3 py-2" onclick="event.stopPropagation()">
-          ${renderInlineSelect(id, 'POC Name', item['POC Name'], pocs)}
-        </td>
-        <td class="px-3 py-2" onclick="event.stopPropagation()">
-          ${renderInlineSelect(id, 'Identifying Detecting Source', item['Identifying Detecting Source'], sources)}
-        </td>
+        <td class="px-3 py-2 text-xs text-slate-700">${escapeHtml(item['Impacted Security Controls'] || '')}</td>
         <td class="px-3 py-2" onclick="event.stopPropagation()">
           ${renderInlineSelect(id, 'Severity Value', item['Severity Value'], severities)}
         </td>
@@ -1036,7 +1032,10 @@ async function renderWorkbookSystemTable(systemId) {
           ${renderInlineSelect(id, 'Status', item['Status'], statuses)}
         </td>
         <td class="px-3 py-2" onclick="event.stopPropagation()">
-          ${renderInlineDate(id, 'Scheduled Completion Date', item['Scheduled Completion Date'])}
+          ${renderInlineSelect(id, 'POC Name', item['POC Name'], pocs)}
+        </td>
+        <td class="px-3 py-2" onclick="event.stopPropagation()">
+          ${renderInlineDate(id, 'Scheduled Completion Date', dueDate)}
         </td>
       </tr>
       `;
