@@ -1101,6 +1101,7 @@ async function renderWorkbookSystemTable(systemId) {
           <span class="hover:text-teal-700 hover:underline">${escapeHtml(item['Item number'] || '')}</span>${warningIcon}
         </td>
         <td class="px-3 py-2 text-sm text-slate-900 cursor-pointer" onclick="poamWorkbookOpenItemDetails('${id}')">${escapeHtml(item['Vulnerability Name'] || '')}</td>
+        <td class="px-3 py-2 text-xs text-slate-700 font-mono">${escapeHtml(item['Impacted Security Controls'] || '')}</td>
         <td class="px-3 py-2 text-xs text-slate-700">${escapeHtml(item['Identifying Detecting Source'] || '')}</td>
         <td class="px-3 py-2" onclick="event.stopPropagation()">
           ${renderInlineSelect(id, 'POC Name', item['POC Name'], pocs)}
@@ -1120,7 +1121,7 @@ async function renderWorkbookSystemTable(systemId) {
     .join('');
 
   if (displayItems.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="8" class="px-4 py-8 text-center text-slate-500 text-sm">
+    tableBody.innerHTML = `<tr><td colspan="9" class="px-4 py-8 text-center text-slate-500 text-sm">
       ${items.length > 0 ? 'All items are completed or closed. Use the status filter to view them.' : 'No POAMs in this system yet.'}
     </td></tr>`;
   }
