@@ -391,19 +391,20 @@ class POAMDatabase {
             // Milestones (embedded on POAM for POAM Detail view)
             milestones: Array.isArray(poam.milestones) ? poam.milestones : [],
 
-            // Status history MUST be preserved — do NOT lose it on re-save
-            statusHistory: Array.isArray(poam.statusHistory) ? poam.statusHistory : []
+            // Status history preserved — cap at last 50 entries to prevent storage bloat
+            statusHistory: Array.isArray(poam.statusHistory) ? poam.statusHistory.slice(-50) : []
         };
     }
 
     transformAssetsWithMetadata(assets) {
-        // Store only essential asset identification - verbose fields in scan summaries
-        return assets.map(asset => ({
+        // Store only essential asset identification — drop verbose results/evidence to save space
+        // Cap at 100 assets per POAM to prevent IndexedDB quota issues on large scans
+        const capped = assets.length > 100 ? assets.slice(0, 100) : assets;
+        return capped.map(asset => ({
             id: asset.id || asset.assetId || asset.asset_id || asset.name || 'Unknown',
             name: asset.name || asset.assetName || asset.asset_name || asset.assetId || 'Unknown Asset',
             ipv4: asset.ipv4 || asset.ip || asset.asset_ipv4 || '',
             os: asset.os || asset.operatingSystem || 'Unknown',
-            results: asset.results || asset.result || asset.findingResults || '',
             status: asset.status || 'affected',
             firstDetected: asset.firstDetected || asset.scanDate || new Date().toISOString().split('T')[0],
             lastDetected: asset.lastDetected || asset.scanDate || new Date().toISOString().split('T')[0]
