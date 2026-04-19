@@ -1650,6 +1650,15 @@ async function mergePOAMsFromScan(newPOAMs) {
         scannedAssetCount: scannedAssets.size
     };
 
+    // Persist scan analysis to localStorage for history viewing
+    try {
+        const analyses = JSON.parse(localStorage.getItem('scanAnalyses') || '[]');
+        analyses.push(window.lastScanAnalysis);
+        // Keep last 20 analyses
+        if (analyses.length > 20) analyses.splice(0, analyses.length - 20);
+        localStorage.setItem('scanAnalyses', JSON.stringify(analyses));
+    } catch(e) { /* localStorage full or unavailable */ }
+
     console.log(`🔄 Merge results: ${created} new, ${updated} updated, ${reopened} reopened, ${closureCandidates.length} auto-resolved, ${scopeSkipped.length} out-of-scope skipped`);
 
     return {

@@ -1733,6 +1733,16 @@ async function poamWorkbookOpenItemDetails(id) {
             </div>
             ${resourcesRequired.length ? renderFieldSelect('Resources Required', item['Resources Required'], resourcesRequired) : renderFieldText('Resources Required', item['Resources Required'])}
             ${renderFieldTextarea('Milestone with Completion Dates', item['Milestone with Completion Dates'])}
+
+            <!-- Milestone Tracker -->
+            <div class="border border-slate-200 rounded-lg p-4 space-y-3" id="wb-milestone-tracker">
+              <div class="flex items-center justify-between">
+                <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Milestones</div>
+                <button type="button" id="wb-add-milestone" class="px-2 py-1 text-xs bg-teal-700 text-white rounded hover:bg-teal-800">Add Milestone</button>
+              </div>
+              <div id="wb-milestones-list" class="space-y-2"></div>
+            </div>
+
             ${renderFieldTextarea('Milestone Changes', item['Milestone Changes'])}
             ${renderFieldTextarea('Affected Components/URLs', item['Affected Components/URLs'])}
             ${renderFieldTextarea('Comments', item['Comments'])}
@@ -1773,6 +1783,125 @@ async function poamWorkbookOpenItemDetails(id) {
   `;
 
   document.body.appendChild(modal);
+
+  // ── Milestone Tracker Logic ──
+  const _milestones = Array.isArray(item._milestones) ? JSON.parse(JSON.stringify(item._milestones)) : parseMilestonesFromText(item['Milestone with Completion Dates'] || '');
+
+  function parseMilestonesFromText(text) {
+    if (!text || !text.trim()) return [];
+    const milestones = [];
+    const lines = text.split(/\n/).filter(l => l.trim());
+    lines.forEach((line, idx) => {
+      const match = line.match(/^(?:(\d+)[.)\-:\s]*)?(.+?)(?:\s*[-–]\s*(Pending|In Progress|Complete))?(?:\s*[-–]\s*(?:Target|Due|By)?:?\s*(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{2,4}))?(?:\s*[-–]\s*(?:Completed|Done)?:?\s*(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{2,4}))?$/i);
+      if (match) {
+        milestones.push({
+          id: match[1] ? parseInt(match[1]) : idx + 1,
+          description: (match[2] || line).trim(),
+          targetDate: match[4] || '',
+          status: match[3] || 'Pending',
+          completedDate: match[5] || ''
+        });
+      } else {
+        milestones.push({
+          id: idx + 1,
+          description: line.trim(),
+          targetDate: '',
+          status: 'Pending',
+          completedDate: ''
+        });
+      }
+    });
+    return milestones;
+  }
+
+  function renderMilestoneRows() {
+    const list = modal.querySelector('#wb-milestones-list');
+    if (!list) return;
+    if (_milestones.length === 0) {
+      list.innerHTML = '<div class="text-xs text-slate-400">No milestones added yet.</div>';
+      return;
+    }
+    list.innerHTML = _milestones.map((m, idx) => {
+      const statusColors = {
+        'Pending': 'bg-slate-100 text-slate-700',
+        'In Progress': 'bg-teal-50 text-teal-800',
+        'Complete': 'bg-green-50 text-green-800'
+      };
+      const sc = statusColors[m.status] || statusColors['Pending'];
+      return `
+        <div class="flex items-start gap-2 p-2 border border-slate-100 rounded bg-slate-50" data-ms-idx="${idx}">
+          <div class="text-xs font-bold text-slate-400 mt-1 w-5 text-center">${m.id}</div>
+          <div class="flex-1 space-y-1">
+            <input type="text" value="${escapeAttr(m.description)}" placeholder="Milestone description"
+              data-ms-desc="${idx}" class="w-full text-xs text-slate-800 border border-slate-200 rounded px-2 py-1 bg-white">
+            <div class="flex items-center gap-2">
+              <input type="date" value="${escapeAttr(m.targetDate)}" data-ms-target="${idx}"
+                class="text-xs border border-slate-200 rounded px-2 py-1 bg-white">
+              <select data-ms-status="${idx}" class="text-xs border border-slate-200 rounded px-2 py-1 bg-white ${sc}">
+                <option value="Pending" ${m.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                <option value="In Progress" ${m.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                <option value="Complete" ${m.status === 'Complete' ? 'selected' : ''}>Complete</option>
+              </select>
+              ${m.completedDate ? `<span class="text-[10px] text-green-700">Done: ${escapeHtml(m.completedDate)}</span>` : ''}
+              <button type="button" data-ms-remove="${idx}" class="text-xs text-red-400 hover:text-red-600 ml-auto" title="Remove milestone"><i class="fas fa-trash-alt"></i></button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Bind change events
+    list.querySelectorAll('[data-ms-desc]').forEach(el => {
+      el.addEventListener('input', () => {
+        _milestones[parseInt(el.dataset.msDesc)].description = el.value;
+      });
+    });
+    list.querySelectorAll('[data-ms-target]').forEach(el => {
+      el.addEventListener('change', () => {
+        _milestones[parseInt(el.dataset.msTarget)].targetDate = el.value;
+      });
+    });
+    list.querySelectorAll('[data-ms-status]').forEach(el => {
+      el.addEventListener('change', () => {
+        const idx2 = parseInt(el.dataset.msStatus);
+        _milestones[idx2].status = el.value;
+        if (el.value === 'Complete' && !_milestones[idx2].completedDate) {
+          _milestones[idx2].completedDate = new Date().toISOString().slice(0, 10);
+        }
+        if (el.value !== 'Complete') {
+          _milestones[idx2].completedDate = '';
+        }
+        renderMilestoneRows();
+      });
+    });
+    list.querySelectorAll('[data-ms-remove]').forEach(el => {
+      el.addEventListener('click', () => {
+        _milestones.splice(parseInt(el.dataset.msRemove), 1);
+        // Renumber
+        _milestones.forEach((m2, i) => { m2.id = i + 1; });
+        renderMilestoneRows();
+      });
+    });
+  }
+
+  renderMilestoneRows();
+
+  modal.querySelector('#wb-add-milestone')?.addEventListener('click', () => {
+    const nextId = _milestones.length > 0 ? Math.max(..._milestones.map(m => m.id)) + 1 : 1;
+    _milestones.push({ id: nextId, description: '', targetDate: '', status: 'Pending', completedDate: '' });
+    renderMilestoneRows();
+  });
+
+  function serializeMilestonesToText(milestones) {
+    return milestones.map(m => {
+      let line = `${m.id}. ${m.description}`;
+      if (m.targetDate) line += ` - Target: ${m.targetDate}`;
+      line += ` - ${m.status}`;
+      if (m.completedDate) line += ` - Completed: ${m.completedDate}`;
+      return line;
+    }).join('\n');
+  }
+  // ── End Milestone Tracker Logic ──
 
   window.wbAppendControl = function (control) {
     const ta = modal.querySelector('#wb-controls');
@@ -1871,6 +2000,10 @@ async function poamWorkbookOpenItemDetails(id) {
       if (assetsEl) {
         updated[window.POAM_WORKBOOK_INTERNAL_FIELDS.assetsImpacted] = assetsEl.value;
       }
+
+      // Persist structured milestones and sync text field
+      updated._milestones = _milestones;
+      updated['Milestone with Completion Dates'] = serializeMilestonesToText(_milestones);
 
       // Validate enums
       const enums = window.POAM_WORKBOOK_ENUMS;

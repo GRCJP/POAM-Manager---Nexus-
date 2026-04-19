@@ -1937,3 +1937,185 @@ async function seedTestEvidence(options = {}) {
 
 // Expose globally
 window.seedTestEvidence = seedTestEvidence;
+
+// ═══════════════════════════════════════════════════════════════
+// SCAN ANALYSIS HISTORY — View Analysis buttons in Scan History
+// ═══════════════════════════════════════════════════════════════
+
+// Local escapeHtml for scan analysis UI (workbook.js loads after data-processing.js)
+function _dpEscapeHtml(str) {
+    return String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+/**
+ * Enhances scan history rows with "View Analysis" buttons
+ * when a matching persisted analysis exists in localStorage.
+ * Called after renderScanHistory completes.
+ */
+function enhanceScanHistoryWithAnalysis() {
+    const historyList = document.getElementById('scan-history-list');
+    if (!historyList) return;
+
+    let analyses;
+    try {
+        analyses = JSON.parse(localStorage.getItem('scanAnalyses') || '[]');
+    } catch (e) {
+        return;
+    }
+    if (!analyses.length) return;
+
+    // For each row in the scan history, add a View Analysis button in the last cell
+    const rows = historyList.querySelectorAll('tr');
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length < 5) return;
+
+        // Extract the scan date from the first cell's subtitle
+        const dateEl = cells[0]?.querySelector('.text-xs.text-slate-500');
+        if (!dateEl) return;
+
+        const lastCell = cells[cells.length - 1];
+        // Don't add twice
+        if (lastCell.querySelector('.wb-view-analysis-btn')) return;
+
+        // Find the closest analysis by timestamp matching the scan date
+        const scanDateText = dateEl.textContent.trim();
+        const matchingAnalysis = findClosestAnalysis(analyses, scanDateText);
+        if (!matchingAnalysis) return;
+
+        const btn = document.createElement('button');
+        btn.className = 'wb-view-analysis-btn text-xs font-bold text-teal-700 hover:text-teal-900 transition-colors flex items-center gap-1 mt-1';
+        btn.innerHTML = '<i class="fas fa-chart-bar"></i> View Analysis';
+        btn.addEventListener('click', () => openScanAnalysisModal(matchingAnalysis));
+        lastCell.appendChild(btn);
+    });
+}
+
+function findClosestAnalysis(analyses, scanDateText) {
+    // Try to parse the scan date text into a timestamp for comparison
+    let scanTime;
+    try {
+        scanTime = new Date(scanDateText).getTime();
+    } catch (e) {
+        return null;
+    }
+    if (isNaN(scanTime)) return null;
+
+    // Find analysis within 5 minutes of scan
+    let best = null;
+    let bestDiff = Infinity;
+    for (const a of analyses) {
+        const aTime = new Date(a.timestamp).getTime();
+        const diff = Math.abs(aTime - scanTime);
+        if (diff < bestDiff && diff < 5 * 60 * 1000) {
+            bestDiff = diff;
+            best = a;
+        }
+    }
+    return best;
+}
+
+function openScanAnalysisModal(analysis) {
+    const existing = document.getElementById('scan-analysis-modal');
+    if (existing) existing.remove();
+
+    const ts = new Date(analysis.timestamp).toLocaleString();
+    const modal = document.createElement('div');
+    modal.id = 'scan-analysis-modal';
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+
+    const partialRows = (analysis.partialRemediationPOAMs || []).map(p =>
+        `<tr><td class="px-3 py-1 text-xs font-mono">${_dpEscapeHtml(String(p.id || ''))}</td><td class="px-3 py-1 text-xs">${_dpEscapeHtml(p.title || '')}</td><td class="px-3 py-1 text-xs text-right">${p.remediationPercent || 0}%</td></tr>`
+    ).join('');
+
+    const riskRows = (analysis.riskChangedPOAMs || []).map(p =>
+        `<tr><td class="px-3 py-1 text-xs font-mono">${_dpEscapeHtml(String(p.id || ''))}</td><td class="px-3 py-1 text-xs">${_dpEscapeHtml(p.title || '')}</td><td class="px-3 py-1 text-xs">${_dpEscapeHtml(p.previousRisk || '')} &rarr; ${_dpEscapeHtml(p.newRisk || '')}</td></tr>`
+    ).join('');
+
+    modal.innerHTML = `
+        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+            <div class="bg-slate-900 text-white px-6 py-3 flex items-center justify-between">
+                <div class="text-sm font-semibold">Scan Analysis — ${_dpEscapeHtml(ts)}</div>
+                <button id="close-scan-analysis" class="text-slate-300 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-4">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="border border-slate-200 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-black text-teal-700">${analysis.newPOAMs || 0}</div>
+                        <div class="text-[10px] font-bold text-slate-500 uppercase">New</div>
+                    </div>
+                    <div class="border border-slate-200 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-black text-slate-700">${analysis.updatedPOAMs || 0}</div>
+                        <div class="text-[10px] font-bold text-slate-500 uppercase">Updated</div>
+                    </div>
+                    <div class="border border-slate-200 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-black text-green-700">${analysis.autoClosedPOAMs || 0}</div>
+                        <div class="text-[10px] font-bold text-slate-500 uppercase">Auto-Closed</div>
+                    </div>
+                    <div class="border border-slate-200 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-black text-amber-700">${analysis.reopenedPOAMs || 0}</div>
+                        <div class="text-[10px] font-bold text-slate-500 uppercase">Reopened</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="border border-slate-200 rounded-lg p-3">
+                        <div class="text-[10px] font-bold text-slate-500 uppercase mb-1">Scanned Assets</div>
+                        <div class="text-lg font-bold text-slate-800">${analysis.scannedAssetCount || 0}</div>
+                    </div>
+                    <div class="border border-slate-200 rounded-lg p-3">
+                        <div class="text-[10px] font-bold text-slate-500 uppercase mb-1">Out-of-Scope Skipped</div>
+                        <div class="text-lg font-bold text-slate-800">${analysis.scopeSkippedPOAMs || 0}</div>
+                    </div>
+                </div>
+
+                ${partialRows ? `
+                <div>
+                    <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Partial Remediation</div>
+                    <table class="w-full text-left border border-slate-200 rounded">
+                        <thead><tr class="bg-slate-50"><th class="px-3 py-1 text-[10px] font-bold text-slate-500 uppercase">ID</th><th class="px-3 py-1 text-[10px] font-bold text-slate-500 uppercase">Title</th><th class="px-3 py-1 text-[10px] font-bold text-slate-500 uppercase text-right">Remediation</th></tr></thead>
+                        <tbody>${partialRows}</tbody>
+                    </table>
+                </div>` : ''}
+
+                ${riskRows ? `
+                <div>
+                    <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Risk Changes</div>
+                    <table class="w-full text-left border border-slate-200 rounded">
+                        <thead><tr class="bg-slate-50"><th class="px-3 py-1 text-[10px] font-bold text-slate-500 uppercase">ID</th><th class="px-3 py-1 text-[10px] font-bold text-slate-500 uppercase">Title</th><th class="px-3 py-1 text-[10px] font-bold text-slate-500 uppercase">Change</th></tr></thead>
+                        <tbody>${riskRows}</tbody>
+                    </table>
+                </div>` : ''}
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    modal.querySelector('#close-scan-analysis')?.addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+}
+
+// Hook into renderScanHistory by observing the scan-history-list for changes
+(function initScanAnalysisEnhancer() {
+    const target = document.getElementById('scan-history-list');
+    if (target) {
+        const observer = new MutationObserver(() => {
+            enhanceScanHistoryWithAnalysis();
+        });
+        observer.observe(target, { childList: true });
+    } else {
+        // If DOM not ready yet, wait
+        document.addEventListener('DOMContentLoaded', () => {
+            const el = document.getElementById('scan-history-list');
+            if (el) {
+                const observer = new MutationObserver(() => {
+                    enhanceScanHistoryWithAnalysis();
+                });
+                observer.observe(el, { childList: true });
+            }
+        });
+    }
+})();
+
+window.enhanceScanHistoryWithAnalysis = enhanceScanHistoryWithAnalysis;
+window.openScanAnalysisModal = openScanAnalysisModal;
