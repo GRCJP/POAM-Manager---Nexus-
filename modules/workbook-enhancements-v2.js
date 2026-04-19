@@ -14,6 +14,20 @@ window.poamWorkbookState.filters = {
   dateRange: 'all'
 };
 
+window.poamWorkbookSyncStatusPills = function(activeBtn) {
+  const pills = document.querySelectorAll('.poam-status-pill');
+  pills.forEach(p => {
+    p.style.border = '1px solid #E2E4E8';
+    p.style.background = '#fff';
+    p.style.color = '#374151';
+  });
+  if (activeBtn) {
+    activeBtn.style.border = '1px solid #CCEEEE';
+    activeBtn.style.background = '#E6F7F7';
+    activeBtn.style.color = '#0D7377';
+  }
+};
+
 window.poamWorkbookApplyFilters = async function() {
   const systemId = window.poamWorkbookState.activeSystemId;
   if (!systemId || window.poamWorkbookState.activeTab !== 'system') return;
@@ -77,16 +91,28 @@ window.poamWorkbookFilterItems = function(items) {
         item['Vulnerability Name'],
         item['Vulnerability Description'],
         item['POC Name'],
-        item['Impacted Security Controls']
+        item['Impacted Security Controls'],
+        item['Identifying Detecting Source'],
+        item['Comments'],
+        item['Mitigations']
       ].join(' ').toLowerCase();
-      
+
       if (!searchableText.includes(searchLower)) return false;
     }
-    
-    // Status filter
+
+    // Control family filter
+    if (filters.controlFamily && filters.controlFamily !== 'all') {
+      const itemControl = String(item['Impacted Security Controls'] || '').trim().toUpperCase();
+      const filterCF = filters.controlFamily.toUpperCase();
+      if (!itemControl.startsWith(filterCF)) return false;
+    }
+
+    // Status filter (case-insensitive, treat Closed=Completed)
     if (filters.status !== 'all') {
-      const itemStatus = String(item['Status'] || '').trim();
-      if (itemStatus !== filters.status) return false;
+      const itemStatus = String(item['Status'] || '').trim().toLowerCase();
+      let filterStatus = filters.status.toLowerCase();
+      if (filterStatus === 'closed') filterStatus = 'completed';
+      if (itemStatus !== filterStatus) return false;
     }
     
     // Severity filter
@@ -111,7 +137,7 @@ window.poamWorkbookFilterItems = function(items) {
       const thirtyDaysOut = new Date(today);
       thirtyDaysOut.setDate(thirtyDaysOut.getDate() + 30);
       
-      const dueStr = String(item['Scheduled Completion Date'] || '').trim();
+      const dueStr = String(item['Updated Scheduled Completion Date'] || item['Scheduled Completion Date'] || '').trim();
       const status = String(item['Status'] || '').trim();
       
       if (dueStr) {
@@ -156,7 +182,7 @@ window.poamWorkbookRenderQuickStatusPanel = function(items) {
   for (const item of items) {
     const status = String(item['Status'] || '').trim() || 'Open';
     
-    if (status === 'Completed' || status === 'Closed') {
+    if (status === 'Completed') {
       completed++;
     } else if (status === 'In Progress') {
       inProgress++;
@@ -167,8 +193,8 @@ window.poamWorkbookRenderQuickStatusPanel = function(items) {
     }
     
     // Check if overdue (counts as delayed)
-    const dueStr = String(item['Scheduled Completion Date'] || '').trim();
-    if (dueStr && status !== 'Completed' && status !== 'Closed') {
+    const dueStr = String(item['Updated Scheduled Completion Date'] || item['Scheduled Completion Date'] || '').trim();
+    if (dueStr && status !== 'Completed') {
       const dueDate = new Date(dueStr);
       if (!isNaN(dueDate.getTime())) {
         dueDate.setHours(0, 0, 0, 0);
@@ -181,21 +207,21 @@ window.poamWorkbookRenderQuickStatusPanel = function(items) {
   
   return `
     <div class="grid grid-cols-4 gap-2 mb-4">
-      <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3 border border-blue-200 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.status='Open'; poamWorkbookApplyFilters()">
-        <div class="text-xs font-semibold text-blue-700 uppercase mb-1">Open</div>
-        <div class="text-2xl font-bold text-blue-900">${open}</div>
+      <div style="background:#E6F7F7;border:1px solid #CCEEEE" class="rounded-lg p-3 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.status='Open'; poamWorkbookApplyFilters()">
+        <div style="color:#0A5E62" class="text-xs font-semibold uppercase mb-1">Open</div>
+        <div style="color:#0D7377" class="text-2xl font-bold">${open}</div>
       </div>
-      <div class="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-3 border border-amber-200 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.status='In Progress'; poamWorkbookApplyFilters()">
-        <div class="text-xs font-semibold text-amber-700 uppercase mb-1">In Progress</div>
-        <div class="text-2xl font-bold text-amber-900">${inProgress}</div>
+      <div style="background:#FFF7ED;border:1px solid #FDE68A" class="rounded-lg p-3 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.status='In Progress'; poamWorkbookApplyFilters()">
+        <div style="color:#92400E" class="text-xs font-semibold uppercase mb-1">In Progress</div>
+        <div style="color:#B45309" class="text-2xl font-bold">${inProgress}</div>
       </div>
-      <div class="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-3 border border-red-200 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.dateRange='overdue'; poamWorkbookApplyFilters()">
-        <div class="text-xs font-semibold text-red-700 uppercase mb-1">Delayed</div>
-        <div class="text-2xl font-bold text-red-900">${delayed}</div>
+      <div style="background:#FFF5F5;border:1px solid #FECACA" class="rounded-lg p-3 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.dateRange='overdue'; poamWorkbookApplyFilters()">
+        <div style="color:#991B1B" class="text-xs font-semibold uppercase mb-1">Delayed</div>
+        <div style="color:#DC2626" class="text-2xl font-bold">${delayed}</div>
       </div>
-      <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-3 border border-green-200 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.status='Completed'; poamWorkbookApplyFilters()">
-        <div class="text-xs font-semibold text-green-700 uppercase mb-1">Completed</div>
-        <div class="text-2xl font-bold text-green-900">${completed}</div>
+      <div style="background:#F3F4F6;border:1px solid #E2E4E8" class="rounded-lg p-3 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.status='Completed'; poamWorkbookApplyFilters()">
+        <div style="color:#374151" class="text-xs font-semibold uppercase mb-1">Completed</div>
+        <div style="color:#111827" class="text-2xl font-bold">${completed}</div>
       </div>
     </div>
   `;
