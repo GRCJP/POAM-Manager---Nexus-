@@ -1109,6 +1109,7 @@ async function renderWorkbookSystemTable(systemId) {
         <td class="px-3 py-2" onclick="event.stopPropagation()">
           ${renderInlineSelect(id, 'POC Name', item['POC Name'], pocs)}
         </td>
+        <td class="text-center py-2 text-xs ${(item._extensionCount || 0) > 0 ? 'text-red-700 font-bold' : 'text-slate-400'}" title="${(item._extensionHistory || []).map(h => h.from + ' → ' + h.to).join('\n') || 'No extensions'}">${item._extensionCount || 0}</td>
         <td class="px-3 py-2" onclick="event.stopPropagation()">
           ${renderInlineSelect(id, 'Severity Value', item['Severity Value'], severities)}
         </td>
@@ -1121,7 +1122,7 @@ async function renderWorkbookSystemTable(systemId) {
     .join('');
 
   if (displayItems.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="9" class="px-4 py-8 text-center text-slate-500 text-sm">
+    tableBody.innerHTML = `<tr><td colspan="10" class="px-4 py-8 text-center text-slate-500 text-sm">
       ${items.length > 0 ? 'All items are completed or closed. Use the status filter to view them.' : 'No POAMs in this system yet.'}
     </td></tr>`;
   }
@@ -1230,12 +1231,13 @@ function poamWorkbookBulkUpdateStatus() {
   poamWorkbookOpenBulkEditModal({ mode: 'status' });
 }
 
-function poamWorkbookOpenBulkEditModal({ mode } = {}) {
+async function poamWorkbookOpenBulkEditModal({ mode } = {}) {
   const ids = Array.from(window.poamWorkbookState.selectedItemIds);
   if (ids.length === 0) return;
 
   const statuses = window.POAM_WORKBOOK_ENUMS?.statusValues || [];
   const severities = window.POAM_WORKBOOK_ENUMS?.severityValues || [];
+  const pocs = (await window.poamWorkbookDB.getLookup('pocs')) || [];
 
   const modal = document.createElement('div');
   modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
@@ -1265,7 +1267,10 @@ function poamWorkbookOpenBulkEditModal({ mode } = {}) {
         </div>
         <div>
           <label class="block text-sm font-semibold text-slate-700 mb-2">POC Name</label>
-          <input id="wb-bulk-poc" type="text" class="w-full px-3 py-2 border border-slate-200 rounded-lg" placeholder="(no change)">
+          <select id="wb-bulk-poc" class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white">
+            <option value="">(no change)</option>
+            ${pocs.map(p => `<option value="${escapeAttr(p)}">${escapeHtml(p)}</option>`).join('')}
+          </select>
         </div>
         <div>
           <label class="block text-sm font-semibold text-slate-700 mb-2">Scheduled Completion Date</label>
@@ -1301,7 +1306,15 @@ function poamWorkbookOpenBulkEditModal({ mode } = {}) {
         if (status) item['Status'] = status;
         if (severity) item['Severity Value'] = severity;
         if (poc) item['POC Name'] = poc;
-        if (due) item['Scheduled Completion Date'] = due;
+        if (due) {
+          const oldDue = item['Scheduled Completion Date'] || item['Updated Scheduled Completion Date'] || '';
+          if (oldDue && oldDue !== due) {
+            item._extensionCount = (item._extensionCount || 0) + 1;
+            item._extensionHistory = item._extensionHistory || [];
+            item._extensionHistory.push({ from: oldDue, to: due, date: new Date().toISOString() });
+          }
+          item['Updated Scheduled Completion Date'] = due;
+        }
         item.updatedAt = new Date().toISOString();
         await window.poamWorkbookDB.saveItem(item);
       }
@@ -1346,6 +1359,16 @@ async function poamWorkbookInlineUpdate(id, field, value) {
   if (field === 'Severity Value' && value && !enums.severityValues.includes(value)) return;
   if (field === 'Status' && value && !enums.statusValues.includes(value)) return;
   if (field === 'Identifying Detecting Source' && value && !enums.detectingSources.includes(value)) return;
+
+  // Track extensions when due date changes
+  if ((field === 'Scheduled Completion Date' || field === 'Updated Scheduled Completion Date') && value) {
+    const oldDue = item['Updated Scheduled Completion Date'] || item['Scheduled Completion Date'] || '';
+    if (oldDue && oldDue !== value) {
+      item._extensionCount = (item._extensionCount || 0) + 1;
+      item._extensionHistory = item._extensionHistory || [];
+      item._extensionHistory.push({ from: oldDue, to: value, date: new Date().toISOString() });
+    }
+  }
 
   item[field] = value;
   item.updatedAt = new Date().toISOString();
@@ -1832,7 +1855,7 @@ function computeWorkbookAnalytics(items, scopeKey) {
     const poc = String(item['POC Name'] || '').trim();
     if (!poc || poc === 'Unassigned') missingPoc++;
 
-    const due = String(item['Scheduled Completion Date'] || '').trim();
+    const due = String(item['Updated Scheduled Completion Date'] || item['Scheduled Completion Date'] || '').trim();
     if (due) {
       const d = new Date(due);
       if (!isNaN(d.getTime())) {
@@ -1860,12 +1883,22 @@ function computeWorkbookAnalytics(items, scopeKey) {
 
   const toTop = (m) => Array.from(m.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
 
+  // Extension stats
+  let totalExtensions = 0;
+  let itemsExtended = 0;
+  for (const item of items) {
+    const ext = item._extensionCount || 0;
+    if (ext > 0) { totalExtensions += ext; itemsExtended++; }
+  }
+
   const result = {
     total: items.length,
     overdue,
     comingDue,
     completed,
     missingPoc,
+    totalExtensions,
+    itemsExtended,
     byStatus,
     bySeverity,
     topVulns: toTop(topVulnMap),
