@@ -101,7 +101,7 @@ function showImportValidationModal(validationResults, onProceed, onCancel) {
                     <h2 class="text-xl font-bold text-slate-900">Import Validation Results</h2>
                     <p class="text-sm text-slate-500 mt-1">Review validation issues before importing</p>
                 </div>
-                <button onclick="this.closest('.modal').remove()" class="text-slate-400 hover:text-slate-600">
+                <button onclick="this.closest('.fixed').remove()" class="text-slate-400 hover:text-slate-600">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -183,7 +183,7 @@ function showImportValidationModal(validationResults, onProceed, onCancel) {
                     ${hasErrors ? '<span class="text-red-600 font-semibold">⚠️ Errors must be fixed before importing</span>' : ''}
                 </div>
                 <div class="flex gap-3">
-                    <button onclick="this.closest('.modal').remove()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">
+                    <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">
                         Cancel
                     </button>
                     ${!hasErrors ? `
@@ -228,7 +228,7 @@ function showQuickEditPOAMModal(poamId, systemId) {
         return;
     }
 
-    window.poamWorkbookDB.getItemById(poamId).then(poam => {
+    window.poamWorkbookDB.getItem(poamId).then(poam => {
         if (!poam) {
             showUpdateFeedback('POAM not found', 'error');
             return;
@@ -243,7 +243,7 @@ function showQuickEditPOAMModal(poamId, systemId) {
                         <h2 class="text-xl font-bold text-slate-900">Quick Edit POAM</h2>
                         <p class="text-sm text-slate-500 mt-1">ID: ${escapeHtml(poam['Item number'] || poamId)}</p>
                     </div>
-                    <button onclick="this.closest('.modal').remove()" class="text-slate-400 hover:text-slate-600">
+                    <button onclick="this.closest('.fixed').remove()" class="text-slate-400 hover:text-slate-600">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -315,7 +315,7 @@ function showQuickEditPOAMModal(poamId, systemId) {
                     </div>
 
                     <div class="flex justify-end gap-3 pt-4 border-t">
-                        <button type="button" onclick="this.closest('.modal').remove()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">
+                        <button type="button" onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">
                             Cancel
                         </button>
                         <button type="submit" class="px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800">

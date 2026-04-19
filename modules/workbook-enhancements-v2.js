@@ -44,9 +44,11 @@ window.poamWorkbookFilterByMetric = function(metric) {
     status: 'all',
     severity: 'all',
     poc: 'all',
-    dateRange: 'all'
+    dateRange: 'all',
+    closedWithinDays: 0,
+    controlFamily: 'all'
   };
-  
+
   // Apply metric-specific filter
   switch(metric) {
     case 'overdue':
@@ -71,7 +73,7 @@ window.poamWorkbookFilterByMetric = function(metric) {
   if (window.poamWorkbookState.activeTab === 'overview') {
     const systems = window.poamWorkbookState.systems || [];
     if (systems.length > 0) {
-      poamWorkbookShowSystem(systems[0].id);
+      poamWorkbookNavigateToSystem(systems[0].id);
     }
   } else {
     poamWorkbookApplyFilters();
@@ -250,19 +252,19 @@ window.poamWorkbookRenderQuickStatusPanel = function(items) {
 
   return `
     <div class="grid grid-cols-5 gap-2 mb-4">
-      <div style="background:#E6F7F7;border:1px solid #CCEEEE" class="rounded-lg p-3 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.status='Open'; window.poamWorkbookState.filters.dateRange='all'; poamWorkbookApplyFilters()">
+      <div style="background:#E6F7F7;border:1px solid #CCEEEE" class="rounded-lg p-3 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.status='Open'; window.poamWorkbookState.filters.dateRange='all'; window.poamWorkbookState.filters.closedWithinDays=0; poamWorkbookApplyFilters()">
         <div style="color:#0A5E62" class="text-xs font-semibold uppercase mb-1">Open</div>
         <div style="color:#0D7377" class="text-2xl font-bold">${open}</div>
       </div>
-      <div style="background:#FFF7ED;border:1px solid #FDE68A" class="rounded-lg p-3 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.status='In Progress'; window.poamWorkbookState.filters.dateRange='all'; poamWorkbookApplyFilters()">
+      <div style="background:#FFF7ED;border:1px solid #FDE68A" class="rounded-lg p-3 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.status='In Progress'; window.poamWorkbookState.filters.dateRange='all'; window.poamWorkbookState.filters.closedWithinDays=0; poamWorkbookApplyFilters()">
         <div style="color:#92400E" class="text-xs font-semibold uppercase mb-1">In Progress</div>
         <div style="color:#B45309" class="text-2xl font-bold">${inProgress}</div>
       </div>
-      <div style="background:#FFF5F5;border:1px solid #FECACA" class="rounded-lg p-3 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.status='all'; window.poamWorkbookState.filters.dateRange='overdue'; poamWorkbookApplyFilters()">
+      <div style="background:#FFF5F5;border:1px solid #FECACA" class="rounded-lg p-3 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.status='all'; window.poamWorkbookState.filters.dateRange='overdue'; window.poamWorkbookState.filters.closedWithinDays=0; poamWorkbookApplyFilters()">
         <div style="color:#991B1B" class="text-xs font-semibold uppercase mb-1">Overdue</div>
         <div style="color:#DC2626" class="text-2xl font-bold">${overdue}</div>
       </div>
-      <div style="background:#F3F4F6;border:1px solid #E2E4E8" class="rounded-lg p-3 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.status='Completed'; window.poamWorkbookState.filters.dateRange='all'; poamWorkbookApplyFilters()">
+      <div style="background:#F3F4F6;border:1px solid #E2E4E8" class="rounded-lg p-3 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.status='Completed'; window.poamWorkbookState.filters.dateRange='all'; window.poamWorkbookState.filters.closedWithinDays=0; poamWorkbookApplyFilters()">
         <div style="color:#374151" class="text-xs font-semibold uppercase mb-1">All Completed</div>
         <div style="color:#111827" class="text-2xl font-bold">${totalCompleted}</div>
       </div>
@@ -329,7 +331,7 @@ window.poamWorkbookRenderAllSystemsView = async function() {
               <span class="text-sm text-slate-600">${sys.items.length} POAMs</span>
             </div>
             <div class="flex gap-2">
-              <button onclick="poamWorkbookShowSystem('${escapeAttr(sys.id)}')" class="px-3 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 text-sm font-medium">
+              <button onclick="poamWorkbookNavigateToSystem('${escapeAttr(sys.id)}')" class="px-3 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 text-sm font-medium">
                 <i class="fas fa-eye mr-1"></i>View
               </button>
               <button onclick="poamWorkbookExportSystem('${escapeAttr(sys.id)}')" class="px-3 py-1 bg-teal-50 text-teal-800 rounded hover:bg-teal-100 text-sm font-medium">
@@ -379,6 +381,7 @@ window.poamWorkbookExportAllSystems = async function() {
 
 // Export specific system
 window.poamWorkbookExportSystem = async function(systemId) {
+  systemId = systemId || window.poamWorkbookState.activeSystemId;
   try {
     await poamWorkbookExportXlsx({ systemId });
     showUpdateFeedback(`Exported system ${systemId} successfully`, 'success');
