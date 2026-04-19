@@ -187,10 +187,9 @@ class POAMDatabase {
             console.log(`📦 STORAGE: Used ${usedMB}MB / ${quotaMB}MB (${availMB}MB available)`);
         }
 
-        // Clear data stores before import (full replace strategy)
-        // Keep scanRuns for scan history — only clear POAMs and temp artifacts
-        console.log('📦 addPOAMsBatch: Clearing POAM stores...');
-        const storesToClear = ['poams', 'poamScanSummaries', 'phaseArtifacts'];
+        // Clear ALL data stores before import to free maximum space
+        console.log('📦 addPOAMsBatch: Clearing stores to free space...');
+        const storesToClear = ['poams', 'poamScanSummaries', 'phaseArtifacts', 'scans'];
         for (const storeName of storesToClear) {
             if (this.db.objectStoreNames.contains(storeName)) {
                 try {
@@ -234,20 +233,41 @@ class POAMDatabase {
         }
         console.log(`📦 STORAGE: Total POAM data: ${(totalBytes/1024/1024).toFixed(2)}MB, avg ${(totalBytes/formalPOAMs.length/1024).toFixed(1)}KB/poam, largest: ${(maxSize/1024).toFixed(1)}KB (${maxId})`);
 
-        // If total exceeds 20MB, aggressively trim assets to fit
-        if (totalBytes > 20 * 1024 * 1024) {
-            console.warn('📦 STORAGE WARNING: Data exceeds 20MB, trimming assets to 20 per POAM');
+        // Aggressively trim if data is large
+        if (totalBytes > 5 * 1024 * 1024) {
+            console.warn(`📦 STORAGE WARNING: Data is ${(totalBytes/1024/1024).toFixed(1)}MB, trimming to fit`);
             for (const p of formalPOAMs) {
-                if (Array.isArray(p.affectedAssets) && p.affectedAssets.length > 20) {
-                    p.affectedAssets = p.affectedAssets.slice(0, 20);
+                // Keep only 10 sample assets, preserve the count
+                if (Array.isArray(p.affectedAssets) && p.affectedAssets.length > 10) {
+                    p.affectedAssets = p.affectedAssets.slice(0, 10);
                 }
+                // Truncate text fields
                 if (p.findingDescription && p.findingDescription.length > 500) {
                     p.findingDescription = p.findingDescription.substring(0, 500) + '...';
                     p.description = p.findingDescription;
                 }
+                if (p.mitigation && p.mitigation.length > 500) {
+                    p.mitigation = p.mitigation.substring(0, 500) + '...';
+                }
+                // Cap history
+                if (Array.isArray(p.statusHistory) && p.statusHistory.length > 20) {
+                    p.statusHistory = p.statusHistory.slice(-20);
+                }
             }
             totalBytes = formalPOAMs.reduce((sum, p) => sum + JSON.stringify(p).length, 0);
             console.log(`📦 STORAGE: After trim: ${(totalBytes/1024/1024).toFixed(2)}MB`);
+        }
+
+        // If STILL too large, drop all assets and non-essential fields
+        if (totalBytes > 10 * 1024 * 1024) {
+            console.warn('📦 STORAGE CRITICAL: Still too large, dropping asset details');
+            for (const p of formalPOAMs) {
+                p.affectedAssets = [];
+                p.milestones = [];
+                p.statusHistory = p.statusHistory ? p.statusHistory.slice(-5) : [];
+            }
+            totalBytes = formalPOAMs.reduce((sum, p) => sum + JSON.stringify(p).length, 0);
+            console.log(`📦 STORAGE: After aggressive trim: ${(totalBytes/1024/1024).toFixed(2)}MB`);
         }
 
         // Request persistent storage to avoid browser eviction
@@ -407,8 +427,8 @@ class POAMDatabase {
 
     transformAssetsWithMetadata(assets) {
         // Store only essential asset identification — drop verbose results/evidence to save space
-        // Cap at 100 assets per POAM to prevent IndexedDB quota issues on large scans
-        const capped = assets.length > 100 ? assets.slice(0, 100) : assets;
+        // Cap at 25 sample assets per POAM — totalAffectedAssets preserves the real count
+        const capped = assets.length > 25 ? assets.slice(0, 25) : assets;
         return capped.map(asset => ({
             id: asset.id || asset.assetId || asset.asset_id || asset.name || 'Unknown',
             name: asset.name || asset.assetName || asset.asset_name || asset.assetId || 'Unknown Asset',
