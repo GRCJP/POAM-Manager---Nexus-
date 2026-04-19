@@ -1070,15 +1070,34 @@ async function renderWorkbookSystemTable(systemId) {
       const dueDate = item['Updated Scheduled Completion Date'] || item['Scheduled Completion Date'] || '';
       // Check if overdue
       const dueDateObj = dueDate ? new Date(dueDate) : null;
+      const statusLower = (item['Status'] || '').toLowerCase();
       const isOverdue = dueDateObj && !isNaN(dueDateObj.getTime()) && dueDateObj < new Date() &&
-        !['completed','closed'].includes((item['Status'] || '').toLowerCase());
-      const rowClass = isOverdue ? 'border-l-4 border-l-red-400 bg-red-50/30' : '';
+        !['completed','closed'].includes(statusLower);
+
+      // Compute live warnings (persisted + runtime checks)
+      const warnings = [];
+      if (Array.isArray(item._importWarnings)) warnings.push(...item._importWarnings);
+      if (statusLower === 'completed' && !item['Actual Completion Date']) warnings.push('Completed but no actual completion date');
+      if (statusLower !== 'completed' && statusLower !== 'closed' && item['Actual Completion Date']) warnings.push('Actual completion date set but status is not Completed');
+      if (!item['Vulnerability Name']) warnings.push('Missing vulnerability name');
+      if (!item['Severity Value']) warnings.push('Missing severity');
+      if (!item['Status']) warnings.push('Missing status');
+      const hasWarnings = warnings.length > 0;
+
+      let rowClass = '';
+      if (isOverdue) rowClass = 'border-l-4 border-l-red-400 bg-red-50/30';
+      else if (hasWarnings) rowClass = 'border-l-4 border-l-amber-400 bg-amber-50/30';
+
+      const warningIcon = hasWarnings
+        ? `<span class="inline-flex items-center ml-1 text-amber-600 cursor-help" title="${escapeAttr(warnings.join('\n'))}"><i class="fas fa-exclamation-triangle text-[10px]"></i></span>`
+        : '';
+
       return `
       <tr class="border-b border-slate-100 hover:bg-teal-50 transition-colors group ${rowClass}">
         <td class="px-3 py-2" onclick="event.stopPropagation()">
           <input type="checkbox" ${checked ? 'checked' : ''} onchange="poamWorkbookToggleRowSelection('${id}', this.checked)" />
         </td>
-        <td class="px-3 py-2 text-xs text-slate-700 font-mono">${escapeHtml(item['Item number'] || '')}</td>
+        <td class="px-3 py-2 text-xs text-slate-700 font-mono">${escapeHtml(item['Item number'] || '')}${warningIcon}</td>
         <td class="px-3 py-2 text-xs text-slate-600 font-mono">${escapeHtml(item['Weakness Source Identifier'] || '—')}</td>
         <td class="px-3 py-2 text-sm text-slate-900 cursor-pointer" onclick="poamWorkbookOpenItemDetails('${id}')">${escapeHtml(item['Vulnerability Name'] || '')}</td>
         <td class="px-3 py-2 text-xs text-slate-700">${escapeHtml(item['Impacted Security Controls'] || '')}</td>

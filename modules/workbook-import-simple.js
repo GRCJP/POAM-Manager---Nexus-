@@ -367,6 +367,7 @@ async function poamWorkbookImportXlsxSimple(file, systemId) {
 
     if (issues.length > 0) {
       rowWarnings.push({ row: rowNum, id, issues });
+      obj._importWarnings = issues;
     }
 
     parsedRows.push(obj);
@@ -396,6 +397,7 @@ async function poamWorkbookImportXlsxSimple(file, systemId) {
       createdAt: existing ? existing.createdAt : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       'Item number': itemNumber,
+      'Weakness Source Identifier': row['Weakness Source Identifier'] || '',
       'Vulnerability Name': row['Vulnerability Name'] || '',
       'Vulnerability Description': row['Vulnerability Description'] || '',
       'Detection Date': row['Detection Date'] || '',
@@ -413,7 +415,8 @@ async function poamWorkbookImportXlsxSimple(file, systemId) {
       'Actual Completion Date': row['Actual Completion Date'] || '',
       'Affected Components/URLs': row['Affected Components/URLs'] || '',
       'Status': row['Status'] || '',
-      'Comments': row['Comments'] || ''
+      'Comments': row['Comments'] || '',
+      _importWarnings: row._importWarnings || null
     };
 
     await window.poamWorkbookDB.saveItem(item);
