@@ -2868,21 +2868,21 @@ function toExcelDate(v) {
 
 window.POAM_WORKBOOK_COLUMNS = [
   'Item number',
+  'Impacted Security Controls',
   'Vulnerability Name',
   'Vulnerability Description',
-  'Detection Date',
-  'Impacted Security Controls',
-  'Office/Org',
-  'POC Name',
+  'Affected Components/URLs',
   'Identifying Detecting Source',
-  'Mitigations',
-  'Severity Value',
+  'POC Name',
   'Resources Required',
   'Scheduled Completion Date',
   'Milestone with Completion Dates',
   'Milestone Changes',
-  'Affected Components/URLs',
+  'Updated Scheduled Completion Date',
+  'Actual Completion Date',
   'Status',
+  'Severity Value',
+  'Mitigations',
   'Comments'
 ];
 

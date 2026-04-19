@@ -128,13 +128,76 @@ async function showWorkbookImportPreview(file, systemId) {
 
         // Handle proceed button
         modal.querySelector('#proceed-import-btn').onclick = async () => {
-            modal.remove();
-            
-            // Now do the actual import using the simple direct importer
+            const btn = modal.querySelector('#proceed-import-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Importing...';
+
             try {
                 const result = await window.poamWorkbookImportXlsxSimple(file, systemId);
-                const msg = `Imported ${result.saved} workbook POAMs`;
-                showUpdateFeedback(msg, 'success');
+
+                // Show results in the modal instead of closing
+                const content = modal.querySelector('.bg-white');
+                let resultHtml = `
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900">Import Complete</h2>
+                            <p class="text-sm text-slate-500 mt-1">${escapeHtml(file.name)}</p>
+                        </div>
+                        <button onclick="this.closest('.fixed').remove()" class="text-slate-400 hover:text-slate-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                        <div class="flex items-center gap-3 text-green-800">
+                            <i class="fas fa-check-circle text-xl"></i>
+                            <div>
+                                <div class="font-semibold">${result.saved} new POAMs imported${result.updated > 0 ? `, ${result.updated} updated` : ''}</div>
+                                <div class="text-sm text-green-700">${result.total} total rows processed</div>
+                            </div>
+                        </div>
+                    </div>`;
+
+                // Show errors
+                if (result.errors && result.errors.length > 0) {
+                    resultHtml += `
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                        <div class="font-semibold text-red-800 mb-2"><i class="fas fa-exclamation-circle mr-1"></i>${result.errors.length} row(s) skipped</div>
+                        <div class="max-h-32 overflow-y-auto text-xs text-red-700 space-y-1">
+                            ${result.errors.map(e => `<div>Row ${e.row}: ${escapeHtml(e.message)}</div>`).join('')}
+                        </div>
+                    </div>`;
+                }
+
+                // Show warnings
+                if (result.warnings && result.warnings.length > 0) {
+                    resultHtml += `
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+                        <div class="font-semibold text-amber-800 mb-2"><i class="fas fa-exclamation-triangle mr-1"></i>${result.warnings.length} row(s) with warnings</div>
+                        <div class="max-h-40 overflow-y-auto text-xs text-amber-700 space-y-2">
+                            ${result.warnings.map(w => `<div><strong>${escapeHtml(w.id)}</strong> (row ${w.row}): ${w.issues.map(i => escapeHtml(i)).join('; ')}</div>`).join('')}
+                        </div>
+                    </div>`;
+                }
+
+                // Show header warnings
+                if (result.headerWarnings && result.headerWarnings.length > 0) {
+                    resultHtml += `
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-4 text-xs text-slate-600">
+                        ${result.headerWarnings.map(w => `<div><i class="fas fa-info-circle mr-1"></i>${escapeHtml(w)}</div>`).join('')}
+                    </div>`;
+                }
+
+                resultHtml += `
+                    <div class="flex justify-end pt-4 border-t">
+                        <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800">
+                            Done
+                        </button>
+                    </div>`;
+
+                content.innerHTML = resultHtml;
+
+                // Refresh workbook views
                 await renderWorkbookSidebarSystems();
                 await renderWorkbookOverview();
                 if (window.poamWorkbookState.activeTab === 'system') {
@@ -142,6 +205,8 @@ async function showWorkbookImportPreview(file, systemId) {
                 }
             } catch (e) {
                 console.error('Import failed:', e);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-upload mr-2"></i>Proceed with Import';
                 showUpdateFeedback(`Import failed: ${e.message}`, 'error');
             }
         };
