@@ -998,7 +998,60 @@ async function renderWorkbookSystemTable(systemId) {
   const severities = (await window.poamWorkbookDB.getLookup('severityValues')) || window.POAM_WORKBOOK_ENUMS.severityValues;
   const sources = (await window.poamWorkbookDB.getLookup('detectingSources')) || window.POAM_WORKBOOK_ENUMS.detectingSources;
 
-  tableBody.innerHTML = items
+  // Default: hide completed/closed/risk-accepted unless a status filter is active
+  const statusFilter = window.poamWorkbookState?.filters?.status || '';
+  const showAll = statusFilter && statusFilter !== 'all';
+  const displayItems = showAll ? items : items.filter(item => {
+    const s = (item['Status'] || 'Open').toLowerCase();
+    return s !== 'completed' && s !== 'closed';
+  });
+
+  const sevBadge = (sev) => {
+    const s = (sev || '').toLowerCase();
+    const colors = {
+      critical: 'bg-red-100 text-red-800',
+      high: 'bg-amber-50 text-amber-800',
+      moderate: 'bg-teal-50 text-teal-800',
+      medium: 'bg-teal-50 text-teal-800',
+      low: 'bg-slate-100 text-slate-700'
+    };
+    return `<span class="px-2 py-0.5 rounded text-xs font-semibold ${colors[s] || 'bg-slate-100 text-slate-700'}">${escapeHtml(sev || 'N/A')}</span>`;
+  };
+
+  const statusBadge = (status) => {
+    const s = (status || 'Open').toLowerCase();
+    const colors = {
+      open: 'bg-blue-100 text-blue-800',
+      ongoing: 'bg-blue-100 text-blue-800',
+      'in progress': 'bg-teal-50 text-teal-800',
+      completed: 'bg-green-100 text-green-800',
+      closed: 'bg-slate-100 text-slate-600',
+      'risk accepted': 'bg-slate-100 text-slate-700',
+      delayed: 'bg-red-100 text-red-800',
+      extended: 'bg-amber-50 text-amber-800'
+    };
+    return `<span class="px-2 py-0.5 rounded text-xs font-semibold ${colors[s] || 'bg-slate-100 text-slate-700'}">${escapeHtml(status || 'Open')}</span>`;
+  };
+
+  // Show count info
+  const hiddenCount = items.length - displayItems.length;
+  if (hiddenCount > 0 && !showAll) {
+    const infoRow = document.getElementById('wb-hidden-count-info');
+    if (!infoRow) {
+      const info = document.createElement('div');
+      info.id = 'wb-hidden-count-info';
+      info.className = 'px-4 py-2 bg-slate-50 border-b border-slate-200 text-xs text-slate-500 flex items-center justify-between';
+      info.innerHTML = `<span>${hiddenCount} completed/closed item${hiddenCount !== 1 ? 's' : ''} hidden</span>
+        <button onclick="document.getElementById('poam-workbook-filter-status').value='all'; poamWorkbookApplyFilters()" class="text-teal-700 hover:text-teal-900 font-medium">Show all</button>`;
+      tableBody.closest('table')?.parentElement?.insertBefore(info, tableBody.closest('table'));
+    } else {
+      infoRow.querySelector('span').textContent = `${hiddenCount} completed/closed item${hiddenCount !== 1 ? 's' : ''} hidden`;
+    }
+  } else {
+    document.getElementById('wb-hidden-count-info')?.remove();
+  }
+
+  tableBody.innerHTML = displayItems
     .sort((a, b) => {
       const an = parseInt(String(a['Item number'] || 0), 10) || 0;
       const bn = parseInt(String(b['Item number'] || 0), 10) || 0;
@@ -1008,8 +1061,13 @@ async function renderWorkbookSystemTable(systemId) {
       const id = item.id;
       const checked = window.poamWorkbookState.selectedItemIds.has(id);
       const dueDate = item['Updated Scheduled Completion Date'] || item['Scheduled Completion Date'] || '';
+      // Check if overdue
+      const dueDateObj = dueDate ? new Date(dueDate) : null;
+      const isOverdue = dueDateObj && !isNaN(dueDateObj.getTime()) && dueDateObj < new Date() &&
+        !['completed','closed'].includes((item['Status'] || '').toLowerCase());
+      const rowClass = isOverdue ? 'border-l-4 border-l-red-400 bg-red-50/30' : '';
       return `
-      <tr class="border-b border-slate-100 hover:bg-teal-50 transition-colors group">
+      <tr class="border-b border-slate-100 hover:bg-teal-50 transition-colors group ${rowClass}">
         <td class="px-3 py-2" onclick="event.stopPropagation()">
           <input type="checkbox" ${checked ? 'checked' : ''} onchange="poamWorkbookToggleRowSelection('${id}', this.checked)" />
         </td>
@@ -1025,22 +1083,24 @@ async function renderWorkbookSystemTable(systemId) {
         </td>
         <td class="px-3 py-2 text-sm text-slate-900 cursor-pointer" onclick="poamWorkbookOpenItemDetails('${id}')">${escapeHtml(item['Vulnerability Name'] || '')}</td>
         <td class="px-3 py-2 text-xs text-slate-700">${escapeHtml(item['Impacted Security Controls'] || '')}</td>
-        <td class="px-3 py-2" onclick="event.stopPropagation()">
-          ${renderInlineSelect(id, 'Severity Value', item['Severity Value'], severities)}
-        </td>
-        <td class="px-3 py-2" onclick="event.stopPropagation()">
-          ${renderInlineSelect(id, 'Status', item['Status'], statuses)}
-        </td>
+        <td class="px-3 py-2">${sevBadge(item['Severity Value'])}</td>
+        <td class="px-3 py-2">${statusBadge(item['Status'])}</td>
         <td class="px-3 py-2" onclick="event.stopPropagation()">
           ${renderInlineSelect(id, 'POC Name', item['POC Name'], pocs)}
         </td>
-        <td class="px-3 py-2" onclick="event.stopPropagation()">
-          ${renderInlineDate(id, 'Scheduled Completion Date', dueDate)}
+        <td class="px-3 py-2 text-xs ${isOverdue ? 'text-red-700 font-semibold' : 'text-slate-700'}">
+          ${dueDate || '<span class="text-slate-400">—</span>'}
         </td>
       </tr>
       `;
     })
     .join('');
+
+  if (displayItems.length === 0) {
+    tableBody.innerHTML = `<tr><td colspan="8" class="px-4 py-8 text-center text-slate-500 text-sm">
+      ${items.length > 0 ? 'All items are completed or closed. Use the status filter to view them.' : 'No POAMs in this system yet.'}
+    </td></tr>`;
+  }
 
   poamWorkbookUpdateBulkActionBar();
 }
@@ -2833,20 +2893,57 @@ async function poamWorkbookExportXlsx({ systemId = null } = {}) {
     }
 
     // Normalize date columns to JS Date so XLSX writes real Excel dates
-    row['Detection Date'] = toExcelDate(row['Detection Date']);
     row['Scheduled Completion Date'] = toExcelDate(row['Scheduled Completion Date']);
+    row['Updated Scheduled Completion Date'] = toExcelDate(row['Updated Scheduled Completion Date']);
+    row['Actual Completion Date'] = toExcelDate(row['Actual Completion Date']);
 
     return row;
   });
 
-  // Build worksheet with explicit header order
-  const ws = XLSX.utils.json_to_sheet(rows, { header: cols, skipHeader: false });
-
-  // Ensure header row is exactly our titles
-  XLSX.utils.sheet_add_aoa(ws, [cols], { origin: 'A1' });
-
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, systemId ? `System_${systemId}` : 'All_Systems');
+
+  if (systemId) {
+    // Single system export — one sheet
+    const ws = XLSX.utils.json_to_sheet(rows, { header: cols, skipHeader: false });
+    XLSX.utils.sheet_add_aoa(ws, [cols], { origin: 'A1' });
+    const sheetName = String(systemId).substring(0, 31); // Excel max tab name length
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  } else {
+    // All systems export — each system gets its own tab
+    const systemsMap = new Map();
+    for (const item of items) {
+      const sysId = item.systemId || 'default';
+      if (!systemsMap.has(sysId)) systemsMap.set(sysId, []);
+      systemsMap.get(sysId).push(item);
+    }
+
+    for (const [sysId, sysItems] of systemsMap) {
+      const sysRows = sysItems.map(item => {
+        const row = {};
+        for (const c of cols) row[c] = item[c] ?? '';
+        const assetsImpacted = String(item[window.POAM_WORKBOOK_INTERNAL_FIELDS?.assetsImpacted] || '').trim();
+        if (assetsImpacted) {
+          const marker = 'Assets Impacted:';
+          const current = String(row['Affected Components/URLs'] || '');
+          if (!current.includes(marker)) {
+            row['Affected Components/URLs'] = (current ? current.trim() + '\n\n' : '') + `${marker}\n${assetsImpacted}`;
+          }
+        }
+        row['Scheduled Completion Date'] = toExcelDate(row['Scheduled Completion Date']);
+        row['Updated Scheduled Completion Date'] = toExcelDate(row['Updated Scheduled Completion Date']);
+        row['Actual Completion Date'] = toExcelDate(row['Actual Completion Date']);
+        return row;
+      });
+      const ws = XLSX.utils.json_to_sheet(sysRows, { header: cols, skipHeader: false });
+      XLSX.utils.sheet_add_aoa(ws, [cols], { origin: 'A1' });
+      const sheetName = String(sysId).substring(0, 31);
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    }
+
+    if (wb.SheetNames.length === 0) {
+      throw new Error('No data to export');
+    }
+  }
 
   const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   const filename = systemId ? `POAM_Workbook_${systemId}_${ts}.xlsx` : `POAM_Workbook_All_${ts}.xlsx`;
