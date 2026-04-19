@@ -386,7 +386,7 @@
         }
         const now = new Date();
         const dotFor = action => {
-            if (action === 'created') return '#3B82F6';
+            if (action === 'created') return '#0D7377';
             if (action === 'auto_resolved' || action === 'resolved' || action === 'closed') return '#10B981';
             if (action === 'risk_change') return '#F59E0B';
             if (action === 'risk_accepted') return '#6B7280';

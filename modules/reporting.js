@@ -265,8 +265,8 @@ function renderTrendChart(poams, scanRuns) {
                 {
                     label: 'Total Open',
                     data: openData,
-                    borderColor: '#6366f1',
-                    backgroundColor: 'rgba(99,102,241,0.1)',
+                    borderColor: '#0D7377',
+                    backgroundColor: 'rgba(13,115,119,0.1)',
                     fill: true,
                     tension: 0.3,
                     pointRadius: 2
@@ -409,7 +409,7 @@ function renderStatusDonut(poams) {
             labels: ['Open', 'In Progress', 'Completed', 'Overdue', 'Risk Accepted'],
             datasets: [{
                 data: [statusCounts.open, statusCounts['in-progress'], statusCounts.completed, statusCounts.overdue, statusCounts['risk-accepted']],
-                backgroundColor: ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#94a3b8'],
+                backgroundColor: ['#0D7377', '#f59e0b', '#6B7280', '#ef4444', '#94a3b8'],
                 borderWidth: 2,
                 borderColor: '#fff'
             }]

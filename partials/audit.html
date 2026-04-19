@@ -1,35 +1,93 @@
         <div id="audit-module" class="module hidden">
-            <div class="ph">
+            <!-- Page Header -->
+            <div class="ph mb-6">
                 <div>
-                    <div class="ph-title">Audit Logs</div>
-                    <div class="ph-meta">System activity and change history</div>
+                    <button onclick="showModule('dashboard')" class="text-sm text-teal-700 hover:text-teal-800 mb-3 inline-flex items-center gap-1">
+                        <i class="fas fa-arrow-left text-xs"></i> Dashboard
+                    </button>
+                    <h1 class="ph-title">Audit Logs</h1>
+                    <p class="text-sm text-slate-500 mt-1">System activity, scan events, and change history</p>
                 </div>
-                <div class="ph-actions">
-                    <button class="btn-sec"><i class="fas fa-download" style="margin-right:6px"></i>Export Logs</button>
+                <div class="ph-actions flex gap-2">
+                    <button onclick="exportAuditLog()" class="btn-sec text-xs px-3 py-2 rounded-lg"><i class="fas fa-download mr-1"></i> Export Log</button>
+                    <button onclick="clearAuditFilters()" class="btn-sec text-xs px-3 py-2 rounded-lg"><i class="fas fa-times mr-1"></i> Clear Filters</button>
                 </div>
             </div>
 
-            <div class="card">
-                <div style="height:1px;background:#F3F4F6;margin:0 20px"></div>
-                <div style="padding:20px;display:flex;flex-direction:column;gap:10px">
-                    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border:1px solid #E2E4E8;border-radius:8px;background:#fff">
-                        <div style="display:flex;align-items:center;gap:14px">
-                            <i class="fas fa-user-edit" style="color:#0D7377;font-size:16px;width:20px;text-align:center"></i>
-                            <div>
-                                <p style="font-size:13px;font-weight:600;color:#1F2937;margin:0 0 2px">POAM V-001235 updated</p>
-                                <p style="font-size:12px;color:#6B7280;margin:0">Admin User &bull; 2 hours ago</p>
-                            </div>
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="kpi" style="border-top: 3px solid #0D7377;">
+                    <p class="kpi-lbl">Total Events</p>
+                    <h3 class="text-2xl font-black text-slate-900" id="audit-total-events">0</h3>
+                </div>
+                <div class="kpi" style="border-top: 3px solid #0D7377;">
+                    <p class="kpi-lbl">Scan Imports</p>
+                    <h3 class="text-2xl font-black" style="color: #0D7377;" id="audit-scan-count">0</h3>
+                </div>
+                <div class="kpi" style="border-top: 3px solid #22C55E;">
+                    <p class="kpi-lbl">Status Changes</p>
+                    <h3 class="text-2xl font-black text-green-600" id="audit-status-changes">0</h3>
+                </div>
+                <div class="kpi" style="border-top: 3px solid #6B7280;">
+                    <p class="kpi-lbl">Settings Changes</p>
+                    <h3 class="text-2xl font-black text-slate-600" id="audit-settings-changes">0</h3>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card mb-6">
+                <div class="px-5 py-4">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Event Type</label>
+                            <select id="audit-filter-type" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" onchange="filterAuditLogs()">
+                                <option value="all">All Events</option>
+                                <option value="scan_import">Scan Imports</option>
+                                <option value="status_change">Status Changes</option>
+                                <option value="poam_created">POAM Created</option>
+                                <option value="poam_updated">POAM Updated</option>
+                                <option value="jira_ticket">Jira Tickets</option>
+                                <option value="settings_change">Settings Changes</option>
+                                <option value="evidence_upload">Evidence Uploads</option>
+                            </select>
                         </div>
-                        <span style="font-size:11px;color:#6B7280;background:#F9FAFB;padding:4px 10px;border-radius:4px;border:1px solid #E2E4E8">Status changed to In Progress</span>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Date From</label>
+                            <input type="date" id="audit-filter-from" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" onchange="filterAuditLogs()">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Date To</label>
+                            <input type="date" id="audit-filter-to" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" onchange="filterAuditLogs()">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Search</label>
+                            <input type="text" id="audit-filter-search" placeholder="Search events..." class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm teal-focus focus:ring-2 focus:outline-none" oninput="filterAuditLogs()">
+                        </div>
                     </div>
-                    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border:1px solid #E2E4E8;border-radius:8px;background:#fff">
-                        <div style="display:flex;align-items:center;gap:14px">
-                            <i class="fas fa-file-upload" style="color:#10B981;font-size:16px;width:20px;text-align:center"></i>
-                            <div>
-                                <p style="font-size:13px;font-weight:600;color:#1F2937;margin:0 0 2px">Evidence uploaded</p>
-                                <p style="font-size:12px;color:#6B7280;margin:0">Admin User &bull; 2 hours ago</p>
-                            </div>
+                </div>
+            </div>
+
+            <!-- Activity Feed -->
+            <div class="card">
+                <div class="card-head mb-4">
+                    <h2 class="card-title flex items-center gap-2">
+                        <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                        Activity Feed
+                    </h2>
+                    <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded" id="audit-showing-count">Showing 0 events</span>
+                </div>
+                <div class="px-5 pb-5">
+                    <div class="space-y-2" id="audit-log-feed">
+                        <div class="text-center py-8 text-slate-400 text-sm">
+                            <i class="fas fa-clipboard-list text-3xl text-slate-300 mb-3 block"></i>
+                            No audit events recorded yet. Events will appear here as you import scans, update POAMs, and make changes.
                         </div>
+                    </div>
+                    <!-- Load More -->
+                    <div class="text-center mt-4 hidden" id="audit-load-more">
+                        <button onclick="loadMoreAuditEvents()" class="text-xs px-4 py-2 text-teal-700 bg-teal-50 rounded-lg hover:bg-teal-100 font-medium">
+                            Load More Events
+                        </button>
                     </div>
                 </div>
             </div>

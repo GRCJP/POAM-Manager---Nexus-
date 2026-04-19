@@ -608,10 +608,10 @@
 
             <!-- Row 1: Primary KPI Tiles -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
-                <div class="bg-white p-5 rounded-2xl shadow-sm transition-all cursor-pointer" style="border-top: 3px solid #1E3A8A;" onclick="dashboardDrillDown('open')">
+                <div class="bg-white p-5 rounded-2xl shadow-sm transition-all cursor-pointer" style="border-top: 3px solid #0A5E62;" onclick="dashboardDrillDown('open')">
                     <div class="flex justify-between items-start mb-3">
                         <span class="p-2 rounded-lg text-white" style="background: #0F172A;"><i class="fas fa-clipboard-list"></i></span>
-                        <span class="text-[10px] font-bold px-2 py-1 rounded" style="background: rgba(30, 58, 138, 0.1); color: #1E3A8A; border: 1px solid #1E3A8A;">OPEN</span>
+                        <span class="text-[10px] font-bold px-2 py-1 rounded" style="background: rgba(10, 94, 98, 0.1); color: #0A5E62; border: 1px solid #0A5E62;">OPEN</span>
                     </div>
                     <h3 class="text-3xl font-bold tracking-tight" id="dash-total-open">—</h3>
                     <p class="text-sm text-slate-500 font-medium">Total Open POAMs</p>
@@ -657,12 +657,12 @@
                     <p class="text-sm text-slate-500 font-medium">Critical + High</p>
                     <p class="text-xs text-slate-400 mt-1" id="dash-crit-high-sub">Severity exposure</p>
                 </div>
-                <div class="bg-white p-5 rounded-2xl shadow-sm transition-all cursor-pointer" style="border-top: 3px solid #3B82F6;" onclick="dashboardDrillDown('closed')">
+                <div class="bg-white p-5 rounded-2xl shadow-sm transition-all cursor-pointer" style="border-top: 3px solid #0D7377;" onclick="dashboardDrillDown('closed')">
                     <div class="flex justify-between items-start mb-3">
-                        <span class="p-2 bg-blue-50 text-blue-600 rounded-lg"><i class="fas fa-stopwatch"></i></span>
-                        <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-300">MTTR</span>
+                        <span class="p-2 bg-teal-50 text-teal-700 rounded-lg"><i class="fas fa-stopwatch"></i></span>
+                        <span class="text-[10px] font-bold text-teal-700 bg-teal-50 px-2 py-1 rounded border border-teal-200">MTTR</span>
                     </div>
-                    <h3 class="text-3xl font-bold tracking-tight text-blue-600" id="dash-mttr">—</h3>
+                    <h3 class="text-3xl font-bold tracking-tight text-teal-700" id="dash-mttr">—</h3>
                     <p class="text-sm text-slate-500 font-medium">Mean Time to Remediate</p>
                     <p class="text-xs text-slate-400 mt-1" id="dash-mttr-sub">Avg days to close</p>
                 </div>
@@ -2015,7 +2015,7 @@
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-lg font-bold text-slate-800">Processing Jobs</h3>
-                        <button onclick="refreshJobs()" class="text-teal-700 hover:text-teal-800">
+                        <button onclick="if(typeof refreshJobs==='function') refreshJobs(); else showUpdateFeedback('Job refresh coming soon','info')" class="text-teal-700 hover:text-teal-800">
                             <i class="fas fa-sync-alt mr-2"></i>Refresh
                         </button>
                     </div>
@@ -2076,10 +2076,10 @@
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                     <h3 class="text-lg font-bold text-slate-800 mb-4">Quick Actions</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <button onclick="generateUnifiedReport()" class="bg-teal-700 text-white px-4 py-3 rounded-lg hover:bg-teal-800 transition-colors text-left">
+                        <button onclick="if(typeof generateUnifiedReport==='function') generateUnifiedReport(); else showUpdateFeedback('Report generation coming soon','info')" class="bg-teal-700 text-white px-4 py-3 rounded-lg hover:bg-teal-800 transition-colors text-left">
                             <i class="fas fa-file-excel mr-2"></i>Generate Unified Report
                         </button>
-                        <button onclick="exportAnalytics()" class="bg-slate-600 text-white px-4 py-3 rounded-lg hover:bg-slate-700 transition-colors text-left">
+                        <button onclick="if(typeof exportAnalytics==='function') exportAnalytics(); else showUpdateFeedback('Analytics export coming soon','info')" class="bg-slate-600 text-white px-4 py-3 rounded-lg hover:bg-slate-700 transition-colors text-left">
                             <i class="fas fa-download mr-2"></i>Export Analytics Data
                         </button>
                     </div>
@@ -2438,9 +2438,9 @@
                     <h3 class="text-2xl font-black text-green-600" id="rpt-closed-mtd">--</h3>
                     <p class="text-[10px] text-slate-400 mt-1" id="rpt-closed-sub">This month</p>
                 </div>
-                <div class="kpi" style="border-top: 3px solid #3B82F6;">
+                <div class="kpi" style="border-top: 3px solid #0D7377;">
                     <p class="kpi-lbl">MTTR</p>
-                    <h3 class="text-2xl font-black text-blue-600" id="rpt-mttr">--</h3>
+                    <h3 class="text-2xl font-black" style="color: #0D7377;" id="rpt-mttr">--</h3>
                     <p class="text-[10px] text-slate-400 mt-1">Avg days to close</p>
                 </div>
                 <div class="kpi" style="border-top: 3px solid #0D7377;">
@@ -2667,9 +2667,9 @@
                     <p class="kpi-lbl">Total Events</p>
                     <h3 class="text-2xl font-black text-slate-900" id="audit-total-events">0</h3>
                 </div>
-                <div class="kpi" style="border-top: 3px solid #3B82F6;">
+                <div class="kpi" style="border-top: 3px solid #0D7377;">
                     <p class="kpi-lbl">Scan Imports</p>
-                    <h3 class="text-2xl font-black text-blue-600" id="audit-scan-count">0</h3>
+                    <h3 class="text-2xl font-black" style="color: #0D7377;" id="audit-scan-count">0</h3>
                 </div>
                 <div class="kpi" style="border-top: 3px solid #22C55E;">
                     <p class="kpi-lbl">Status Changes</p>

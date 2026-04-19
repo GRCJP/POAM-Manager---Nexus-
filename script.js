@@ -994,38 +994,7 @@ const riskFrameworks = {
 
 let currentRiskFramework = 'nist'; // Default framework
 
-function updateFrameworkInfo() {
-    const selectedFramework = document.getElementById('risk-framework-select').value;
-    const framework = riskFrameworks[selectedFramework];
-    const infoDiv = document.getElementById('framework-info');
-    
-    infoDiv.innerHTML = `
-        <h4 class="font-semibold text-slate-800 mb-2">Framework: ${framework.name}</h4>
-        <p class="text-sm text-slate-600 mb-3">${framework.description}</p>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-            <div><strong>Control Families:</strong> ${framework.families}</div>
-            <div><strong>Controls:</strong> ${framework.controls}</div>
-            <div><strong>Assessment:</strong> ${framework.assessment}</div>
-            <div><strong>Compliance:</strong> ${framework.compliance}</div>
-        </div>
-    `;
-}
-
-function saveRiskFramework() {
-    const selectedFramework = document.getElementById('risk-framework-select').value;
-    currentRiskFramework = selectedFramework;
-    
-    // Save to localStorage
-    localStorage.setItem('riskFramework', selectedFramework);
-    
-    // Update the NIST Control Mapper to use the new framework
-    updateControlMapper(selectedFramework);
-    
-    // Update framework display throughout the interface
-    updateFrameworkDisplay(selectedFramework);
-    
-    alert(`Risk framework updated to: ${riskFrameworks[selectedFramework].name}`);
-}
+// updateFrameworkInfo, saveRiskFramework, loadRiskFramework defined in sidebar-navigation.js
 
 function updateFrameworkDisplay(framework) {
     // Update POAM table header
@@ -1047,20 +1016,6 @@ function updateControlMapper(framework) {
     if (window.nistControlMapper) {
         window.nistControlMapper.framework = framework;
         window.nistControlMapper.controlMappings = riskFrameworks[framework].controlMapping;
-    }
-}
-
-function loadRiskFramework() {
-    const saved = localStorage.getItem('riskFramework');
-    if (saved) {
-        currentRiskFramework = saved;
-        document.getElementById('risk-framework-select').value = saved;
-        updateFrameworkInfo();
-        updateControlMapper(saved);
-        updateFrameworkDisplay(saved);
-    } else {
-        // Initialize with default framework display
-        updateFrameworkDisplay('nist');
     }
 }
 
