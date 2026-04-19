@@ -2754,12 +2754,34 @@ async function poamWorkbookImportXlsx(file, systemId) {
   const enums = window.POAM_WORKBOOK_ENUMS || {};
   const invalidRows = [];
 
+  const isNA = (s) => /^(n\/?a|none|—|-|tbd|tba|pending)$/i.test(String(s || '').trim());
   const normalizeDate = (v) => {
-    if (!v) return '';
-    if (v instanceof Date) return v.toISOString().split('T')[0];
-    const d = new Date(v);
-    if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
-    return String(v);
+    if (v == null || v === '') return '';
+    if (v instanceof Date) return isNaN(v.getTime()) ? '' : v.toISOString().split('T')[0];
+    // Excel serial number
+    if (typeof v === 'number' && v > 0 && v < 100000) {
+      const excelEpoch = new Date(1900, 0, 1);
+      const d = new Date(excelEpoch.getTime() + (v - 2) * 86400000);
+      return isNaN(d.getTime()) ? '' : d.toISOString().split('T')[0];
+    }
+    const str = String(v).trim();
+    if (!str || isNA(str)) return '';
+    // Try multiple formats
+    const attempts = [
+      () => new Date(str),
+      () => { const m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); return m ? new Date(+m[3], +m[1]-1, +m[2]) : null; },
+      () => { const m = str.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/); return m ? new Date(+m[3], +m[1]-1, +m[2]) : null; },
+      () => { const m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); return m ? new Date(+m[1], +m[2]-1, +m[3]) : null; },
+      () => { const m = str.match(/^(\d{1,2})\/(\d{4})$/); return m ? new Date(+m[2], +m[1]-1, 1) : null; },
+      () => { const m = str.match(/(\d{1,2})\/(\d{1,2})\/(\d{2})$/); return m ? new Date(2000 + +m[3], +m[1]-1, +m[2]) : null; }
+    ];
+    for (const fn of attempts) {
+      try {
+        const d = fn();
+        if (d && !isNaN(d.getTime()) && d.getFullYear() > 1970) return d.toISOString().split('T')[0];
+      } catch (_) {}
+    }
+    return '';
   };
 
   const parsedRows = [];
@@ -2776,6 +2798,9 @@ async function poamWorkbookImportXlsx(file, systemId) {
     // Skip fully empty rows
     const anyVal = Object.values(r).some(v => String(v || '').trim() !== '');
     if (!anyVal) continue;
+
+    // Normalize status: treat "Closed" as "Completed"
+    if (String(r['Status'] || '').trim().toLowerCase() === 'closed') r['Status'] = 'Completed';
 
     const severity = String(r['Severity Value'] || '').trim();
     if (severity && !enums.severityValues.includes(severity)) {
@@ -2794,6 +2819,8 @@ async function poamWorkbookImportXlsx(file, systemId) {
 
     r['Detection Date'] = normalizeDate(r['Detection Date']);
     r['Scheduled Completion Date'] = normalizeDate(r['Scheduled Completion Date']);
+    r['Updated Scheduled Completion Date'] = normalizeDate(r['Updated Scheduled Completion Date']);
+    r['Actual Completion Date'] = normalizeDate(r['Actual Completion Date']);
 
     const rawAffected = String(r['Affected Components/URLs'] || '');
     const parsed = poamWorkbookExtractAssetsImpacted(rawAffected);
@@ -3035,7 +3062,7 @@ window.POAM_WORKBOOK_COLUMNS = [
 window.POAM_WORKBOOK_ENUMS = {
   detectingSources: ['Continuous Monitoring', 'Assessment', 'HVA Assessment', 'Pen Test', 'Audit', 'Self-Assessment'],
   severityValues: ['Critical', 'High', 'Moderate', 'Medium', 'Low', 'Informational'],
-  statusValues: ['Open', 'In Progress', 'Completed', 'Risk Accepted', 'Extended', 'Closed', 'Ongoing', 'Delayed']
+  statusValues: ['Open', 'In Progress', 'Ongoing', 'Completed', 'Risk Accepted', 'Extended', 'Delayed']
 };
 
 // ── Inline Quick Add ──

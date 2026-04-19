@@ -337,9 +337,14 @@ async function poamWorkbookImportXlsxSimple(file, systemId) {
     }
     seenIds.add(id);
 
+    // Normalize status: treat "Closed" as "Completed"
+    if ((obj['Status'] || '').trim().toLowerCase() === 'closed') {
+      obj['Status'] = 'Completed';
+    }
+
     // Enum warnings
     const status = (obj['Status'] || '').trim();
-    const knownStatuses = new Set(['open', 'ongoing', 'in progress', 'completed', 'risk accepted', 'delayed', 'pending', 'extended', 'closed']);
+    const knownStatuses = new Set(['open', 'ongoing', 'in progress', 'completed', 'risk accepted', 'delayed', 'pending', 'extended']);
     if (status && !knownStatuses.has(status.toLowerCase())) {
       issues.push(`Unknown finding status: "${status}"`);
     }

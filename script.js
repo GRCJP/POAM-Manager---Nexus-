@@ -2095,23 +2095,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Replace old inline module HTML with new mockup-C partials
     await loadModulePartials();
 
-    // Always start with dashboard for consistent user experience
-    // Hide all modules first
+    // Restore last active module (or default to dashboard)
     document.querySelectorAll('.module').forEach(module => {
         module.classList.add('hidden');
     });
-    
-    // Show dashboard
-    const dashboardModule = document.getElementById('dashboard-module');
-    if (dashboardModule) {
-        dashboardModule.classList.remove('hidden');
-        console.log('✅ Dashboard displayed');
-    } else {
-        console.error('❌ Dashboard module not found!');
-    }
-    
-    // Set dashboard as current module
-    localStorage.setItem('currentModule', 'dashboard');
+
+    const savedModule = localStorage.getItem('currentModule') || 'dashboard';
+    showModule(savedModule);
 
     // Auto-seed mock POA&M Workbook data on first run so the app has
     // something meaningful to display before a real scan is imported.
