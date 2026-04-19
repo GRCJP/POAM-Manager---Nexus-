@@ -242,6 +242,9 @@ window.poamWorkbookRenderQuickStatusPanel = function(items) {
     }
   }
 
+  // Store for dynamic tile updates (set before returning HTML)
+  window._closedDaysAgo = closedDaysAgo;
+
   // Default closed window
   const defaultWindow = 30;
 
@@ -275,9 +278,6 @@ window.poamWorkbookRenderQuickStatusPanel = function(items) {
           </select>
         </div>
         <div id="wb-closed-count" style="color:#0D7377;cursor:pointer" class="text-2xl font-bold" onclick="window.poamWorkbookState.filters.status='Completed'; window.poamWorkbookState.filters.closedWithinDays=parseInt(document.getElementById('wb-closed-window').value)||30; window.poamWorkbookState.filters.dateRange='all'; poamWorkbookApplyFilters()">${closedDaysAgo[defaultWindow]}</div>
-        <script>
-          window._closedDaysAgo = ${JSON.stringify(closedDaysAgo)};
-        </script>
       </div>
     </div>
   `;

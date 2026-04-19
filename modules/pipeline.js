@@ -289,11 +289,16 @@ class PipelineOrchestrator {
             }
             
             // (C) First-import timestamp fallback: if no firstDetected, use import date
+            // and skip the SLA gate since we don't know actual age
             let firstDetected = finding.firstDetected || finding.first_detected || finding.firstFound;
             if (!firstDetected) {
                 firstDetected = new Date().toISOString();
                 finding.firstDetected = firstDetected;
                 finding._firstDetectedFallback = true;
+                // Skip SLA gate — unknown age, assume eligible
+                eligibleFindings.push(finding);
+                if (i % 100 === 0) { this.currentRun.phaseProgress = Math.round(i / rawVulnerabilities.length * 100); this.updateProgress(); }
+                continue;
             }
             // Gate 2: Exclude findings that haven't reached their severity-based SLA threshold
             if (firstDetected) {
@@ -348,7 +353,7 @@ class PipelineOrchestrator {
                 totalProcessed: rawVulnerabilities.length,
                 eligible: eligibleFindings.length,
                 excluded: excludedFindings.length,
-                exclusionRate: (excludedFindings.length / rawVulnerabilities.length * 100).toFixed(2) + '%'
+                exclusionRate: rawVulnerabilities.length > 0 ? (excludedFindings.length / rawVulnerabilities.length * 100).toFixed(2) + '%' : '0%'
             }
         });
         
@@ -359,7 +364,7 @@ class PipelineOrchestrator {
         this.logger.phaseEnd(phase.name, {
             eligible: eligibleFindings.length,
             excluded: excludedFindings.length,
-            exclusionRate: (excludedFindings.length / rawVulnerabilities.length * 100).toFixed(2) + '%'
+            exclusionRate: rawVulnerabilities.length > 0 ? (excludedFindings.length / rawVulnerabilities.length * 100).toFixed(2) + '%' : '0%'
         });
         
         return eligibleFindings;

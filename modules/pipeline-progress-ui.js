@@ -108,19 +108,19 @@ class PipelineProgressUI {
                             <span class="text-sm font-medium text-gray-900" id="current-phase-percent">0%</span>
                         </div>
                         <div class="w-full bg-gray-300 rounded-full h-2">
-                            <div id="current-phase-bar" class="bg-green-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            <div id="current-phase-bar" class="bg-teal-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
                         </div>
                     </div>
 
                     <!-- Counts -->
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                        <div class="bg-blue-50 p-3 rounded-lg">
-                            <div class="text-xs text-blue-600 font-medium mb-1">Total Findings</div>
-                            <div class="text-2xl font-bold text-blue-900" id="count-total">0</div>
+                        <div class="bg-teal-50 p-3 rounded-lg">
+                            <div class="text-xs text-teal-700 font-medium mb-1">Total Findings</div>
+                            <div class="text-2xl font-bold text-teal-900" id="count-total">0</div>
                         </div>
-                        <div class="bg-green-50 p-3 rounded-lg">
-                            <div class="text-xs text-green-600 font-medium mb-1">Eligible</div>
-                            <div class="text-2xl font-bold text-green-900" id="count-eligible">0</div>
+                        <div class="bg-teal-50 p-3 rounded-lg">
+                            <div class="text-xs text-teal-600 font-medium mb-1">Eligible</div>
+                            <div class="text-2xl font-bold text-teal-900" id="count-eligible">0</div>
                         </div>
                         <div class="bg-slate-100 p-3 rounded-lg">
                             <div class="text-xs text-slate-700 font-medium mb-1">Groups</div>
@@ -157,7 +157,7 @@ class PipelineProgressUI {
                     </div>
                     <p class="text-xs text-gray-500 mt-1">${description}</p>
                     <div class="w-full bg-gray-200 rounded-full h-1.5 mt-2 hidden" id="phase-${phaseIndex}-progress-container">
-                        <div class="bg-blue-500 h-1.5 rounded-full transition-all duration-300" 
+                        <div class="bg-teal-500 h-1.5 rounded-full transition-all duration-300" 
                              id="phase-${phaseIndex}-progress" style="width: 0%"></div>
                     </div>
                 </div>
@@ -188,27 +188,27 @@ class PipelineProgressUI {
             
             if (i < currentPhaseIndex) {
                 // Completed phase
-                icon.classList.remove('border-gray-300', 'border-blue-500');
-                icon.classList.add('border-green-500', 'bg-green-500');
+                icon.classList.remove('border-gray-300', 'border-teal-500');
+                icon.classList.add('border-teal-600', 'bg-teal-600');
                 icon.innerHTML = '<svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>';
                 status.textContent = 'Completed';
-                status.classList.add('text-green-600');
+                status.classList.add('text-teal-600');
                 if (progressContainer) progressContainer.classList.add('hidden');
             } else if (i === currentPhaseIndex) {
                 // Current phase
-                icon.classList.remove('border-gray-300', 'border-green-500', 'bg-green-500');
-                icon.classList.add('border-blue-500');
-                icon.innerHTML = `<span class="text-sm font-medium text-blue-500">${i}</span>`;
+                icon.classList.remove('border-gray-300', 'border-teal-600', 'bg-teal-600');
+                icon.classList.add('border-teal-500');
+                icon.innerHTML = `<span class="text-sm font-medium text-teal-600">${i}</span>`;
                 status.textContent = 'In Progress';
-                status.classList.add('text-blue-600');
+                status.classList.add('text-teal-700');
                 if (progressContainer) progressContainer.classList.remove('hidden');
             } else {
                 // Pending phase
-                icon.classList.remove('border-blue-500', 'border-green-500', 'bg-green-500');
+                icon.classList.remove('border-teal-500', 'border-teal-600', 'bg-teal-600');
                 icon.classList.add('border-gray-300');
                 icon.innerHTML = `<span class="text-sm font-medium text-gray-400">${i}</span>`;
                 status.textContent = 'Pending';
-                status.classList.remove('text-blue-600', 'text-green-600');
+                status.classList.remove('text-teal-700', 'text-teal-600');
                 if (progressContainer) progressContainer.classList.add('hidden');
             }
         }
@@ -269,13 +269,13 @@ class PipelineProgressUI {
             const icon = document.getElementById(`phase-${i}-icon`);
             const status = document.getElementById(`phase-${i}-status`);
             if (icon) {
-                icon.classList.remove('border-gray-300', 'border-blue-500');
-                icon.classList.add('border-green-500', 'bg-green-500');
+                icon.classList.remove('border-gray-300', 'border-teal-500');
+                icon.classList.add('border-teal-600', 'bg-teal-600');
                 icon.innerHTML = '<svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>';
             }
             if (status) {
                 status.textContent = 'Complete';
-                status.className = 'text-xs text-green-600 phase-status';
+                status.className = 'text-xs text-teal-600 phase-status';
             }
         }
 
@@ -289,12 +289,12 @@ class PipelineProgressUI {
         let detailsHtml = '';
         if (isReImport) {
             detailsHtml = `
-                <div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-left text-xs text-blue-700 space-y-1">
-                    <div class="font-semibold text-blue-800 mb-1">📊 Re-import Analysis</div>
+                <div class="mt-3 p-3 bg-teal-50 border border-teal-200 rounded-lg text-left text-xs text-teal-700 space-y-1">
+                    <div class="font-semibold text-teal-800 mb-1">📊 Re-import Analysis</div>
                     <div>✅ <strong>${counts.poamsCreated || 0}</strong> new POAMs created</div>
                     <div>🔄 <strong>${counts.poamsMerged || analysis.updatedPOAMs || 0}</strong> existing POAMs updated</div>
                     <div>✓ <strong>${counts.poamsAutoResolved || analysis.autoClosedPOAMs || 0}</strong> POAMs auto-closed (no longer in scan)</div>
-                    ${analysis.autoClosedIds && analysis.autoClosedIds.length > 0 ? `<div class="mt-1 text-blue-600"><strong>Closed:</strong> ${analysis.autoClosedIds.slice(0, 5).join(', ')}${analysis.autoClosedIds.length > 5 ? ` +${analysis.autoClosedIds.length - 5} more` : ''}</div>` : ''}
+                    ${analysis.autoClosedIds && analysis.autoClosedIds.length > 0 ? `<div class="mt-1 text-teal-700"><strong>Closed:</strong> ${analysis.autoClosedIds.slice(0, 5).join(', ')}${analysis.autoClosedIds.length > 5 ? ` +${analysis.autoClosedIds.length - 5} more` : ''}</div>` : ''}
                 </div>`;
         } else {
             detailsHtml = `<div class="mt-2 text-sm text-gray-600">Created <strong>${counts.poamsCreated || 0}</strong> POAMs from <strong>${counts.totalRows || 0}</strong> findings (${counts.excludedCount || 0} excluded)</div>`;
@@ -302,7 +302,7 @@ class PipelineProgressUI {
 
         if (statusEl) {
             statusEl.innerHTML = `
-                <div class="text-green-600 font-medium">
+                <div class="text-teal-600 font-medium">
                     Pipeline completed successfully.
                     ${detailsHtml}
                     <div class="mt-4 flex gap-2 justify-center">

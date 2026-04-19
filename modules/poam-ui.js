@@ -1355,10 +1355,15 @@ async function mergePOAMsFromScan(newPOAMs) {
 
     // (A) Scan scope: collect all assets seen in this scan for scope-aware auto-resolve
     const scannedAssets = new Set();
+    const extractAssetName = (a) => {
+        if (!a) return '';
+        if (typeof a === 'string') return a.trim().toLowerCase();
+        // Handle asset objects from analysis engine: {asset_name, ipv4, os, ...}
+        return String(a.asset_name || a.hostname || a.ipv4 || a.ip || a.name || a).trim().toLowerCase();
+    };
     for (const p of newPOAMs) {
         const assets = p.affectedAssets || p.rawAssets || [];
-        if (Array.isArray(assets)) assets.forEach(a => scannedAssets.add(String(a).trim().toLowerCase()));
-        // Also capture individual host fields
+        if (Array.isArray(assets)) assets.forEach(a => { const n = extractAssetName(a); if (n && n !== '[object object]') scannedAssets.add(n); });
         if (p.host) scannedAssets.add(String(p.host).trim().toLowerCase());
     }
 
@@ -1389,7 +1394,7 @@ async function mergePOAMsFromScan(newPOAMs) {
         if (previouslyCompleted) {
             // REOPEN: Restore the existing POAM instead of creating a new one
             const merged = { ...previouslyCompleted };
-            merged.findingStatus = 'Open';
+            merged.findingStatus = 'open';
             merged.status = 'open';
             merged.actualCompletionDate = '';
             merged.lastModifiedDate = new Date().toISOString();
@@ -1541,7 +1546,7 @@ async function mergePOAMsFromScan(newPOAMs) {
             const poamAssets = existing.affectedAssets || [];
             const assetList = Array.isArray(poamAssets) ? poamAssets : [poamAssets];
             const anyInScope = assetList.length === 0 || assetList.some(a =>
-                scannedAssets.has(String(a).trim().toLowerCase())
+                scannedAssets.has(extractAssetName(a))
             );
             if (!anyInScope) {
                 // POAM's assets weren't in this scan — don't auto-close, it's out of scope
@@ -1600,7 +1605,7 @@ async function mergePOAMsFromScan(newPOAMs) {
             previousStatus: candidate.findingStatus || candidate.status,
             scanId: newPOAMs[0]?.scanId || 'unknown'
         });
-        candidate.findingStatus = 'Completed';
+        candidate.findingStatus = 'completed';
         candidate.status = 'completed';
         candidate.actualCompletionDate = new Date().toISOString().split('T')[0];
         candidate.lastModifiedDate = new Date().toISOString();
