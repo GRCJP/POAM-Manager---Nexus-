@@ -57,12 +57,22 @@ async function poamWorkbookImportXlsxSimple(file, systemId) {
     if (has('finding') && has('identifier'))   return 'Item number';
     if (has('item') && has('number'))          return 'Item number';
     if (has('poam') && has('id'))              return 'Item number';
+    if (has('poam') && has('number'))          return 'Item number';
+    if (has('poam') && has('item'))            return 'Item number';
+    if (norm === 'id' || norm === 'no' || norm === 'number') return 'Item number';
     if (has('control') && has('family'))       return 'Impacted Security Controls';
     if (has('security') && has('control'))     return 'Impacted Security Controls';
     if (has('vulnerability') && has('name'))   return 'Vulnerability Name';
     if (has('weakness') && has('name'))        return 'Vulnerability Name';
+    if (has('weakness') && !has('desc'))       return 'Vulnerability Name';
+    if (has('finding') && has('name'))         return 'Vulnerability Name';
+    if (has('finding') && has('title'))        return 'Vulnerability Name';
+    if (has('poam') && has('title'))           return 'Vulnerability Name';
+    if (norm === 'title' || norm === 'name')   return 'Vulnerability Name';
     if (has('finding') && has('description'))  return 'Vulnerability Description';
     if (has('vulnerability') && has('desc'))   return 'Vulnerability Description';
+    if (has('weakness') && has('desc'))        return 'Vulnerability Description';
+    if (norm === 'description')                return 'Vulnerability Description';
     if (has('affected') && has('host'))        return 'Affected Components/URLs';
     if (has('host') && has('technical'))       return 'Affected Components/URLs';
     if (has('affected') && has('component'))   return 'Affected Components/URLs';
@@ -83,8 +93,12 @@ async function poamWorkbookImportXlsxSimple(file, systemId) {
     if (has('completion') && has('date') && !has('scheduled') && !has('milestone')) return 'Actual Completion Date';
     if (has('finding') && has('status'))       return 'Status';
     if (norm === 'status')                     return 'Status';
+    if (has('poam') && has('status'))          return 'Status';
     if (has('risk') && has('level'))           return 'Severity Value';
     if (norm === 'severity' || norm === 'risk level') return 'Severity Value';
+    if (norm === 'risk' || norm === 'priority') return 'Severity Value';
+    if (has('severity') && has('value'))       return 'Severity Value';
+    if (has('impact') && has('level'))         return 'Severity Value';
     if (has('mitigation'))                     return 'Mitigations';
     if (has('remediation'))                    return 'Mitigations';
     if (has('comment'))                        return 'Comments';
@@ -135,6 +149,13 @@ async function poamWorkbookImportXlsxSimple(file, systemId) {
       columnMap = POSITIONAL_MAP.slice();
       warnings.push('Weak header match — falling back to positional column mapping');
     }
+  }
+
+  // Log full header mapping for debugging
+  console.log('Column mapping result:');
+  for (let c = 0; c < columnMap.length; c++) {
+    const mapped = typeof columnMap[c] === 'string' ? columnMap[c] : null;
+    console.log(`  [${c}] ${String.fromCharCode(65 + c)}: → ${mapped || '(unmapped)'}`);
   }
 
   // Log header mapping
@@ -245,27 +266,39 @@ async function poamWorkbookImportXlsxSimple(file, systemId) {
       }
     }
 
-    // Required field validation
-    const id = obj['Item number'] || '';
+    // Check if row has any meaningful content at all
+    const allValues = Object.values(obj);
+    const hasAnyContent = allValues.some(v => String(v || '').trim() !== '');
+    if (!hasAnyContent) continue;
+
+    // For workbook import: only need SOME identifying info — title or ID
+    // Auto-generate item number if missing
     const vulnName = obj['Vulnerability Name'] || '';
-    const vulnDesc = obj['Vulnerability Description'] || '';
+    let id = obj['Item number'] || '';
 
-    if (!id && !vulnName && !vulnDesc) {
-      // Truly empty meaningful content — skip silently
-      continue;
+    if (!vulnName && !id) {
+      // Check if any other fields have data — if so, try to use first non-empty text field as title
+      const fallbackTitle = obj['Vulnerability Description'] || obj['Mitigations'] || '';
+      if (fallbackTitle) {
+        obj['Vulnerability Name'] = fallbackTitle.substring(0, 200);
+      } else {
+        rowErrors.push({ row: rowNum, message: 'No title or identifier found — row skipped' });
+        continue;
+      }
     }
 
+    // Auto-generate item number if not provided
     if (!id) {
-      rowErrors.push({ row: rowNum, message: 'Missing finding identifier — row skipped' });
-      continue;
+      const autoNum = typeof window.poamWorkbookDB.getNextItemNumber === 'function'
+        ? String(await window.poamWorkbookDB.getNextItemNumber(systemId))
+        : String(rowNum);
+      obj['Item number'] = autoNum;
+      id = autoNum;
     }
-    if (!vulnName) {
-      rowErrors.push({ row: rowNum, message: `Missing vulnerability name (ID: ${id}) — row skipped` });
-      continue;
-    }
-    if (!vulnDesc) {
-      rowErrors.push({ row: rowNum, message: `Missing vulnerability description (ID: ${id}) — row skipped` });
-      continue;
+
+    // Use title as vulnerability name if we only have an ID
+    if (!obj['Vulnerability Name'] && id) {
+      issues.push('No vulnerability name — row imported with ID only');
     }
 
     // Duplicate check
