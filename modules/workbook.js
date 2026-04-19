@@ -1112,7 +1112,7 @@ async function renderWorkbookSystemTable(systemId) {
         <td class="px-3 py-2" onclick="event.stopPropagation()">
           ${renderInlineSelect(id, 'Severity Value', item['Severity Value'], severities)}
         </td>
-        <td class="px-3 py-2" onclick="event.stopPropagation()">
+        <td class="pl-3 pr-5 py-2" onclick="event.stopPropagation()">
           ${renderInlineSelect(id, 'Status', item['Status'], statuses)}
         </td>
       </tr>
