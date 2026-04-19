@@ -331,68 +331,51 @@ class POAMDatabase {
     }
 
     transformToFormalPOAM(poam) {
-        // EXPLICIT field selection only - no spread operator to avoid copying large arrays
+        // EXPLICIT field selection — truncate text fields to prevent storage bloat
+        const cap = (val, max) => { const s = val || ''; return s.length > max ? s.substring(0, max) + '...' : s; };
+
+        const vulnName = cap(poam.vulnerabilityName || poam.title || poam.vulnerability, 500);
+        const desc = cap(poam.findingDescription || poam.description || '', 2000);
+        const mitig = cap(poam.mitigation || '', 2000);
+
         return {
-            // Core identification
             id: poam.id,
             findingIdentifier: poam.findingIdentifier || poam.id,
-
-            // Classification
             controlFamily: poam.controlFamily || this.inferControlFamily(poam),
-            vulnerabilityName: poam.vulnerabilityName || poam.title || poam.vulnerability,
-            findingDescription: poam.findingDescription || poam.description || poam.vulnerability,
-            findingSource: poam.source || poam.findingSource || 'Vulnerability Scan',
-            source: poam.source || poam.findingSource || 'Vulnerability Scan',
-
-            // Responsibility
+            vulnerabilityName: vulnName,
+            findingDescription: desc,
+            findingSource: cap(poam.source || poam.findingSource || 'Vulnerability Scan', 200),
+            source: cap(poam.source || poam.findingSource || 'Vulnerability Scan', 200),
             poc: poam.poc || poam.pocTeam || '',
             pocTeam: poam.pocTeam || poam.poc || '',
             resourcesRequired: poam.resourcesRequired || '',
-
-            // Scheduling
             dueDate: poam.dueDate || poam.initialScheduledCompletionDate || this.calculateDueDate(poam),
             initialScheduledCompletionDate: poam.initialScheduledCompletionDate || poam.dueDate || this.calculateDueDate(poam),
             updatedScheduledCompletionDate: poam.updatedScheduledCompletionDate || poam.dueDate || this.calculateDueDate(poam),
             actualCompletionDate: poam.actualCompletionDate || null,
-
-            // Status and risk
             findingStatus: poam.findingStatus || poam.status || 'Open',
             status: poam.status || poam.findingStatus || 'Open',
             riskLevel: poam.riskLevel || poam.risk || 'medium',
             risk: poam.risk || poam.riskLevel || 'medium',
-
-            // Mitigation
-            mitigation: poam.mitigation || '',
-
-            // Metadata
+            mitigation: mitig,
             createdDate: poam.createdDate || new Date().toISOString(),
             lastModifiedDate: poam.lastModifiedDate || new Date().toISOString(),
             scanId: poam.scanId || null,
             needsReview: poam.needsReview || false,
-            notes: poam.notes || '',
-
-            // Essential fields for UI
-            title: poam.title || poam.vulnerabilityName,
-            vulnerability: poam.vulnerability || poam.vulnerabilityName,
-            description: poam.description || poam.findingDescription,
-            
-            // Identifiers
-            cves: Array.isArray(poam.cves) ? poam.cves : [],
-            qids: Array.isArray(poam.qids) ? poam.qids : [],
+            notes: cap(poam.notes || '', 1000),
+            title: vulnName,
+            description: desc,
+            cves: Array.isArray(poam.cves) ? poam.cves.slice(0, 20) : [],
+            qids: Array.isArray(poam.qids) ? poam.qids.slice(0, 20) : [],
             remediationSignature: poam.remediationSignature || '',
             patchable: poam.patchable || false,
             confidenceScore: poam.confidenceScore || 0,
             isPriority: poam.isPriority || false,
-
-            // Data preservation
             affectedAssets: Array.isArray(poam.affectedAssets) ? this.transformAssetsWithMetadata(poam.affectedAssets) : [],
             totalAffectedAssets: poam.totalAffectedAssets || poam.affectedAssets?.length || 0,
-
-            // Milestones (embedded on POAM for POAM Detail view)
-            milestones: Array.isArray(poam.milestones) ? poam.milestones : [],
-
-            // Status history preserved — cap at last 50 entries to prevent storage bloat
-            statusHistory: Array.isArray(poam.statusHistory) ? poam.statusHistory.slice(-50) : []
+            milestones: Array.isArray(poam.milestones) ? poam.milestones.slice(0, 10) : [],
+            statusHistory: Array.isArray(poam.statusHistory) ? poam.statusHistory.slice(-50) : [],
+            lastScanDate: poam.lastScanDate || null
         };
     }
 
