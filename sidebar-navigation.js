@@ -180,7 +180,9 @@ function saveSLAConfig() {
     };
     
     localStorage.setItem('slaConfig', JSON.stringify(slaConfig));
-    alert('✅ SLA Configuration saved successfully!');
+    if (typeof showUpdateFeedback === 'function') {
+        showUpdateFeedback('SLA Configuration saved successfully', 'success');
+    }
 }
 
 function resetSLADefaults() {
@@ -277,7 +279,9 @@ function saveNotificationRules() {
     });
 
     localStorage.setItem('notificationRules', JSON.stringify(rules));
-    alert('Notification rules saved successfully.');
+    if (typeof showUpdateFeedback === 'function') {
+        showUpdateFeedback('Notification rules saved successfully', 'success');
+    }
 }
 
 function loadNotificationRules() {
@@ -303,7 +307,9 @@ function saveRoleContacts() {
         auditor: (document.getElementById('role-contact-auditor') || {}).value || ''
     };
     localStorage.setItem('roleContacts', JSON.stringify(contacts));
-    alert('Role contacts saved successfully.');
+    if (typeof showUpdateFeedback === 'function') {
+        showUpdateFeedback('Role contacts saved successfully', 'success');
+    }
 }
 
 function loadRoleContacts() {
@@ -441,14 +447,18 @@ function addUserFromModal() {
     const dept = document.getElementById('add-user-dept').value.trim();
 
     if (!first || !last || !email) {
-        alert('First name, last name, and email are required.');
+        if (typeof showUpdateFeedback === 'function') {
+            showUpdateFeedback('First name, last name, and email are required', 'error');
+        }
         return;
     }
 
     const users = getAdminUsers();
     const id = email.split('@')[0].toLowerCase().replace(/[^a-z0-9.]/g, '');
     if (users.find(u => u.id === id || u.email === email)) {
-        alert('A user with this email already exists.');
+        if (typeof showUpdateFeedback === 'function') {
+            showUpdateFeedback('A user with this email already exists', 'error');
+        }
         return;
     }
 
@@ -495,7 +505,9 @@ function saveEmailConfig() {
         bcc: (document.getElementById('email-bcc') || {}).value || ''
     };
     localStorage.setItem('emailConfig', JSON.stringify(config));
-    alert('Email settings saved successfully.');
+    if (typeof showUpdateFeedback === 'function') {
+        showUpdateFeedback('Email settings saved successfully', 'success');
+    }
 }
 
 function loadEmailConfig() {
@@ -522,10 +534,14 @@ function loadEmailConfig() {
 function testEmailConnection() {
     const host = (document.getElementById('smtp-host') || {}).value;
     if (!host) {
-        alert('Enter an SMTP host before testing.');
+        if (typeof showUpdateFeedback === 'function') {
+            showUpdateFeedback('Enter an SMTP host before testing', 'error');
+        }
         return;
     }
-    alert('SMTP connection test is not available in demo mode. Configure your SMTP relay and deploy to test connectivity.');
+    if (typeof showUpdateFeedback === 'function') {
+        showUpdateFeedback('SMTP connection test is not available in demo mode. Configure your SMTP relay and deploy to test connectivity.', 'info');
+    }
 }
 
 function saveRiskFramework() {
@@ -538,7 +554,9 @@ function saveRiskFramework() {
     };
     
     localStorage.setItem('riskFramework', JSON.stringify(config));
-    alert('✅ Risk Framework configuration saved successfully!');
+    if (typeof showUpdateFeedback === 'function') {
+        showUpdateFeedback('Risk Framework configuration saved successfully', 'success');
+    }
 }
 
 function loadRiskFramework() {
@@ -637,7 +655,9 @@ function updateFrameworkInfo() {
 }
 
 function saveUserPreferences() {
-    alert('✅ User preferences saved successfully!');
+    if (typeof showUpdateFeedback === 'function') {
+        showUpdateFeedback('User preferences saved successfully', 'success');
+    }
 }
 
 // Save API Configuration
@@ -664,12 +684,16 @@ function saveAPIConfig() {
     };
     
     localStorage.setItem('apiConfig', JSON.stringify(apiConfig));
-    alert('✅ API Configuration saved successfully!');
+    if (typeof showUpdateFeedback === 'function') {
+        showUpdateFeedback('API Configuration saved successfully', 'success');
+    }
 }
 
 // Test API Connections
 function testAPIConnections() {
-    alert('🔌 Testing API connections...\n\nThis feature will validate your API credentials and connectivity. Implementation coming soon!');
+    if (typeof showUpdateFeedback === 'function') {
+        showUpdateFeedback('Testing API connections... This feature will validate your API credentials and connectivity. Implementation coming soon.', 'info');
+    }
 }
 
 // Load API Configuration
@@ -731,16 +755,22 @@ function saveJiraConfig() {
         apiToken: document.getElementById('jira-api-token').value
     };
     localStorage.setItem('jiraConfig', JSON.stringify(config));
-    alert('Jira configuration saved successfully.');
+    if (typeof showUpdateFeedback === 'function') {
+        showUpdateFeedback('Jira configuration saved successfully', 'success');
+    }
 }
 
 function testJiraConnection() {
     const url = document.getElementById('jira-base-url').value;
     if (!url) {
-        alert('Please enter a Jira instance URL first.');
+        if (typeof showUpdateFeedback === 'function') {
+            showUpdateFeedback('Please enter a Jira instance URL first', 'error');
+        }
         return;
     }
-    alert('Connection test is not available in this environment. Configuration saved locally.');
+    if (typeof showUpdateFeedback === 'function') {
+        showUpdateFeedback('Connection test is not available in this environment. Configuration saved locally.', 'info');
+    }
 }
 
 // Initialize sidebar on page load

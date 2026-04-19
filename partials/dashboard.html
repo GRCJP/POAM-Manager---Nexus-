@@ -5,14 +5,14 @@
                 <div>
                     <div class="ph-title">Dashboard</div>
                     <div class="ph-meta">
-                        <span class="ph-tag">FY2025 Q2</span>
+                        <span class="ph-tag" id="dash-fy-quarter-tag">FY2025 Q2</span>
                         <span class="ph-tag teal">FISMA High</span>
                         <span id="dash-overdue-tag" class="ph-tag warn" style="display:none"></span>
                         <span id="dash-last-updated" class="ph-fresh"></span>
                     </div>
                 </div>
                 <div class="ph-actions">
-                    <button class="btn-sec">&#8595; Export Report</button>
+                    <button onclick="showModule('reporting')" class="btn-sec">&#8595; Export Report</button>
                     <button onclick="loadDashboardMetrics()" class="btn-sec">&#8635; Refresh</button>
                 </div>
             </div>

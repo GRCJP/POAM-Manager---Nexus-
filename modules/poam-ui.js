@@ -295,7 +295,8 @@ if (typeof showUpdateFeedback === 'undefined') {
         console.log(`[${type.toUpperCase()}] ${message}`);
         // Simple temporary toast if no UI container exists
         const toast = document.createElement('div');
-        toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded shadow-lg z-[100] transition-all ${type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white text-sm`;
+        const bgColor = type === 'success' ? 'bg-green-600' : type === 'info' ? 'bg-blue-600' : 'bg-red-600';
+        toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded shadow-lg z-[100] transition-all ${bgColor} text-white text-sm`;
         toast.textContent = message;
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 3000);

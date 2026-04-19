@@ -160,6 +160,23 @@ async function initPOAMWorkbookModule() {
   await renderWorkbookSidebarSystems();
   await renderWorkbookOverview();
 
+  // Update FISMA tag dynamically from risk framework settings
+  const fismaTag = document.getElementById('poam-header-fisma-tag');
+  if (fismaTag) {
+    const savedFramework = localStorage.getItem('riskFramework');
+    if (savedFramework) {
+      try {
+        const fw = JSON.parse(savedFramework);
+        const frameworkLabels = {
+          'nist': 'FISMA High', 'csf': 'NIST CSF', 'iso27001': 'ISO 27001',
+          'mitre': 'MITRE ATT&CK', 'fedramp': 'FedRAMP', 'cms': 'CMS ARS',
+          'irs': 'IRS 1075', 'cis': 'CIS Controls'
+        };
+        fismaTag.textContent = frameworkLabels[fw.framework] || 'FISMA High';
+      } catch (e) { /* keep default */ }
+    }
+  }
+
   // If a system selector explicitly requested a system, open it now.
   const pending = window.poamWorkbookState.pendingOpenSystemId;
   if (pending) {
@@ -1102,8 +1119,9 @@ async function renderWorkbookSystemTable(systemId) {
         </td>
         <td class="px-3 py-2 text-xs text-slate-700 font-mono">${escapeHtml(item['Impacted Security Controls'] || '')}</td>
         <td class="px-3 py-2 text-sm text-slate-900 cursor-pointer" onclick="poamWorkbookOpenItemDetails('${id}')">${escapeHtml(item['Vulnerability Name'] || '')}</td>
-        <td class="px-3 py-2 text-xs ${isOverdue ? 'text-red-700 font-semibold' : 'text-slate-700'}">
+        <td class="px-3 py-2 text-xs ${isOverdue ? 'text-red-700 font-semibold' : 'text-slate-700'}" onclick="event.stopPropagation()">
           ${dueDate || '<span class="text-slate-400">—</span>'}
+          ${isOverdue ? `<button onclick="poamWorkbookOpenExtendModal('${id}')" style="display:inline-block;margin-left:6px;padding:1px 6px;font-size:10px;font-weight:700;color:#B45309;background:#FFF7ED;border:1px solid #FDE68A;border-radius:4px;cursor:pointer;font-family:inherit;vertical-align:middle" title="Extend due date">Extend</button>` : ''}
         </td>
         <td class="px-3 py-2 text-xs text-slate-700">${escapeHtml(item['Identifying Detecting Source'] || '')}</td>
         <td class="px-3 py-2" onclick="event.stopPropagation()">
@@ -1377,6 +1395,116 @@ async function poamWorkbookInlineUpdate(id, field, value) {
 
   // Refresh small metrics in system view
   await renderWorkbookSystemTable(item.systemId);
+}
+
+async function poamWorkbookOpenExtendModal(itemId) {
+  const item = await window.poamWorkbookDB.getItem(itemId);
+  if (!item) { showUpdateFeedback('Item not found', 'error'); return; }
+
+  const currentDue = item['Updated Scheduled Completion Date'] || item['Scheduled Completion Date'] || '';
+
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+  modal.innerHTML = `
+    <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Extend Due Date</h2>
+          <p class="text-sm text-slate-500 mt-1">${escapeHtml(item['Vulnerability Name'] || 'Unnamed POAM')}</p>
+          <p class="text-xs text-slate-400 mt-1">Current due: <span class="font-mono font-semibold text-red-700">${escapeHtml(currentDue || 'Not set')}</span></p>
+        </div>
+        <button id="wb-extend-close" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">New Due Date</label>
+          <input id="wb-extend-date" type="date" class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white" required>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">Reason</label>
+          <select id="wb-extend-reason" class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white">
+            <option value="">Select a reason...</option>
+            <option value="Procurement Delay">Procurement Delay</option>
+            <option value="Resource Constraint">Resource Constraint</option>
+            <option value="Vendor Dependency">Vendor Dependency</option>
+            <option value="Awaiting Approval">Awaiting Approval</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">Justification</label>
+          <textarea id="wb-extend-justification" rows="3" class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white" placeholder="Provide justification for the extension..."></textarea>
+        </div>
+      </div>
+      <div class="flex justify-end gap-3 mt-6">
+        <button id="wb-extend-cancel" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">Cancel</button>
+        <button id="wb-extend-save" class="px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800">Save Extension</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const close = () => modal.remove();
+  modal.querySelector('#wb-extend-close')?.addEventListener('click', close);
+  modal.querySelector('#wb-extend-cancel')?.addEventListener('click', close);
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+
+  modal.querySelector('#wb-extend-save')?.addEventListener('click', async () => {
+    try {
+      const newDate = String(modal.querySelector('#wb-extend-date')?.value || '').trim();
+      const reason = String(modal.querySelector('#wb-extend-reason')?.value || '').trim();
+      const justification = String(modal.querySelector('#wb-extend-justification')?.value || '').trim();
+
+      if (!newDate) { showUpdateFeedback('Please select a new due date', 'error'); return; }
+      if (!reason) { showUpdateFeedback('Please select a reason', 'error'); return; }
+
+      const freshItem = await window.poamWorkbookDB.getItem(itemId);
+      if (!freshItem) { showUpdateFeedback('Item not found', 'error'); return; }
+
+      const oldDue = freshItem['Updated Scheduled Completion Date'] || freshItem['Scheduled Completion Date'] || '';
+
+      freshItem['Updated Scheduled Completion Date'] = newDate;
+      freshItem._extensionCount = (freshItem._extensionCount || 0) + 1;
+      freshItem._extensionHistory = freshItem._extensionHistory || [];
+      freshItem._extensionHistory.push({
+        from: oldDue,
+        to: newDate,
+        date: new Date().toISOString(),
+        reason: reason,
+        justification: justification
+      });
+
+      // Change status to Extended if it was Delayed
+      if ((freshItem['Status'] || '').toLowerCase() === 'delayed') {
+        freshItem['Status'] = 'Extended';
+      }
+
+      freshItem.updatedAt = new Date().toISOString();
+      await window.poamWorkbookDB.saveItem(freshItem);
+      window.poamWorkbookNotifyMutation();
+
+      // Log audit event if available
+      if (typeof window.poamWorkbookLogAuditEvent === 'function') {
+        window.poamWorkbookLogAuditEvent('extension', {
+          itemId: itemId,
+          itemNumber: freshItem['Item number'],
+          from: oldDue,
+          to: newDate,
+          reason: reason,
+          justification: justification,
+          extensionCount: freshItem._extensionCount
+        });
+      }
+
+      await renderWorkbookSystemTable(freshItem.systemId);
+      await renderWorkbookOverview();
+      showUpdateFeedback(`Due date extended to ${newDate} (extension #${freshItem._extensionCount})`, 'success');
+      close();
+    } catch (e) {
+      console.error(e);
+      showUpdateFeedback(`Extension failed: ${e.message}`, 'error');
+    }
+  });
 }
 
 async function poamWorkbookCreateItem() {

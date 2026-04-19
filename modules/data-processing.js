@@ -1111,11 +1111,29 @@ function updateSelectedPOAMInfo() {
 
 // clearPOAMSelection defined above in typeahead section
 
-// Handle evidence file upload
+// Handle evidence file selection (shows preview only)
 function handleEvidenceUpload(event) {
     const files = event.target.files;
     if (!files || files.length === 0) return;
-    
+
+    // Show file preview
+    displaySelectedFiles(files);
+}
+
+// Submit evidence form — validates all fields and saves
+function submitEvidenceForm() {
+    const fileInput = document.getElementById('evidence-file-upload');
+    const files = fileInput ? fileInput.files : null;
+
+    if (!files || files.length === 0) {
+        if (typeof showUpdateFeedback === 'function') {
+            showUpdateFeedback('Please select at least one file to upload.', 'error');
+        } else {
+            alert('Please select at least one file to upload.');
+        }
+        return;
+    }
+
     // Validate required fields
     const poamId = document.getElementById('evidence-poam-select').value;
     const evidenceType = document.getElementById('evidence-type-select').value;
@@ -1123,28 +1141,34 @@ function handleEvidenceUpload(event) {
     const submitter = document.getElementById('evidence-submitter').value.trim();
     const date = document.getElementById('evidence-date').value;
     const description = document.getElementById('evidence-description').value.trim();
-    
+
     if (!poamId) {
-        alert('Please select a POAM to link this evidence to.');
-        event.target.value = '';
+        if (typeof showUpdateFeedback === 'function') {
+            showUpdateFeedback('Please select a POAM to link this evidence to.', 'error');
+        } else {
+            alert('Please select a POAM to link this evidence to.');
+        }
         return;
     }
-    
+
     if (!evidenceType) {
-        alert('Please select an evidence category.');
-        event.target.value = '';
+        if (typeof showUpdateFeedback === 'function') {
+            showUpdateFeedback('Please select an evidence category.', 'error');
+        } else {
+            alert('Please select an evidence category.');
+        }
         return;
     }
-    
+
     if (!owner || !submitter || !date || !description) {
-        alert('Please fill in all required fields:\n- Artifact Owner\n- Submitted By\n- Submission Date\n- Evidence Description');
-        event.target.value = '';
+        if (typeof showUpdateFeedback === 'function') {
+            showUpdateFeedback('Please fill in all required fields: Artifact Owner, Submitted By, Submission Date, Evidence Description', 'error');
+        } else {
+            alert('Please fill in all required fields:\n- Artifact Owner\n- Submitted By\n- Submission Date\n- Evidence Description');
+        }
         return;
     }
-    
-    // Show file preview
-    displaySelectedFiles(files);
-    
+
     // Process and save evidence
     saveEvidenceFiles(files);
 }
@@ -1374,13 +1398,13 @@ function updatePOAMTableRow(poamId) {
 
 // Show success message
 function showEvidenceUploadSuccess(fileCount, poamId, autoClosed) {
-    let message = `✅ Successfully uploaded ${fileCount} evidence file(s) for POAM ${poamId}`;
-    
+    let message = `Successfully uploaded ${fileCount} evidence file(s) for POAM ${poamId}`;
     if (autoClosed) {
-        message += `\n\n🎉 POAM ${poamId} has been automatically marked as COMPLETED!`;
+        message += `. POAM ${poamId} has been automatically marked as COMPLETED.`;
     }
-    
-    alert(message);
+    if (typeof showUpdateFeedback === 'function') {
+        showUpdateFeedback(message, 'success');
+    }
 }
 
 // Reset evidence form

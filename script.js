@@ -69,6 +69,15 @@ function showModule(moduleName) {
     // Load module-specific data
     if (moduleName === 'dashboard') {
         if (typeof loadDashboardMetrics === 'function') loadDashboardMetrics();
+        // Dynamic FY quarter tag
+        const fyTag = document.getElementById('dash-fy-quarter-tag');
+        if (fyTag) {
+            const now = new Date();
+            const month = now.getMonth(); // 0-11
+            const fy = month >= 9 ? now.getFullYear() + 1 : now.getFullYear();
+            const quarter = month >= 9 ? 1 : month >= 6 ? 4 : month >= 3 ? 3 : 2;
+            fyTag.textContent = `FY${fy} Q${quarter}`;
+        }
     } else if (moduleName === 'poam') {
         // Load POAM ID configuration when POAM Repository is shown
         loadPOAMIdConfig();
