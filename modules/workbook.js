@@ -1100,16 +1100,19 @@ async function renderWorkbookSystemTable(systemId) {
         <td class="px-3 py-2 text-xs text-slate-700 font-mono cursor-pointer" onclick="poamWorkbookOpenItemDetails('${id}')">
           <span class="hover:text-teal-700 hover:underline">${escapeHtml(item['Item number'] || '')}</span>${warningIcon}
         </td>
-        <td class="px-3 py-2 text-xs text-slate-600 font-mono">${escapeHtml(item['Weakness Source Identifier'] || '—')}</td>
         <td class="px-3 py-2 text-sm text-slate-900 cursor-pointer" onclick="poamWorkbookOpenItemDetails('${id}')">${escapeHtml(item['Vulnerability Name'] || '')}</td>
+        <td class="px-3 py-2 text-xs text-slate-700">${escapeHtml(item['Identifying Detecting Source'] || '')}</td>
+        <td class="px-3 py-2" onclick="event.stopPropagation()">
+          ${renderInlineSelect(id, 'POC Name', item['POC Name'], pocs)}
+        </td>
+        <td class="px-3 py-2 text-xs ${isOverdue ? 'text-red-700 font-semibold' : 'text-slate-700'}">
+          ${dueDate || '<span class="text-slate-400">—</span>'}
+        </td>
         <td class="px-3 py-2" onclick="event.stopPropagation()">
           ${renderInlineSelect(id, 'Severity Value', item['Severity Value'], severities)}
         </td>
         <td class="px-3 py-2" onclick="event.stopPropagation()">
           ${renderInlineSelect(id, 'Status', item['Status'], statuses)}
-        </td>
-        <td class="px-3 py-2" onclick="event.stopPropagation()">
-          ${renderInlineSelect(id, 'POC Name', item['POC Name'], pocs)}
         </td>
       </tr>
       `;
@@ -1117,7 +1120,7 @@ async function renderWorkbookSystemTable(systemId) {
     .join('');
 
   if (displayItems.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="7" class="px-4 py-8 text-center text-slate-500 text-sm">
+    tableBody.innerHTML = `<tr><td colspan="8" class="px-4 py-8 text-center text-slate-500 text-sm">
       ${items.length > 0 ? 'All items are completed or closed. Use the status filter to view them.' : 'No POAMs in this system yet.'}
     </td></tr>`;
   }
@@ -3040,7 +3043,6 @@ function toExcelDate(v) {
 
 window.POAM_WORKBOOK_COLUMNS = [
   'Item number',
-  'Weakness Source Identifier',
   'Impacted Security Controls',
   'Vulnerability Name',
   'Vulnerability Description',
