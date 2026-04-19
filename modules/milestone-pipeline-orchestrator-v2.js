@@ -777,13 +777,20 @@ class AuthoritativeMilestonePipeline {
     }
 
     mapSeverityToSLA(severity) {
-        const slaMap = {
-            'critical': 15,
-            'high': 30,
-            'medium': 90,
-            'low': 180
-        };
-        return slaMap[severity] || 90;
+        let slaMap = { critical: 15, high: 30, medium: 90, low: 180 };
+        try {
+            const saved = localStorage.getItem('slaConfig');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                slaMap = {
+                    critical: parseInt(parsed.critical) || 15,
+                    high: parseInt(parsed.high) || 30,
+                    medium: parseInt(parsed.medium) || 90,
+                    low: parseInt(parsed.low) || 180
+                };
+            }
+        } catch(e) { /* use defaults */ }
+        return slaMap[severity] || slaMap.medium;
     }
 
     mapSeverityToRisk(severity) {

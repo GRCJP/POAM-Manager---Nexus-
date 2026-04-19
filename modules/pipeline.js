@@ -257,13 +257,20 @@ class PipelineOrchestrator {
         const excludedFindings = [];
         const INACTIVE_STATUSES = ['fixed', 'closed', 'resolved', 'ignored', 'disabled'];
         
-        // Severity-based SLA thresholds (configurable, defaults to 15/30/90/180)
-        const SLA_CONFIG = {
-            critical: 15,
-            high: 30,
-            medium: 90,
-            low: 180
-        };
+        // Severity-based SLA thresholds (read from Settings, defaults to 15/30/90/180)
+        let SLA_CONFIG = { critical: 15, high: 30, medium: 90, low: 180 };
+        try {
+            const saved = localStorage.getItem('slaConfig');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                SLA_CONFIG = {
+                    critical: parseInt(parsed.critical) || 15,
+                    high: parseInt(parsed.high) || 30,
+                    medium: parseInt(parsed.medium) || 90,
+                    low: parseInt(parsed.low) || 180
+                };
+            }
+        } catch(e) { /* use defaults */ }
         const now = new Date();
 
         console.log(`🔍 PHASE 1: Processing ${rawVulnerabilities.length} raw findings`);
