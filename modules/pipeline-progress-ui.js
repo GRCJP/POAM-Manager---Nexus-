@@ -86,7 +86,7 @@ class PipelineProgressUI {
                             <span class="text-sm font-medium text-gray-900" id="overall-progress-percent">0%</span>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-3">
-                            <div id="overall-progress-bar" class="bg-teal-50 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            <div id="overall-progress-bar" class="bg-teal-700 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
                         </div>
                     </div>
 
@@ -303,35 +303,21 @@ class PipelineProgressUI {
         if (statusEl) {
             statusEl.innerHTML = `
                 <div class="text-green-600 font-medium">
-                    ✅ Pipeline completed successfully!
+                    Pipeline completed successfully.
                     ${detailsHtml}
-                    <div class="mt-3 text-xs text-gray-400">Auto-closing in <span id="close-countdown">4</span>s...</div>
-                    <div class="mt-2 flex gap-2 justify-center">
-                        <button type="button" onclick="showModule('dashboard'); document.getElementById('pipeline-progress-container')?.classList.add('hidden')" 
-                            class="px-4 py-2 text-sm font-semibold text-white bg-teal-50 rounded-lg hover:bg-teal-50 transition-colors">
-                            <i class="fas fa-chart-line mr-1"></i> Go to Dashboard
+                    <div class="mt-4 flex gap-2 justify-center">
+                        <button type="button" onclick="showModule('vulnerability-tracking'); document.getElementById('pipeline-progress-container')?.classList.add('hidden'); document.getElementById('pipeline-progress-overlay')?.remove();"
+                            class="px-4 py-2 text-sm font-semibold text-white bg-teal-700 rounded-lg hover:bg-teal-800 transition-colors">
+                            <i class="fas fa-list mr-1"></i> View Findings
                         </button>
-                        <button type="button" onclick="document.getElementById('pipeline-progress-container')?.classList.add('hidden')" 
+                        <button type="button" onclick="showModule('dashboard'); document.getElementById('pipeline-progress-container')?.classList.add('hidden'); document.getElementById('pipeline-progress-overlay')?.remove();"
                             class="px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-200 rounded-lg hover:bg-slate-300 transition-colors">
-                            Stay Here
+                            <i class="fas fa-chart-line mr-1"></i> Dashboard
                         </button>
                     </div>
                 </div>
             `;
         }
-
-        // Auto-close after 4 seconds
-        let countdown = 4;
-        const countdownInterval = setInterval(() => {
-            countdown--;
-            const el = document.getElementById('close-countdown');
-            if (el) el.textContent = countdown;
-            if (countdown <= 0) {
-                clearInterval(countdownInterval);
-                const container = document.getElementById('pipeline-progress-container');
-                if (container) container.classList.add('hidden');
-            }
-        }, 1000);
     }
 
     showError(error) {
