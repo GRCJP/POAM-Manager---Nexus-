@@ -1,6 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// WORKBOOK IMPORT PREVIEW & COLUMN MAPPING
-// Shows what will be imported before committing
+// WORKBOOK IMPORT — Modern single-progress-bar UI
 // ═══════════════════════════════════════════════════════════════
 
 async function showWorkbookImportPreview(file, systemId) {
@@ -10,231 +9,132 @@ async function showWorkbookImportPreview(file, systemId) {
         return;
     }
 
+    // Show minimal processing modal immediately
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full text-center">
+            <div style="width:56px;height:56px;margin:0 auto 20px;background:#E6F7F7;border-radius:50%;display:flex;align-items:center;justify-content:center">
+                <i class="fas fa-file-import" style="font-size:22px;color:#0D7377"></i>
+            </div>
+            <h2 class="text-lg font-bold text-slate-900 mb-1">Importing POAMs</h2>
+            <p id="import-status-text" class="text-sm text-slate-500 mb-6">${escapeHtml(file.name)}</p>
+            <div style="background:#F3F4F6;border-radius:999px;height:8px;overflow:hidden;margin-bottom:8px">
+                <div id="import-progress-bar" style="width:0%;height:100%;background:#0D7377;border-radius:999px;transition:width 0.3s ease"></div>
+            </div>
+            <div id="import-percent" class="text-xs font-semibold text-slate-500">0%</div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    const bar = modal.querySelector('#import-progress-bar');
+    const pct = modal.querySelector('#import-percent');
+    const statusText = modal.querySelector('#import-status-text');
+
+    const setProgress = (p, text) => {
+        const val = Math.min(100, Math.max(0, Math.round(p)));
+        bar.style.width = val + '%';
+        pct.textContent = val + '%';
+        if (text) statusText.textContent = text;
+    };
+
     try {
-        // Read the Excel file
-        const wb = await file.arrayBuffer().then(buf => XLSX.read(buf, { type: 'array', cellDates: true }));
-        const sheetName = wb.SheetNames[0];
-        if (!sheetName) throw new Error('Workbook has no sheets');
+        setProgress(10, 'Reading file...');
+        await new Promise(r => setTimeout(r, 80)); // allow UI to paint
 
-        const ws = wb.Sheets[sheetName];
-        const matrix = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
-        
-        if (!Array.isArray(matrix) || matrix.length < 2) {
-            throw new Error('No data rows found in workbook');
-        }
+        const result = await window.poamWorkbookImportXlsxSimple(file, systemId, (progress) => {
+            // Optional progress callback from import function
+            if (progress) setProgress(progress.pct, progress.text);
+        });
 
-        // Assume first row is headers
-        const headerRow = matrix[0];
-        const dataRows = matrix.slice(1, 6); // Show first 5 rows as preview
+        setProgress(100, 'Complete');
+        await new Promise(r => setTimeout(r, 300));
 
-        // Show preview modal
-        const modal = document.createElement('div');
-        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
-        modal.innerHTML = `
-            <div class="bg-white rounded-2xl p-6 max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-                <div class="flex items-start justify-between mb-4">
+        // Show summary
+        const hasErrors = result.errors && result.errors.length > 0;
+        const hasWarnings = result.warnings && result.warnings.length > 0;
+
+        const content = modal.querySelector('.bg-white');
+        content.style.maxWidth = '520px';
+        content.style.textAlign = 'left';
+        content.innerHTML = `
+            <div class="flex items-start justify-between mb-5">
+                <div class="flex items-center gap-3">
+                    <div style="width:40px;height:40px;background:#E6F7F7;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                        <i class="fas fa-check" style="color:#0D7377;font-size:16px"></i>
+                    </div>
                     <div>
-                        <h2 class="text-xl font-bold text-slate-900">Import Preview</h2>
-                        <p class="text-sm text-slate-500 mt-1">File: ${escapeHtml(file.name)} → System: ${escapeHtml(systemId)}</p>
-                    </div>
-                    <button id="close-preview-btn" class="text-slate-400 hover:text-slate-600">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm text-blue-800">
-                    <i class="fas fa-info-circle mr-2"></i>
-                    <strong>Preview:</strong> Showing first 5 rows. Total rows in file: ${matrix.length - 1}
-                </div>
-
-                <!-- Data Preview Table -->
-                <div class="flex-1 overflow-auto border border-slate-200 rounded-lg mb-4">
-                    <table class="min-w-full text-xs">
-                        <thead class="bg-slate-100 sticky top-0">
-                            <tr>
-                                ${headerRow.map((h, idx) => `
-                                    <th class="px-3 py-2 text-left font-semibold text-slate-700 border-r border-slate-200">
-                                        <div class="text-[10px] text-slate-500 mb-1">Col ${String.fromCharCode(65 + idx)}</div>
-                                        <div class="font-semibold">${escapeHtml(String(h || '').substring(0, 30))}</div>
-                                    </th>
-                                `).join('')}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${dataRows.map((row, rowIdx) => `
-                                <tr class="border-t border-slate-100 hover:bg-slate-50">
-                                    ${headerRow.map((h, colIdx) => `
-                                        <td class="px-3 py-2 border-r border-slate-100 text-slate-700">
-                                            ${escapeHtml(String(row[colIdx] || '').substring(0, 50))}
-                                        </td>
-                                    `).join('')}
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Column Mapping Info -->
-                <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-4">
-                    <h3 class="font-semibold text-slate-800 mb-2">Expected Column Headers:</h3>
-                    <div class="grid grid-cols-3 gap-2 text-xs">
-                        ${(window.POAM_WORKBOOK_COLUMNS || []).map(col => `
-                            <div class="bg-white px-2 py-1 rounded border border-slate-200">
-                                <i class="fas fa-check-circle text-green-600 mr-1"></i>${escapeHtml(col)}
-                            </div>
-                        `).join('')}
-                    </div>
-                    <p class="text-xs text-slate-600 mt-3">
-                        <i class="fas fa-lightbulb text-amber-500 mr-1"></i>
-                        <strong>Tip:</strong> Column headers should match these names (case-insensitive, flexible matching).
-                    </p>
-                </div>
-
-                <!-- Actions -->
-                <div class="flex justify-between items-center gap-3 pt-4 border-t">
-                    <div class="text-sm text-slate-600">
-                        Ready to import <strong>${matrix.length - 1}</strong> rows into system <strong>${escapeHtml(systemId)}</strong>
-                    </div>
-                    <div class="flex gap-3">
-                        <button id="cancel-import-btn" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">
-                            Cancel
-                        </button>
-                        <button id="proceed-import-btn" class="px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800">
-                            <i class="fas fa-upload mr-2"></i>Proceed with Import
-                        </button>
+                        <h2 class="text-lg font-bold text-slate-900">Import Complete</h2>
+                        <p class="text-xs text-slate-500">${escapeHtml(file.name)}</p>
                     </div>
                 </div>
+                <button onclick="this.closest('.fixed').remove()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px">
+                <div style="background:#E6F7F7;border-radius:8px;padding:12px;text-align:center">
+                    <div style="font-size:22px;font-weight:800;color:#0D7377">${result.saved}</div>
+                    <div style="font-size:10px;font-weight:700;color:#0A5E62;text-transform:uppercase;letter-spacing:0.5px">New</div>
+                </div>
+                <div style="background:#FFF7ED;border-radius:8px;padding:12px;text-align:center">
+                    <div style="font-size:22px;font-weight:800;color:#B45309">${result.updated}</div>
+                    <div style="font-size:10px;font-weight:700;color:#92400E;text-transform:uppercase;letter-spacing:0.5px">Updated</div>
+                </div>
+                <div style="background:#F3F4F6;border-radius:8px;padding:12px;text-align:center">
+                    <div style="font-size:22px;font-weight:800;color:#374151">${result.total}</div>
+                    <div style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px">Total Rows</div>
+                </div>
+            </div>
+
+            ${hasErrors ? `
+            <div style="background:#FFF5F5;border:1px solid #FECACA;border-radius:8px;padding:12px;margin-bottom:12px">
+                <div style="font-size:12px;font-weight:700;color:#991B1B;margin-bottom:6px"><i class="fas fa-exclamation-circle" style="margin-right:4px"></i>${result.errors.length} row(s) skipped</div>
+                <div style="max-height:80px;overflow-y:auto;font-size:11px;color:#DC2626">
+                    ${result.errors.map(e => `<div>Row ${e.row}: ${escapeHtml(e.message)}</div>`).join('')}
+                </div>
+            </div>` : ''}
+
+            ${hasWarnings ? `
+            <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:12px;margin-bottom:12px">
+                <div style="font-size:12px;font-weight:700;color:#92400E;margin-bottom:6px"><i class="fas fa-exclamation-triangle" style="margin-right:4px"></i>${result.warnings.length} row(s) with warnings</div>
+                <div style="max-height:100px;overflow-y:auto;font-size:11px;color:#B45309">
+                    ${result.warnings.map(w => `<div style="margin-bottom:4px"><strong>${escapeHtml(w.id)}</strong> (row ${w.row}): ${w.issues.map(i => escapeHtml(i)).join('; ')}</div>`).join('')}
+                </div>
+            </div>` : ''}
+
+            <div style="display:flex;justify-content:flex-end;padding-top:16px;border-top:1px solid #F3F4F6">
+                <button onclick="this.closest('.fixed').remove()" style="padding:8px 20px;background:#0D7377;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Done</button>
             </div>
         `;
 
-        document.body.appendChild(modal);
-
-        // Handle close button
-        modal.querySelector('#close-preview-btn').onclick = () => {
-            modal.remove();
-        };
-
-        // Handle cancel button
-        modal.querySelector('#cancel-import-btn').onclick = () => {
-            modal.remove();
-        };
-
-        // Handle clicking outside modal
-        modal.onclick = (e) => {
-            if (e.target === modal) {
-                modal.remove();
-            }
-        };
-
-        // Handle proceed button
-        modal.querySelector('#proceed-import-btn').onclick = async () => {
-            const btn = modal.querySelector('#proceed-import-btn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Importing...';
-
-            try {
-                const result = await window.poamWorkbookImportXlsxSimple(file, systemId);
-
-                // Show results in the modal instead of closing
-                const content = modal.querySelector('.bg-white');
-                let resultHtml = `
-                    <div class="flex items-start justify-between mb-4">
-                        <div>
-                            <h2 class="text-xl font-bold text-slate-900">Import Complete</h2>
-                            <p class="text-sm text-slate-500 mt-1">${escapeHtml(file.name)}</p>
-                        </div>
-                        <button onclick="this.closest('.fixed').remove()" class="text-slate-400 hover:text-slate-600">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-
-                    <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                        <div class="flex items-center gap-3 text-green-800">
-                            <i class="fas fa-check-circle text-xl"></i>
-                            <div>
-                                <div class="font-semibold">${result.saved} new POAMs imported${result.updated > 0 ? `, ${result.updated} updated` : ''}</div>
-                                <div class="text-sm text-green-700">${result.total} total rows processed</div>
-                            </div>
-                        </div>
-                    </div>`;
-
-                // Show errors
-                if (result.errors && result.errors.length > 0) {
-                    resultHtml += `
-                    <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                        <div class="font-semibold text-red-800 mb-2"><i class="fas fa-exclamation-circle mr-1"></i>${result.errors.length} row(s) skipped</div>
-                        <div class="max-h-32 overflow-y-auto text-xs text-red-700 space-y-1">
-                            ${result.errors.map(e => `<div>Row ${e.row}: ${escapeHtml(e.message)}</div>`).join('')}
-                        </div>
-                    </div>`;
-                }
-
-                // Show warnings
-                if (result.warnings && result.warnings.length > 0) {
-                    resultHtml += `
-                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
-                        <div class="font-semibold text-amber-800 mb-2"><i class="fas fa-exclamation-triangle mr-1"></i>${result.warnings.length} row(s) with warnings</div>
-                        <div class="max-h-40 overflow-y-auto text-xs text-amber-700 space-y-2">
-                            ${result.warnings.map(w => `<div><strong>${escapeHtml(w.id)}</strong> (row ${w.row}): ${w.issues.map(i => escapeHtml(i)).join('; ')}</div>`).join('')}
-                        </div>
-                    </div>`;
-                }
-
-                // Show header warnings
-                if (result.headerWarnings && result.headerWarnings.length > 0) {
-                    resultHtml += `
-                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-4 text-xs text-slate-600">
-                        ${result.headerWarnings.map(w => `<div><i class="fas fa-info-circle mr-1"></i>${escapeHtml(w)}</div>`).join('')}
-                    </div>`;
-                }
-
-                resultHtml += `
-                    <div class="flex justify-end pt-4 border-t">
-                        <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800">
-                            Done
-                        </button>
-                    </div>`;
-
-                content.innerHTML = resultHtml;
-
-                // Refresh workbook views
-                await renderWorkbookSidebarSystems();
-                await renderWorkbookOverview();
-                if (window.poamWorkbookState.activeTab === 'system') {
-                    await renderWorkbookSystemTable(window.poamWorkbookState.activeSystemId);
-                }
-            } catch (e) {
-                console.error('Import failed:', e);
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-upload mr-2"></i>Proceed with Import';
-                showUpdateFeedback(`Import failed: ${e.message}`, 'error');
-            }
-        };
+        // Refresh workbook views
+        await renderWorkbookSidebarSystems();
+        await renderWorkbookOverview();
+        if (window.poamWorkbookState.activeTab === 'system') {
+            await renderWorkbookSystemTable(window.poamWorkbookState.activeSystemId);
+        }
 
     } catch (error) {
-        console.error('Preview failed:', error);
-        showUpdateFeedback(`Preview failed: ${error.message}`, 'error');
+        console.error('Import failed:', error);
+        modal.remove();
+        showUpdateFeedback(`Import failed: ${error.message}`, 'error');
     }
 }
 
-// Replace the existing import handler
-async function poamWorkbookHandleImportInputWithPreview(evt) {
-    const input = evt.target;
-    const file = input.files && input.files[0];
+function poamWorkbookHandleImportInputWithPreview(evt) {
+    const file = evt?.target?.files?.[0];
     if (!file) return;
 
-    const systemId = window.poamWorkbookState.activeSystemId || 'default';
-    
-    try {
-        await showWorkbookImportPreview(file, systemId);
-    } catch (e) {
-        console.error(e);
-        showUpdateFeedback(`Preview failed: ${e.message}`, 'error');
-    } finally {
-        input.value = '';
+    const systemId = window.poamWorkbookState?.activeSystemId;
+    if (!systemId) {
+        showUpdateFeedback('Select a system before importing', 'error');
+        evt.target.value = '';
+        return;
     }
+
+    showWorkbookImportPreview(file, systemId);
+    evt.target.value = '';
 }
 
-// Export functions
 window.showWorkbookImportPreview = showWorkbookImportPreview;
 window.poamWorkbookHandleImportInputWithPreview = poamWorkbookHandleImportInputWithPreview;

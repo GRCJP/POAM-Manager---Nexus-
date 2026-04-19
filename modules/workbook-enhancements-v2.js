@@ -121,7 +121,19 @@ window.poamWorkbookFilterItems = function(items) {
       const allowed = statusGroups[filterStatus] || [filterStatus];
       if (!allowed.includes(itemStatus)) return false;
     }
-    
+
+    // Closed-within-days filter (only applies to completed items)
+    if (filters.closedWithinDays && filters.closedWithinDays > 0) {
+      const closedStr = String(item['Actual Completion Date'] || item.updatedAt || '').trim();
+      if (!closedStr) return false;
+      const closedDate = new Date(closedStr);
+      if (isNaN(closedDate.getTime())) return false;
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      closedDate.setHours(0, 0, 0, 0);
+      const daysAgo = Math.floor((today - closedDate) / 86400000);
+      if (daysAgo > filters.closedWithinDays) return false;
+    }
+
     // Severity filter
     if (filters.severity !== 'all') {
       const itemSeverity = String(item['Severity Value'] || '').trim();
@@ -178,20 +190,33 @@ window.poamWorkbookFilterItems = function(items) {
 window.poamWorkbookRenderQuickStatusPanel = function(items) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const thirtyDaysOut = new Date(today);
-  thirtyDaysOut.setDate(thirtyDaysOut.getDate() + 30);
-  
+
   let open = 0;
   let inProgress = 0;
-  let completed = 0;
+  let totalCompleted = 0;
   let overdue = 0;
+
+  // Count recently closed by time window
+  const closedDaysAgo = { 7: 0, 15: 0, 30: 0, 60: 0, 90: 0 };
 
   for (const item of items) {
     const status = String(item['Status'] || '').trim() || 'Open';
     const sl = status.toLowerCase();
 
     if (sl === 'completed' || sl === 'closed') {
-      completed++;
+      totalCompleted++;
+      // Check when it was completed for recent-closed counts
+      const closedStr = String(item['Actual Completion Date'] || item.updatedAt || '').trim();
+      if (closedStr) {
+        const closedDate = new Date(closedStr);
+        if (!isNaN(closedDate.getTime())) {
+          closedDate.setHours(0, 0, 0, 0);
+          const daysAgo = Math.floor((today - closedDate) / 86400000);
+          for (const window of [7, 15, 30, 60, 90]) {
+            if (daysAgo <= window) closedDaysAgo[window]++;
+          }
+        }
+      }
       continue;
     } else if (sl === 'risk accepted') {
       continue;
@@ -216,27 +241,53 @@ window.poamWorkbookRenderQuickStatusPanel = function(items) {
       open++;
     }
   }
-  
+
+  // Default closed window
+  const defaultWindow = 30;
+
   return `
-    <div class="grid grid-cols-4 gap-2 mb-4">
-      <div style="background:#E6F7F7;border:1px solid #CCEEEE" class="rounded-lg p-3 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.status='Open'; poamWorkbookApplyFilters()">
+    <div class="grid grid-cols-5 gap-2 mb-4">
+      <div style="background:#E6F7F7;border:1px solid #CCEEEE" class="rounded-lg p-3 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.status='Open'; window.poamWorkbookState.filters.dateRange='all'; poamWorkbookApplyFilters()">
         <div style="color:#0A5E62" class="text-xs font-semibold uppercase mb-1">Open</div>
         <div style="color:#0D7377" class="text-2xl font-bold">${open}</div>
       </div>
-      <div style="background:#FFF7ED;border:1px solid #FDE68A" class="rounded-lg p-3 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.status='In Progress'; poamWorkbookApplyFilters()">
+      <div style="background:#FFF7ED;border:1px solid #FDE68A" class="rounded-lg p-3 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.status='In Progress'; window.poamWorkbookState.filters.dateRange='all'; poamWorkbookApplyFilters()">
         <div style="color:#92400E" class="text-xs font-semibold uppercase mb-1">In Progress</div>
         <div style="color:#B45309" class="text-2xl font-bold">${inProgress}</div>
       </div>
-      <div style="background:#FFF5F5;border:1px solid #FECACA" class="rounded-lg p-3 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.dateRange='overdue'; poamWorkbookApplyFilters()">
-        <div style="color:#991B1B" class="text-xs font-semibold uppercase mb-1">Delayed</div>
+      <div style="background:#FFF5F5;border:1px solid #FECACA" class="rounded-lg p-3 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.status='all'; window.poamWorkbookState.filters.dateRange='overdue'; poamWorkbookApplyFilters()">
+        <div style="color:#991B1B" class="text-xs font-semibold uppercase mb-1">Overdue</div>
         <div style="color:#DC2626" class="text-2xl font-bold">${overdue}</div>
       </div>
-      <div style="background:#F3F4F6;border:1px solid #E2E4E8" class="rounded-lg p-3 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.status='Completed'; poamWorkbookApplyFilters()">
-        <div style="color:#374151" class="text-xs font-semibold uppercase mb-1">Completed</div>
-        <div style="color:#111827" class="text-2xl font-bold">${completed}</div>
+      <div style="background:#F3F4F6;border:1px solid #E2E4E8" class="rounded-lg p-3 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.status='Completed'; window.poamWorkbookState.filters.dateRange='all'; poamWorkbookApplyFilters()">
+        <div style="color:#374151" class="text-xs font-semibold uppercase mb-1">All Completed</div>
+        <div style="color:#111827" class="text-2xl font-bold">${totalCompleted}</div>
+      </div>
+      <div style="background:#E6F7F7;border:1px solid #CCEEEE" class="rounded-lg p-3 hover:shadow transition-shadow">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <div style="color:#0A5E62" class="text-xs font-semibold uppercase">Closed</div>
+          <select id="wb-closed-window" onchange="poamWorkbookUpdateClosedTile(this.value)" style="font-size:10px;border:1px solid #CCEEEE;border-radius:4px;padding:1px 4px;background:#fff;color:#0A5E62;font-weight:700;cursor:pointer;font-family:inherit">
+            <option value="7">7d</option>
+            <option value="15">15d</option>
+            <option value="30" selected>30d</option>
+            <option value="60">60d</option>
+            <option value="90">90d</option>
+          </select>
+        </div>
+        <div id="wb-closed-count" style="color:#0D7377;cursor:pointer" class="text-2xl font-bold" onclick="window.poamWorkbookState.filters.status='Completed'; window.poamWorkbookState.filters.closedWithinDays=parseInt(document.getElementById('wb-closed-window').value)||30; window.poamWorkbookState.filters.dateRange='all'; poamWorkbookApplyFilters()">${closedDaysAgo[defaultWindow]}</div>
+        <script>
+          window._closedDaysAgo = ${JSON.stringify(closedDaysAgo)};
+        </script>
       </div>
     </div>
   `;
+};
+
+window.poamWorkbookUpdateClosedTile = function(days) {
+  const el = document.getElementById('wb-closed-count');
+  if (el && window._closedDaysAgo) {
+    el.textContent = window._closedDaysAgo[days] || 0;
+  }
 };
 
 // ============================================================================
