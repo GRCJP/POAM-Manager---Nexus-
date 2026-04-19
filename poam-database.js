@@ -421,7 +421,12 @@ class POAMDatabase {
             totalAffectedAssets: poam.totalAffectedAssets || poam.affectedAssets?.length || 0,
             milestones: Array.isArray(poam.milestones) ? poam.milestones.slice(0, 10) : [],
             statusHistory: Array.isArray(poam.statusHistory) ? poam.statusHistory.slice(-50) : [],
-            lastScanDate: poam.lastScanDate || null
+            lastScanDate: poam.lastScanDate || null,
+            // Promotion tracking
+            promotedToWorkbook: poam.promotedToWorkbook || false,
+            promotedDate: poam.promotedDate || null,
+            promotedSystemId: poam.promotedSystemId || null,
+            promotedWorkbookItemId: poam.promotedWorkbookItemId || null
         };
     }
 
