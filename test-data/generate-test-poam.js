@@ -6,6 +6,7 @@ const XLSX = require('xlsx');
 
 const headers = [
   'Finding Identifier',
+  'Weakness Source Identifier',
   'Control Family',
   'Vulnerability Name',
   'Finding Description',
@@ -26,7 +27,7 @@ const headers = [
 
 const rows = [
   // Open - Critical
-  ['POAM-2024-001', 'CM', 'Apache HTTP Server 2.4.x Multiple Vulnerabilities',
+  ['POAM-2024-001', 'CVE-2024-24795', 'CM', 'Apache HTTP Server 2.4.x Multiple Vulnerabilities',
    'Apache HTTP Server versions prior to 2.4.59 contain multiple vulnerabilities including path traversal and SSRF.',
    'web-prod-01, web-prod-02, web-staging-01', '2024 Annual Security Assessment', 'David Washington',
    'Personnel', new Date(2025, 5, 15), '1. Patch testing (05/01/2025)\n2. Staging deployment (05/15/2025)\n3. Production rollout (06/15/2025)',
@@ -35,7 +36,7 @@ const rows = [
    'Patch approved by CAB. Waiting on maintenance window.'],
 
   // Open - High
-  ['POAM-2024-002', 'AC', 'Weak Password Policy on Domain Controllers',
+  ['POAM-2024-002', 'QID-38830', 'AC', 'Weak Password Policy on Domain Controllers',
    'Domain password policy does not enforce minimum 14-character passwords or MFA for privileged accounts.',
    'N/A', '2024 DHS ATO Assessment', 'Maria Rodriguez', 'Personnel, Funding',
    new Date(2025, 3, 30), '1. Policy update draft (03/01/2025)\n2. AD GPO changes (03/15/2025)\n3. User notification (04/01/2025)\n4. Enforcement (04/30/2025)',
@@ -44,7 +45,7 @@ const rows = [
    'Extended from original date due to MFA vendor procurement delays.'],
 
   // Open - Moderate
-  ['POAM-2024-003', 'AU', 'Insufficient Audit Log Retention',
+  ['POAM-2024-003', 'NIST-AU-11', 'AU', 'Insufficient Audit Log Retention',
    'System audit logs are retained for only 30 days. NIST 800-53 AU-11 requires minimum 1 year retention.',
    'N/A', 'Continuous Monitoring', 'Tom Chen', 'Funding',
    new Date(2025, 8, 30), '1. SIEM storage expansion (07/2025)\n2. Retention policy update (08/2025)\n3. Validation (09/2025)',
@@ -53,7 +54,7 @@ const rows = [
    ''],
 
   // Open - Low
-  ['POAM-2024-004', 'PE', 'Badge Reader Firmware Out of Date',
+  ['POAM-2024-004', '', 'PE', 'Badge Reader Firmware Out of Date',
    'Physical access badge readers in Building C are running firmware v2.1, current version is v3.4.',
    'Bldg-C badge readers (12 units)', 'Self-Assessment', 'Sarah Patel', 'Funding',
    new Date(2025, 11, 31), '1. Procure firmware licenses (10/2025)\n2. Schedule after-hours update (11/2025)\n3. Test and validate (12/2025)',
@@ -62,7 +63,7 @@ const rows = [
    'Low risk — compensating control: security camera coverage.'],
 
   // Completed
-  ['POAM-2024-005', 'SI', 'OpenSSL 3.0.x Heap Buffer Overflow (CVE-2022-3602)',
+  ['POAM-2024-005', 'CVE-2022-3602', 'SI', 'OpenSSL 3.0.x Heap Buffer Overflow (CVE-2022-3602)',
    'OpenSSL versions 3.0.0-3.0.6 are vulnerable to heap buffer overflow during X.509 certificate verification.',
    'app-server-01, app-server-02', '2024 Pen Test', 'David Washington', 'Personnel',
    new Date(2024, 11, 31), '1. Identify affected systems (10/2024)\n2. Test patches (11/2024)\n3. Deploy (12/2024)',
@@ -71,7 +72,7 @@ const rows = [
    'Verified via Qualys rescan on 12/20/2024. No remaining instances.'],
 
   // Completed
-  ['POAM-2024-006', 'IA', 'Default Credentials on Network Switches',
+  ['POAM-2024-006', 'QID-43012', 'IA', 'Default Credentials on Network Switches',
    'Three network switches found with factory default SNMP community strings.',
    'sw-floor2-01, sw-floor3-01, sw-floor3-02', 'HVA Assessment', 'Tom Chen', 'Personnel',
    new Date(2024, 9, 31), '1. Inventory switches (09/2024)\n2. Change credentials (10/2024)',
@@ -80,7 +81,7 @@ const rows = [
    'Completed ahead of schedule.'],
 
   // Risk Accepted
-  ['POAM-2024-007', 'SC', 'TLS 1.0/1.1 Enabled on Legacy Application',
+  ['POAM-2024-007', 'CVE-2011-3389', 'SC', 'TLS 1.0/1.1 Enabled on Legacy Application',
    'Legacy payroll application requires TLS 1.0 for client compatibility. Vendor EOL is 2026.',
    'payroll-legacy-01', 'Continuous Monitoring', 'Sarah Patel', 'Funding',
    new Date(2025, 5, 30), '1. Vendor engagement for upgrade path (Q1 2025)\n2. Migration planning (Q2 2025)',
@@ -89,7 +90,7 @@ const rows = [
    'Risk accepted by AO on 01/15/2025. Review scheduled for 06/2026.'],
 
   // Risk Accepted
-  ['POAM-2024-008', 'CM', 'Unsupported Operating System (Windows Server 2012 R2)',
+  ['POAM-2024-008', 'QID-91774', 'CM', 'Unsupported Operating System (Windows Server 2012 R2)',
    'Two servers running Windows Server 2012 R2 which reached end-of-life October 2023.',
    'legacy-db-01, legacy-db-02', 'Audit', 'Maria Rodriguez', 'Funding',
    new Date(2025, 2, 31), '1. Migration assessment (01/2025)\n2. New server provisioning (02/2025)\n3. Data migration (03/2025)',
@@ -99,7 +100,7 @@ const rows = [
    'Risk accepted with compensating controls. Migration funded in FY2025 Q3.'],
 
   // Delayed
-  ['POAM-2024-009', 'RA', 'Annual Risk Assessment Not Completed',
+  ['POAM-2024-009', '', 'RA', 'Annual Risk Assessment Not Completed',
    'Organization has not completed the required annual risk assessment per NIST 800-53 RA-3.',
    'N/A', '2024 DHS ATO Assessment', 'James Lee', 'Personnel, Funding',
    new Date(2025, 2, 31), '1. Contract assessor (01/2025)\n2. Conduct assessment (02/2025)\n3. Document findings (03/2025)',
@@ -109,7 +110,7 @@ const rows = [
    'Procurement in progress. Expected contract award 04/2025.'],
 
   // Open - Critical, multiple hosts
-  ['POAM-2024-010', 'SI', 'Missing Endpoint Detection and Response (EDR)',
+  ['POAM-2024-010', 'NIST-SI-3', 'SI', 'Missing Endpoint Detection and Response (EDR)',
    'Production servers lack EDR/XDR agent deployment. 15 of 42 servers have no endpoint protection.',
    'Multiple — see asset list', 'Continuous Monitoring', 'David Washington', 'Funding',
    new Date(2025, 6, 31), '1. EDR license procurement (04/2025)\n2. Pilot deployment (05/2025)\n3. Full rollout (06/2025)\n4. Validation (07/2025)',

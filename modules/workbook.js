@@ -1097,18 +1097,19 @@ async function renderWorkbookSystemTable(systemId) {
         <td class="px-3 py-2" onclick="event.stopPropagation()">
           <input type="checkbox" ${checked ? 'checked' : ''} onchange="poamWorkbookToggleRowSelection('${id}', this.checked)" />
         </td>
-        <td class="px-3 py-2 text-xs text-slate-700 font-mono">${escapeHtml(item['Item number'] || '')}${warningIcon}</td>
+        <td class="px-3 py-2 text-xs text-slate-700 font-mono cursor-pointer" onclick="poamWorkbookOpenItemDetails('${id}')">
+          <span class="hover:text-teal-700 hover:underline">${escapeHtml(item['Item number'] || '')}</span>${warningIcon}
+        </td>
         <td class="px-3 py-2 text-xs text-slate-600 font-mono">${escapeHtml(item['Weakness Source Identifier'] || '—')}</td>
         <td class="px-3 py-2 text-sm text-slate-900 cursor-pointer" onclick="poamWorkbookOpenItemDetails('${id}')">${escapeHtml(item['Vulnerability Name'] || '')}</td>
-        <td class="px-3 py-2 text-xs text-slate-700">${escapeHtml(item['Impacted Security Controls'] || '')}</td>
-        <td class="px-3 py-2">${sevBadge(item['Severity Value'])}</td>
-        <td class="px-3 py-2">${statusBadge(item['Status'])}</td>
-        <td class="px-3 py-2 text-xs ${isOverdue ? 'text-red-700 font-semibold' : 'text-slate-700'}">
-          ${dueDate || '<span class="text-slate-400">—</span>'}
+        <td class="px-3 py-2" onclick="event.stopPropagation()">
+          ${renderInlineSelect(id, 'Severity Value', item['Severity Value'], severities)}
         </td>
-        <td class="px-3 py-2 text-right" onclick="event.stopPropagation()">
-          <button onclick="showQuickEditPOAMModal('${id}', '${systemId}')" class="btn-sec text-xs px-2 py-1 mr-1" title="Quick Edit"><i class="fas fa-edit"></i></button>
-          <button onclick="poamWorkbookOpenItemDetails('${id}')" class="btn-sec text-xs px-2 py-1" title="View Details"><i class="fas fa-eye"></i></button>
+        <td class="px-3 py-2" onclick="event.stopPropagation()">
+          ${renderInlineSelect(id, 'Status', item['Status'], statuses)}
+        </td>
+        <td class="px-3 py-2" onclick="event.stopPropagation()">
+          ${renderInlineSelect(id, 'POC Name', item['POC Name'], pocs)}
         </td>
       </tr>
       `;
@@ -1116,7 +1117,7 @@ async function renderWorkbookSystemTable(systemId) {
     .join('');
 
   if (displayItems.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="9" class="px-4 py-8 text-center text-slate-500 text-sm">
+    tableBody.innerHTML = `<tr><td colspan="7" class="px-4 py-8 text-center text-slate-500 text-sm">
       ${items.length > 0 ? 'All items are completed or closed. Use the status filter to view them.' : 'No POAMs in this system yet.'}
     </td></tr>`;
   }
@@ -1315,8 +1316,10 @@ function poamWorkbookOpenBulkEditModal({ mode } = {}) {
 
 function renderInlineSelect(id, field, value, options) {
   const safeVal = value == null ? '' : String(value);
+  const hasMatch = options.some(o => String(o) === safeVal);
   return `
     <select class="w-full text-xs border border-slate-200 rounded px-2 py-1 bg-white" onchange="poamWorkbookInlineUpdate('${id}', '${escapeAttr(field)}', this.value)">
+      <option value="" ${!hasMatch ? 'selected' : ''}>—</option>
       ${options.map(o => {
         const v = String(o);
         return `<option value="${escapeAttr(v)}" ${v === safeVal ? 'selected' : ''}>${escapeHtml(v)}</option>`;
