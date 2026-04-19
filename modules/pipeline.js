@@ -38,7 +38,7 @@ class PipelineDatabase {
 
         // Fallback: open directly (version must match POAMDatabase.version)
         return new Promise((resolve, reject) => {
-            const request = indexedDB.open(this.dbName, 10);
+            const request = indexedDB.open(this.dbName, 12);
             
             request.onerror = () => reject(request.error);
             request.onsuccess = () => {
@@ -803,22 +803,34 @@ class PipelineOrchestrator {
         // Use merge logic if existing POAMs are present (re-import)
         let saved;
         console.log('🔍 PHASE 5: Fetching existing POAMs...');
-        const existingPOAMs = await window.poamDB.getAllPOAMs();
+        let existingPOAMs = [];
+        try {
+            existingPOAMs = await window.poamDB.getAllPOAMs();
+        } catch (e) {
+            console.warn('🔍 PHASE 5: Failed to fetch existing POAMs, treating as first import:', e.message);
+        }
         console.log('🔍 PHASE 5: Found', existingPOAMs.length, 'existing POAMs');
-        
+
         if (existingPOAMs.length > 0 && typeof window.mergePOAMsFromScan === 'function') {
             this.logger.info(`Re-import detected: ${existingPOAMs.length} existing POAMs. Merging...`);
             console.log('🔍 PHASE 5: Calling mergePOAMsFromScan...');
-            const mergeResult = await window.mergePOAMsFromScan(poamDrafts);
-            console.log('🔍 PHASE 5: Merge complete:', mergeResult.stats);
-            
-            console.log('🔍 PHASE 5: Calling addPOAMsBatch with', mergeResult.mergedPOAMs.length, 'POAMs...');
-            saved = await window.poamDB.addPOAMsBatch(mergeResult.mergedPOAMs);
-            console.log('🔍 PHASE 5: addPOAMsBatch complete:', saved);
-            
-            this.logger.info(`Merge complete: ${mergeResult.stats.created} new, ${mergeResult.stats.updated} updated, ${mergeResult.stats.autoResolved} auto-resolved`);
-            this.currentRun.counts.poamsMerged = mergeResult.stats.updated;
-            this.currentRun.counts.poamsAutoResolved = mergeResult.stats.autoResolved;
+            try {
+                const mergeResult = await window.mergePOAMsFromScan(poamDrafts);
+                console.log('🔍 PHASE 5: Merge complete:', mergeResult.stats);
+
+                console.log('🔍 PHASE 5: Calling addPOAMsBatch with', mergeResult.mergedPOAMs.length, 'POAMs...');
+                saved = await window.poamDB.addPOAMsBatch(mergeResult.mergedPOAMs);
+                console.log('🔍 PHASE 5: addPOAMsBatch complete:', saved);
+
+                this.logger.info(`Merge complete: ${mergeResult.stats.created} new, ${mergeResult.stats.updated} updated, ${mergeResult.stats.autoResolved} auto-resolved`);
+                this.currentRun.counts.poamsMerged = mergeResult.stats.updated || 0;
+                this.currentRun.counts.poamsAutoResolved = mergeResult.stats.autoResolved || 0;
+                this.currentRun.counts.poamsReopened = mergeResult.stats.reopened || 0;
+            } catch (mergeErr) {
+                console.error('🔍 PHASE 5: Merge failed, falling back to direct save:', mergeErr.message);
+                this.logger.warn(`Merge failed: ${mergeErr.message}. Falling back to direct save.`);
+                saved = await window.poamDB.addPOAMsBatch(poamDrafts);
+            }
         } else {
             console.log('🔍 PHASE 5: No merge needed, calling addPOAMsBatch directly with', poamDrafts.length, 'POAMs...');
             saved = await window.poamDB.addPOAMsBatch(poamDrafts);
