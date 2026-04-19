@@ -13,11 +13,7 @@ async function poamWorkbookImportXlsxSimple(file, systemId) {
   const wb = await file.arrayBuffer().then(buf => XLSX.read(buf, { type: 'array', cellDates: true }));
   if (!wb.SheetNames || wb.SheetNames.length === 0) throw new Error('Workbook has no sheets');
 
-  // Use first sheet by index, not by name
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: true, blankrows: true });
-
-  if (!Array.isArray(rows) || rows.length < 2) throw new Error('No data rows found');
+  console.log('Workbook sheets:', wb.SheetNames);
 
   // ── Positional column map (A=0 … Q=16) ──
   const POSITIONAL_MAP = [
@@ -105,51 +101,83 @@ async function poamWorkbookImportXlsxSimple(file, systemId) {
     return null;
   };
 
-  // ── Find header row ──
+  // ── Scan ALL sheets to find the best POAM table ──
   let headerRowIdx = -1;
-  let columnMap = null; // index → canonical field name
+  let columnMap = null;
+  let rows = null;
+  let bestSheetName = null;
+  let bestScore = 0;
   const warnings = [];
 
-  // Try to find a header row in the first 10 rows
-  for (let i = 0; i < Math.min(10, rows.length); i++) {
-    const row = rows[i] || [];
-    let matchCount = 0;
-    const testMap = [];
-    for (let c = 0; c < row.length; c++) {
-      const match = fuzzyMatch(normalizeHeader(row[c]));
-      testMap.push(match);
-      if (match) matchCount++;
+  for (const sheetName of wb.SheetNames) {
+    const ws = wb.Sheets[sheetName];
+    const sheetRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: true, blankrows: true });
+    if (!Array.isArray(sheetRows) || sheetRows.length < 2) {
+      console.log(`Sheet "${sheetName}": ${sheetRows?.length || 0} rows — skipping`);
+      continue;
     }
-    if (matchCount >= 5) {
-      headerRowIdx = i;
-      columnMap = testMap;
-      console.log(`Header found at row ${i} (${matchCount} columns matched)`);
-      break;
+
+    // Try to find a header row in the first 15 rows of this sheet
+    for (let i = 0; i < Math.min(15, sheetRows.length); i++) {
+      const row = sheetRows[i] || [];
+      let matchCount = 0;
+      const testMap = [];
+      for (let c = 0; c < row.length; c++) {
+        const match = fuzzyMatch(normalizeHeader(row[c]));
+        testMap.push(match);
+        if (match) matchCount++;
+      }
+      if (matchCount > bestScore) {
+        bestScore = matchCount;
+        bestSheetName = sheetName;
+        headerRowIdx = i;
+        columnMap = testMap;
+        rows = sheetRows;
+        console.log(`Sheet "${sheetName}" row ${i}: ${matchCount} columns matched (new best)`);
+      }
     }
   }
 
-  // Positional fallback for 17-column files with no recognizable header
-  if (headerRowIdx === -1) {
-    const firstRow = rows[0] || [];
-    if (firstRow.length >= 15 && firstRow.length <= 20) {
-      // Check if row 0 looks like data (first cell is an ID-like string)
-      const firstCell = String(firstRow[0] || '').trim();
-      const looksLikeData = firstCell && !/finding|item|poam|control|vulnerability/i.test(firstCell);
-      if (looksLikeData) {
-        // No header row — use positional mapping, data starts at row 0
-        headerRowIdx = -1;
-        columnMap = POSITIONAL_MAP.slice(0, firstRow.length);
-        warnings.push('No header row detected — using positional column mapping (A-Q)');
-        console.log('Using positional mapping, data starts at row 0');
+  // If we found a good match (5+ columns), use it
+  if (bestScore >= 5) {
+    console.log(`Using sheet "${bestSheetName}" row ${headerRowIdx} (${bestScore} columns matched)`);
+  } else {
+    // Fallback: use the sheet with the most data rows
+    console.log(`No strong header match (best: ${bestScore}). Trying positional fallback...`);
+    let mostRows = 0;
+    for (const sheetName of wb.SheetNames) {
+      const ws = wb.Sheets[sheetName];
+      const sheetRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: true, blankrows: true });
+      if (Array.isArray(sheetRows) && sheetRows.length > mostRows) {
+        mostRows = sheetRows.length;
+        rows = sheetRows;
+        bestSheetName = sheetName;
       }
     }
-    if (!columnMap) {
-      // Last resort: assume row 0 is header, use positional
+
+    if (!rows || rows.length < 2) throw new Error('No data rows found in any sheet');
+
+    const firstRow = rows[0] || [];
+    if (firstRow.length >= 10 && firstRow.length <= 25) {
+      const firstCell = String(firstRow[0] || '').trim();
+      const looksLikeData = firstCell && !/finding|item|poam|control|vulnerability|weakness/i.test(firstCell);
+      if (looksLikeData) {
+        headerRowIdx = -1;
+        columnMap = POSITIONAL_MAP.slice(0, firstRow.length);
+        warnings.push(`No header row detected in "${bestSheetName}" — using positional column mapping`);
+      } else {
+        headerRowIdx = 0;
+        columnMap = POSITIONAL_MAP.slice(0, firstRow.length);
+        warnings.push(`Weak header match in "${bestSheetName}" — using positional column mapping`);
+      }
+    } else {
       headerRowIdx = 0;
       columnMap = POSITIONAL_MAP.slice();
-      warnings.push('Weak header match — falling back to positional column mapping');
+      warnings.push(`Using positional mapping on "${bestSheetName}"`);
     }
   }
+
+  if (!rows) throw new Error('No usable sheet found in workbook');
 
   // Log full header mapping for debugging
   console.log('Column mapping result:');
