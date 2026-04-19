@@ -187,9 +187,10 @@ class POAMDatabase {
             console.log(`📦 STORAGE: Used ${usedMB}MB / ${quotaMB}MB (${availMB}MB available)`);
         }
 
-        // Clear ALL stores before import to free storage from previous failed imports
-        console.log('📦 addPOAMsBatch: Clearing ALL stores to free storage...');
-        const storesToClear = ['poams', 'poamScanSummaries', 'scans', 'scanRuns', 'phaseArtifacts'];
+        // Clear data stores before import (full replace strategy)
+        // Keep scanRuns for scan history — only clear POAMs and temp artifacts
+        console.log('📦 addPOAMsBatch: Clearing POAM stores...');
+        const storesToClear = ['poams', 'poamScanSummaries', 'phaseArtifacts'];
         for (const storeName of storesToClear) {
             if (this.db.objectStoreNames.contains(storeName)) {
                 try {
@@ -384,7 +385,7 @@ class POAMDatabase {
             isPriority: poam.isPriority || false,
 
             // Data preservation
-            affectedAssets: poam.affectedAssets ? this.transformAssetsWithMetadata(poam.affectedAssets) : [],
+            affectedAssets: Array.isArray(poam.affectedAssets) ? this.transformAssetsWithMetadata(poam.affectedAssets) : [],
             totalAffectedAssets: poam.totalAffectedAssets || poam.affectedAssets?.length || 0,
 
             // Milestones (embedded on POAM for POAM Detail view)
