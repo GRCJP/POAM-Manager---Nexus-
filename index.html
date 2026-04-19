@@ -2155,7 +2155,10 @@
                             <input type="file" accept=".xlsx" class="hidden" onchange="poamWorkbookHandleImportInputWithPreview(event)">
                         </label>
                         <button onclick="poamWorkbookOpenPasteModal()" class="px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-lg hover:bg-slate-50 text-sm font-semibold">
-                            <i class="fas fa-paste mr-2 text-teal-700"></i>Paste POAMs
+                            <i class="fas fa-paste mr-2 text-teal-700"></i>Paste
+                        </button>
+                        <button onclick="poamWorkbookToggleInlineEntry()" class="px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-lg hover:bg-slate-50 text-sm font-semibold">
+                            <i class="fas fa-plus-circle mr-2 text-teal-700"></i>Quick Add
                         </button>
                         <button onclick="poamWorkbookExportSystem()" class="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 text-sm font-semibold">
                             <i class="fas fa-file-export mr-2"></i>Export Current System
@@ -2315,6 +2318,50 @@
                                     <button onclick="poamWorkbookClearSelection()" class="px-3 py-2 text-slate-600 hover:text-slate-800 text-sm font-semibold">
                                         Clear
                                     </button>
+                                </div>
+                            </div>
+
+                            <!-- Inline Quick Add Panel -->
+                            <div id="wb-inline-entry" class="hidden mb-4 bg-white border-2 border-teal-200 rounded-xl overflow-hidden">
+                                <div class="px-4 py-3 bg-teal-50 border-b border-teal-200 flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <i class="fas fa-plus-circle text-teal-700"></i>
+                                        <span class="text-sm font-bold text-teal-900">Quick Add Findings</span>
+                                        <span id="wb-inline-count" class="text-xs text-teal-700 bg-teal-100 px-2 py-0.5 rounded-full">0 rows</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button onclick="poamWorkbookInlineAddRow()" class="px-3 py-1.5 bg-white border border-teal-300 text-teal-800 rounded-lg hover:bg-teal-50 text-xs font-semibold">
+                                            <i class="fas fa-plus mr-1"></i>Add Row
+                                        </button>
+                                        <button onclick="poamWorkbookInlineSaveAll()" class="px-3 py-1.5 bg-teal-700 text-white rounded-lg hover:bg-teal-800 text-xs font-semibold">
+                                            <i class="fas fa-save mr-1"></i>Save All
+                                        </button>
+                                        <button onclick="poamWorkbookToggleInlineEntry()" class="text-slate-400 hover:text-slate-600">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full text-sm">
+                                        <thead class="bg-slate-50 border-b border-slate-200">
+                                            <tr>
+                                                <th class="px-2 py-2 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider w-8">#</th>
+                                                <th class="px-2 py-2 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Vulnerability Name</th>
+                                                <th class="px-2 py-2 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider w-20">Control</th>
+                                                <th class="px-2 py-2 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider w-28">Severity</th>
+                                                <th class="px-2 py-2 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider w-28">Status</th>
+                                                <th class="px-2 py-2 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Finding Source</th>
+                                                <th class="px-2 py-2 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider w-28">Due Date</th>
+                                                <th class="px-2 py-2 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider w-10"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="wb-inline-entry-body">
+                                            <!-- Rows added dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="px-4 py-2 bg-slate-50 border-t border-slate-200 text-xs text-slate-500">
+                                    Tab between cells. Enter on last cell adds a new row. Fill what you have — only Vulnerability Name is required.
                                 </div>
                             </div>
 

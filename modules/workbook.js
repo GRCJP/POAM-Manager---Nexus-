@@ -2892,6 +2892,163 @@ window.POAM_WORKBOOK_ENUMS = {
   statusValues: ['Open', 'In Progress', 'Completed', 'Risk Accepted', 'Extended', 'Closed', 'Ongoing', 'Delayed']
 };
 
+// ── Inline Quick Add ──
+let _inlineRowCounter = 0;
+
+function poamWorkbookToggleInlineEntry() {
+  const panel = document.getElementById('wb-inline-entry');
+  if (!panel) return;
+  const isHidden = panel.classList.contains('hidden');
+  if (isHidden) {
+    panel.classList.remove('hidden');
+    _inlineRowCounter = 0;
+    const tbody = document.getElementById('wb-inline-entry-body');
+    if (tbody) tbody.innerHTML = '';
+    poamWorkbookInlineAddRow();
+    poamWorkbookInlineAddRow();
+    poamWorkbookInlineAddRow();
+  } else {
+    panel.classList.add('hidden');
+  }
+}
+
+function poamWorkbookInlineAddRow() {
+  const tbody = document.getElementById('wb-inline-entry-body');
+  if (!tbody) return;
+  _inlineRowCounter++;
+  const idx = _inlineRowCounter;
+  const sevOpts = (window.POAM_WORKBOOK_ENUMS?.severityValues || []).map(v => `<option value="${v}">${v}</option>`).join('');
+  const statusOpts = (window.POAM_WORKBOOK_ENUMS?.statusValues || []).map(v => `<option value="${v}">${v}</option>`).join('');
+  const sourceOpts = (window.POAM_WORKBOOK_ENUMS?.detectingSources || []).map(v => `<option value="${v}">${v}</option>`).join('');
+
+  const tr = document.createElement('tr');
+  tr.className = 'border-b border-slate-100';
+  tr.id = `wb-inline-row-${idx}`;
+  tr.innerHTML = `
+    <td class="px-2 py-1.5 text-xs text-slate-400 text-center">${idx}</td>
+    <td class="px-2 py-1.5"><input type="text" class="wb-inline-field w-full px-2 py-1.5 border border-slate-200 rounded text-sm focus:border-teal-500 focus:outline-none" data-field="Vulnerability Name" placeholder="Required"></td>
+    <td class="px-2 py-1.5"><input type="text" class="wb-inline-field w-full px-2 py-1.5 border border-slate-200 rounded text-sm focus:border-teal-500 focus:outline-none" data-field="Impacted Security Controls" placeholder="e.g. CM"></td>
+    <td class="px-2 py-1.5"><select class="wb-inline-field w-full px-2 py-1.5 border border-slate-200 rounded text-sm focus:border-teal-500 focus:outline-none" data-field="Severity Value"><option value="">--</option>${sevOpts}</select></td>
+    <td class="px-2 py-1.5"><select class="wb-inline-field w-full px-2 py-1.5 border border-slate-200 rounded text-sm focus:border-teal-500 focus:outline-none" data-field="Status"><option value="Open">Open</option>${statusOpts}</select></td>
+    <td class="px-2 py-1.5"><select class="wb-inline-field w-full px-2 py-1.5 border border-slate-200 rounded text-sm focus:border-teal-500 focus:outline-none" data-field="Identifying Detecting Source"><option value="">--</option>${sourceOpts}</select></td>
+    <td class="px-2 py-1.5"><input type="date" class="wb-inline-field w-full px-2 py-1.5 border border-slate-200 rounded text-sm focus:border-teal-500 focus:outline-none" data-field="Scheduled Completion Date"></td>
+    <td class="px-2 py-1.5 text-center"><button onclick="this.closest('tr').remove(); poamWorkbookInlineUpdateCount()" class="text-slate-400 hover:text-red-600 text-xs"><i class="fas fa-trash-alt"></i></button></td>
+  `;
+  tbody.appendChild(tr);
+
+  // Focus the vulnerability name field of the new row
+  const nameInput = tr.querySelector('input[data-field="Vulnerability Name"]');
+  if (nameInput) nameInput.focus();
+
+  // Add Enter key handler on the last field to add a new row
+  const lastField = tr.querySelector('input[data-field="Scheduled Completion Date"]');
+  if (lastField) {
+    lastField.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        poamWorkbookInlineAddRow();
+      }
+    });
+  }
+
+  poamWorkbookInlineUpdateCount();
+}
+
+function poamWorkbookInlineUpdateCount() {
+  const tbody = document.getElementById('wb-inline-entry-body');
+  const countEl = document.getElementById('wb-inline-count');
+  if (tbody && countEl) {
+    const rows = tbody.querySelectorAll('tr').length;
+    countEl.textContent = `${rows} row${rows !== 1 ? 's' : ''}`;
+  }
+}
+
+async function poamWorkbookInlineSaveAll() {
+  const tbody = document.getElementById('wb-inline-entry-body');
+  if (!tbody) return;
+
+  const systemId = window.poamWorkbookState?.activeSystemId;
+  if (!systemId) {
+    showUpdateFeedback('Select a system first', 'error');
+    return;
+  }
+
+  const rows = tbody.querySelectorAll('tr');
+  let saved = 0;
+  let skipped = 0;
+
+  for (const tr of rows) {
+    const fields = tr.querySelectorAll('.wb-inline-field');
+    const data = {};
+    fields.forEach(f => {
+      const key = f.getAttribute('data-field');
+      data[key] = (f.value || '').trim();
+    });
+
+    // Skip rows with no vulnerability name
+    if (!data['Vulnerability Name']) {
+      skipped++;
+      continue;
+    }
+
+    const itemNumber = typeof window.poamWorkbookDB.getNextItemNumber === 'function'
+      ? String(await window.poamWorkbookDB.getNextItemNumber(systemId))
+      : String(Date.now());
+
+    const item = {
+      id: `WB-${systemId}-${Date.now()}-${saved}`,
+      systemId,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      'Item number': itemNumber,
+      'Vulnerability Name': data['Vulnerability Name'] || '',
+      'Vulnerability Description': '',
+      'Detection Date': new Date().toISOString().split('T')[0],
+      'Impacted Security Controls': data['Impacted Security Controls'] || '',
+      'Office/Org': '',
+      'POC Name': '',
+      'Identifying Detecting Source': data['Identifying Detecting Source'] || '',
+      'Mitigations': '',
+      'Severity Value': data['Severity Value'] || '',
+      'Resources Required': '',
+      'Scheduled Completion Date': data['Scheduled Completion Date'] || '',
+      'Milestone with Completion Dates': '',
+      'Milestone Changes': '',
+      'Updated Scheduled Completion Date': '',
+      'Actual Completion Date': '',
+      'Affected Components/URLs': '',
+      'Status': data['Status'] || 'Open',
+      'Comments': ''
+    };
+
+    await window.poamWorkbookDB.saveItem(item);
+    saved++;
+  }
+
+  if (saved === 0) {
+    showUpdateFeedback('No findings to save — fill in at least one Vulnerability Name', 'error');
+    return;
+  }
+
+  if (typeof window.poamWorkbookNotifyMutation === 'function') {
+    window.poamWorkbookNotifyMutation();
+  }
+
+  showUpdateFeedback(`Added ${saved} finding${saved !== 1 ? 's' : ''}${skipped > 0 ? ` (${skipped} empty rows skipped)` : ''}`, 'success');
+
+  // Close the panel and refresh
+  document.getElementById('wb-inline-entry')?.classList.add('hidden');
+  await renderWorkbookOverview();
+  if (window.poamWorkbookState.activeTab === 'system') {
+    await renderWorkbookSystemTable(systemId);
+  }
+}
+
+window.poamWorkbookToggleInlineEntry = poamWorkbookToggleInlineEntry;
+window.poamWorkbookInlineAddRow = poamWorkbookInlineAddRow;
+window.poamWorkbookInlineUpdateCount = poamWorkbookInlineUpdateCount;
+window.poamWorkbookInlineSaveAll = poamWorkbookInlineSaveAll;
+
 window.POAM_WORKBOOK_INTERNAL_FIELDS = {
   assetsImpacted: 'Assets Impacted'
 };
