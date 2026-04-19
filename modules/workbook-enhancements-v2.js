@@ -107,12 +107,19 @@ window.poamWorkbookFilterItems = function(items) {
       if (!itemControl.startsWith(filterCF)) return false;
     }
 
-    // Status filter (case-insensitive, treat Closed=Completed)
+    // Status filter (group related statuses)
     if (filters.status !== 'all') {
       const itemStatus = String(item['Status'] || '').trim().toLowerCase();
-      let filterStatus = filters.status.toLowerCase();
-      if (filterStatus === 'closed') filterStatus = 'completed';
-      if (itemStatus !== filterStatus) return false;
+      const filterStatus = filters.status.toLowerCase();
+      const statusGroups = {
+        'open': ['open', 'ongoing'],
+        'in progress': ['in progress'],
+        'delayed': ['delayed', 'extended'],
+        'completed': ['completed', 'closed'],
+        'risk accepted': ['risk accepted']
+      };
+      const allowed = statusGroups[filterStatus] || [filterStatus];
+      if (!allowed.includes(itemStatus)) return false;
     }
     
     // Severity filter
@@ -177,31 +184,36 @@ window.poamWorkbookRenderQuickStatusPanel = function(items) {
   let open = 0;
   let inProgress = 0;
   let completed = 0;
-  let delayed = 0;
-  
+  let overdue = 0;
+
   for (const item of items) {
     const status = String(item['Status'] || '').trim() || 'Open';
-    
-    if (status === 'Completed') {
+    const sl = status.toLowerCase();
+
+    if (sl === 'completed' || sl === 'closed') {
       completed++;
-    } else if (status === 'In Progress') {
-      inProgress++;
-    } else if (status === 'Delayed') {
-      delayed++;
-    } else if (status === 'Open') {
-      open++;
+      continue;
+    } else if (sl === 'risk accepted') {
+      continue;
     }
-    
-    // Check if overdue (counts as delayed)
+
+    // Check if overdue
     const dueStr = String(item['Updated Scheduled Completion Date'] || item['Scheduled Completion Date'] || '').trim();
-    if (dueStr && status !== 'Completed') {
+    let isOverdue = false;
+    if (dueStr) {
       const dueDate = new Date(dueStr);
       if (!isNaN(dueDate.getTime())) {
         dueDate.setHours(0, 0, 0, 0);
-        if (dueDate < today) {
-          delayed++;
-        }
+        if (dueDate < today) isOverdue = true;
       }
+    }
+
+    if (sl === 'delayed' || sl === 'extended' || isOverdue) {
+      overdue++;
+    } else if (sl === 'in progress') {
+      inProgress++;
+    } else {
+      open++;
     }
   }
   
@@ -217,7 +229,7 @@ window.poamWorkbookRenderQuickStatusPanel = function(items) {
       </div>
       <div style="background:#FFF5F5;border:1px solid #FECACA" class="rounded-lg p-3 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.dateRange='overdue'; poamWorkbookApplyFilters()">
         <div style="color:#991B1B" class="text-xs font-semibold uppercase mb-1">Delayed</div>
-        <div style="color:#DC2626" class="text-2xl font-bold">${delayed}</div>
+        <div style="color:#DC2626" class="text-2xl font-bold">${overdue}</div>
       </div>
       <div style="background:#F3F4F6;border:1px solid #E2E4E8" class="rounded-lg p-3 cursor-pointer hover:shadow transition-shadow" onclick="window.poamWorkbookState.filters.status='Completed'; poamWorkbookApplyFilters()">
         <div style="color:#374151" class="text-xs font-semibold uppercase mb-1">Completed</div>
