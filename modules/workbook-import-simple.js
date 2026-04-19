@@ -56,11 +56,13 @@ async function poamWorkbookImportXlsxSimple(file, systemId) {
     if (has('poam') && has('number'))          return 'Item number';
     if (has('poam') && has('item'))            return 'Item number';
     if (norm === 'id' || norm === 'no' || norm === 'number') return 'Item number';
+    if (has('weakness') && (has('source') || has('identifier'))) return 'Weakness Source Identifier';
+    if (norm === 'cve' || norm === 'qid')     return 'Weakness Source Identifier';
     if (has('control') && has('family'))       return 'Impacted Security Controls';
     if (has('security') && has('control'))     return 'Impacted Security Controls';
     if (has('vulnerability') && has('name'))   return 'Vulnerability Name';
     if (has('weakness') && has('name'))        return 'Vulnerability Name';
-    if (has('weakness') && !has('desc'))       return 'Vulnerability Name';
+    if (has('weakness') && !has('desc') && !has('source') && !has('identifier')) return 'Vulnerability Name';
     if (has('finding') && has('name'))         return 'Vulnerability Name';
     if (has('finding') && has('title'))        return 'Vulnerability Name';
     if (has('poam') && has('title'))           return 'Vulnerability Name';

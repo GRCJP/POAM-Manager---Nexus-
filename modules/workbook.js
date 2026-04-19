@@ -450,6 +450,12 @@ function poamWorkbookHeaderAliases() {
     ['poam id', 'Item number'],
     ['poam number', 'Item number'],
     ['id', 'Item number'],
+    ['weakness source identifier', 'Weakness Source Identifier'],
+    ['weakness id', 'Weakness Source Identifier'],
+    ['weakness identifier', 'Weakness Source Identifier'],
+    ['source identifier', 'Weakness Source Identifier'],
+    ['cve', 'Weakness Source Identifier'],
+    ['qid', 'Weakness Source Identifier'],
     ['vulnerability name', 'Vulnerability Name'],
     ['vulnerability description', 'Vulnerability Description'],
     ['detection date', 'Detection Date'],
@@ -1072,25 +1078,18 @@ async function renderWorkbookSystemTable(systemId) {
         <td class="px-3 py-2" onclick="event.stopPropagation()">
           <input type="checkbox" ${checked ? 'checked' : ''} onchange="poamWorkbookToggleRowSelection('${id}', this.checked)" />
         </td>
-        <td class="px-3 py-2 text-xs text-slate-700 font-mono">
-          <div class="flex items-center gap-2">
-            ${escapeHtml(item['Item number'] || '')}
-            <button onclick="event.stopPropagation(); showQuickEditPOAMModal('${id}', '${systemId}')"
-                    class="opacity-0 group-hover:opacity-100 transition-opacity text-teal-700 hover:text-teal-900"
-                    title="Quick Edit">
-              <i class="fas fa-edit text-xs"></i>
-            </button>
-          </div>
-        </td>
+        <td class="px-3 py-2 text-xs text-slate-700 font-mono">${escapeHtml(item['Item number'] || '')}</td>
+        <td class="px-3 py-2 text-xs text-slate-600 font-mono">${escapeHtml(item['Weakness Source Identifier'] || '—')}</td>
         <td class="px-3 py-2 text-sm text-slate-900 cursor-pointer" onclick="poamWorkbookOpenItemDetails('${id}')">${escapeHtml(item['Vulnerability Name'] || '')}</td>
         <td class="px-3 py-2 text-xs text-slate-700">${escapeHtml(item['Impacted Security Controls'] || '')}</td>
         <td class="px-3 py-2">${sevBadge(item['Severity Value'])}</td>
         <td class="px-3 py-2">${statusBadge(item['Status'])}</td>
-        <td class="px-3 py-2" onclick="event.stopPropagation()">
-          ${renderInlineSelect(id, 'POC Name', item['POC Name'], pocs)}
-        </td>
         <td class="px-3 py-2 text-xs ${isOverdue ? 'text-red-700 font-semibold' : 'text-slate-700'}">
           ${dueDate || '<span class="text-slate-400">—</span>'}
+        </td>
+        <td class="px-3 py-2 text-right" onclick="event.stopPropagation()">
+          <button onclick="showQuickEditPOAMModal('${id}', '${systemId}')" class="btn-sec text-xs px-2 py-1 mr-1" title="Quick Edit"><i class="fas fa-edit"></i></button>
+          <button onclick="poamWorkbookOpenItemDetails('${id}')" class="btn-sec text-xs px-2 py-1" title="View Details"><i class="fas fa-eye"></i></button>
         </td>
       </tr>
       `;
@@ -1098,7 +1097,7 @@ async function renderWorkbookSystemTable(systemId) {
     .join('');
 
   if (displayItems.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="8" class="px-4 py-8 text-center text-slate-500 text-sm">
+    tableBody.innerHTML = `<tr><td colspan="9" class="px-4 py-8 text-center text-slate-500 text-sm">
       ${items.length > 0 ? 'All items are completed or closed. Use the status filter to view them.' : 'No POAMs in this system yet.'}
     </td></tr>`;
   }
@@ -1539,6 +1538,7 @@ async function poamWorkbookOpenItemDetails(id) {
         <div class="grid grid-cols-12 gap-6">
           <div class="col-span-12 lg:col-span-8 space-y-4">
             ${renderFieldText('Item number', item['Item number'], true)}
+            ${renderFieldText('Weakness Source Identifier', item['Weakness Source Identifier'])}
             ${renderFieldText('Vulnerability Name', item['Vulnerability Name'])}
             ${renderFieldTextarea('Vulnerability Description', item['Vulnerability Description'])}
             <div class="grid grid-cols-2 gap-4">
@@ -2583,8 +2583,14 @@ async function poamWorkbookImportXlsx(file, systemId) {
     ['initial scheduled completion date', 'Scheduled Completion Date'],
     ['milestones with completion dates', 'Milestone with Completion Dates'],
     ['changes to milestones with completion dates', 'Milestone Changes'],
-    ['updated scheduled completion date', 'Scheduled Completion Date'],
-    ['actual completion date', 'Detection Date'],
+    ['weakness source identifier', 'Weakness Source Identifier'],
+    ['weakness id', 'Weakness Source Identifier'],
+    ['weakness identifier', 'Weakness Source Identifier'],
+    ['source identifier', 'Weakness Source Identifier'],
+    ['cve', 'Weakness Source Identifier'],
+    ['qid', 'Weakness Source Identifier'],
+    ['updated scheduled completion date', 'Updated Scheduled Completion Date'],
+    ['actual completion date', 'Actual Completion Date'],
     ['finding status', 'Status'],
     ['risk level', 'Severity Value'],
     ['mitigation', 'Mitigations'],
@@ -2621,8 +2627,10 @@ async function poamWorkbookImportXlsx(file, systemId) {
     if (has('finding') && has('status')) return 'Status';
     if (has('risk') && has('level')) return 'Severity Value';
     if (has('initial') && has('scheduled') && has('completion')) return 'Scheduled Completion Date';
-    if (has('updated') && has('scheduled') && has('completion')) return 'Scheduled Completion Date';
-    if (has('actual') && has('completion')) return 'Detection Date';
+    if (has('weakness') && (has('source') || has('identifier'))) return 'Weakness Source Identifier';
+    if (norm === 'cve' || norm === 'qid') return 'Weakness Source Identifier';
+    if (has('updated') && has('scheduled') && has('completion')) return 'Updated Scheduled Completion Date';
+    if (has('actual') && has('completion')) return 'Actual Completion Date';
     if (has('milestones') && has('completion') && has('dates')) return 'Milestone with Completion Dates';
     if (has('changes') && has('milestones')) return 'Milestone Changes';
     
@@ -2983,6 +2991,7 @@ function toExcelDate(v) {
 
 window.POAM_WORKBOOK_COLUMNS = [
   'Item number',
+  'Weakness Source Identifier',
   'Impacted Security Controls',
   'Vulnerability Name',
   'Vulnerability Description',
