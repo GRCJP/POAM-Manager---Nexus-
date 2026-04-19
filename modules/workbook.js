@@ -1100,14 +1100,14 @@ async function renderWorkbookSystemTable(systemId) {
         <td class="px-3 py-2 text-xs text-slate-700 font-mono cursor-pointer" onclick="poamWorkbookOpenItemDetails('${id}')">
           <span class="hover:text-teal-700 hover:underline">${escapeHtml(item['Item number'] || '')}</span>${warningIcon}
         </td>
-        <td class="px-3 py-2 text-sm text-slate-900 cursor-pointer" onclick="poamWorkbookOpenItemDetails('${id}')">${escapeHtml(item['Vulnerability Name'] || '')}</td>
         <td class="px-3 py-2 text-xs text-slate-700 font-mono">${escapeHtml(item['Impacted Security Controls'] || '')}</td>
+        <td class="px-3 py-2 text-sm text-slate-900 cursor-pointer" onclick="poamWorkbookOpenItemDetails('${id}')">${escapeHtml(item['Vulnerability Name'] || '')}</td>
+        <td class="px-3 py-2 text-xs ${isOverdue ? 'text-red-700 font-semibold' : 'text-slate-700'}">
+          ${dueDate || '<span class="text-slate-400">—</span>'}
+        </td>
         <td class="px-3 py-2 text-xs text-slate-700">${escapeHtml(item['Identifying Detecting Source'] || '')}</td>
         <td class="px-3 py-2" onclick="event.stopPropagation()">
           ${renderInlineSelect(id, 'POC Name', item['POC Name'], pocs)}
-        </td>
-        <td class="px-3 py-2 text-xs ${isOverdue ? 'text-red-700 font-semibold' : 'text-slate-700'}">
-          ${dueDate || '<span class="text-slate-400">—</span>'}
         </td>
         <td class="px-3 py-2" onclick="event.stopPropagation()">
           ${renderInlineSelect(id, 'Severity Value', item['Severity Value'], severities)}
