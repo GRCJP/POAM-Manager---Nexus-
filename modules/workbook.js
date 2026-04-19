@@ -63,7 +63,7 @@ async function poamWorkbookOpenSystemIdConfigModal(forSystemId) {
         </div>
 
         <div class="flex justify-between items-center gap-3 mt-6">
-          <button id="wb-sysid-reset" class="px-4 py-2 border border-orange-300 rounded-lg text-sm font-semibold text-orange-700 bg-orange-50 hover:bg-orange-100">Reset Counter</button>
+          <button id="wb-sysid-reset" class="px-4 py-2 border border-red-300 rounded-lg text-sm font-semibold text-red-700 bg-red-50 hover:bg-red-100">Reset Counter</button>
           <div class="flex gap-3">
             <button id="wb-sysid-cancel" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">Cancel</button>
             <button id="wb-sysid-save" class="px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800">Save</button>
@@ -338,6 +338,7 @@ async function poamWorkbookOpenEditSystemModal(systemId) {
         if (!name) throw new Error('System Name is required');
         await window.poamWorkbookDB.saveSystem({ ...system, name, description });
         await renderWorkbookSidebarSystems();
+        if (typeof renderSystemsSettings === 'function') renderSystemsSettings();
         const sysName = document.getElementById('poam-workbook-active-system-name');
         if (sysName && window.poamWorkbookState.activeSystemId === systemId) {
           sysName.textContent = name;
@@ -1021,10 +1022,10 @@ async function renderWorkbookSystemTable(systemId) {
   const statusBadge = (status) => {
     const s = (status || 'Open').toLowerCase();
     const colors = {
-      open: 'bg-blue-100 text-blue-800',
-      ongoing: 'bg-blue-100 text-blue-800',
+      open: 'bg-teal-50 text-teal-800',
+      ongoing: 'bg-teal-50 text-teal-800',
       'in progress': 'bg-teal-50 text-teal-800',
-      completed: 'bg-green-100 text-green-800',
+      completed: 'bg-slate-100 text-slate-600',
       closed: 'bg-slate-100 text-slate-600',
       'risk accepted': 'bg-slate-100 text-slate-700',
       delayed: 'bg-red-100 text-red-800',
@@ -1499,6 +1500,7 @@ function poamWorkbookOpenAddSystemModal() {
       await window.poamWorkbookDB.saveSystem({ id, name, description });
       window.poamWorkbookNotifyMutation();
       await renderWorkbookSidebarSystems();
+      if (typeof renderSystemsSettings === 'function') renderSystemsSettings();
       showUpdateFeedback('System added', 'success');
       close();
     } catch (e) {
@@ -2448,6 +2450,23 @@ class POAMWorkbookDatabase {
     });
   }
 
+  async deleteSystem(id) {
+    if (!this.db) await this.init();
+    // Delete all items belonging to this system first
+    const items = await this.getItemsBySystem(id);
+    for (const item of items) {
+      await this.deleteItem(item.id);
+    }
+    // Delete the system record
+    const tx = this.db.transaction(['poamWorkbookSystems'], 'readwrite');
+    const store = tx.objectStore('poamWorkbookSystems');
+    return new Promise((resolve, reject) => {
+      const req = store.delete(id);
+      req.onsuccess = () => resolve(true);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
   async getNextItemNumber(systemId) {
     const sys = await this.getSystemById(systemId);
     const last = typeof sys?.workbookLastItemNumber === 'number' ? sys.workbookLastItemNumber : 0;
@@ -3148,3 +3167,50 @@ window.poamWorkbookInlineSaveAll = poamWorkbookInlineSaveAll;
 window.POAM_WORKBOOK_INTERNAL_FIELDS = {
   assetsImpacted: 'Assets Impacted'
 };
+
+// ── Settings > General > System Inventory table ──
+
+async function renderSystemsSettings() {
+  const tbody = document.getElementById('systems-settings-list');
+  if (!tbody) return;
+
+  await poamWorkbookEnsureDbReady();
+  const systems = await window.poamWorkbookDB.getSystems();
+
+  if (!systems.length) {
+    tbody.innerHTML = `<tr><td colspan="4" class="px-5 py-6 text-center text-sm text-slate-400">No systems registered yet.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = systems.map(s => {
+    const escapedName = escapeHtml(s.name || s.id);
+    const escapedId = escapeAttr(s.id);
+    return `
+      <tr class="hover:bg-slate-50 transition-colors">
+        <td class="px-5 py-3 text-sm font-mono text-slate-600">${escapeHtml(s.id)}</td>
+        <td class="px-5 py-3 text-sm font-semibold text-slate-900">${escapedName}</td>
+        <td class="px-5 py-3 text-sm text-slate-500">${escapeHtml(s.description || '—')}</td>
+        <td class="px-5 py-3 text-right">
+          <button onclick="poamWorkbookOpenEditSystemModal('${escapedId}')" class="btn-sec text-xs px-3 py-1 mr-1">Edit</button>
+          <button onclick="deleteSystemFromSettings('${escapedId}', '${escapeAttr(s.name || s.id)}')" class="text-xs px-3 py-1 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 font-semibold transition-colors">Delete</button>
+        </td>
+      </tr>`;
+  }).join('');
+}
+window.renderSystemsSettings = renderSystemsSettings;
+
+async function deleteSystemFromSettings(systemId, systemName) {
+  if (!confirm(`Delete system "${systemName}" and all its POAMs?\n\nThis action cannot be undone.`)) return;
+  try {
+    await poamWorkbookEnsureDbReady();
+    await window.poamWorkbookDB.deleteSystem(systemId);
+    window.poamWorkbookNotifyMutation();
+    await renderWorkbookSidebarSystems();
+    await renderSystemsSettings();
+    showUpdateFeedback(`System "${systemName}" deleted`, 'success');
+  } catch (e) {
+    console.error(e);
+    showUpdateFeedback(`Delete failed: ${e.message}`, 'error');
+  }
+}
+window.deleteSystemFromSettings = deleteSystemFromSettings;

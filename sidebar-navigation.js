@@ -90,8 +90,8 @@ function showSettingsTab(tabName) {
         loadNotificationRules();
         loadRoleContacts();
         loadEmailConfig();
-        if (typeof settingsManager !== 'undefined') {
-            settingsManager.renderSystemsSettings();
+        if (typeof renderSystemsSettings === 'function') {
+            renderSystemsSettings();
         }
     } else if (finalTabName === 'critical-assets') {
         if (typeof loadCriticalAssetsRegistry === 'function') loadCriticalAssetsRegistry();

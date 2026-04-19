@@ -759,7 +759,7 @@ function renderMilestonesList(poam) {
                 const statusClass = status === 'completed'
                     ? 'bg-teal-50 text-teal-800 border-teal-200'
                     : status === 'in-progress'
-                        ? 'bg-blue-50 text-blue-700 border-blue-200'
+                        ? 'bg-teal-50 text-teal-700 border-teal-200'
                         : 'bg-slate-50 text-slate-600 border-slate-200';
                 
                 return `
@@ -1621,12 +1621,12 @@ function renderStatusHistory(statusHistory) {
 
     const actionColors = {
         'created': 'border-teal-200 bg-teal-50',
-        'status_change': 'border-blue-300 bg-blue-50',
+        'status_change': 'border-teal-300 bg-teal-50',
         'risk_change': 'border-amber-300 bg-amber-50',
         'scan_update': 'border-slate-300 bg-slate-50',
-        'auto_resolved': 'border-green-300 bg-green-50',
+        'auto_resolved': 'border-slate-300 bg-slate-50',
         'manual_edit': 'border-slate-300 bg-slate-50',
-        'milestone_update': 'border-cyan-300 bg-cyan-50',
+        'milestone_update': 'border-teal-200 bg-teal-50',
         'note_added': 'border-slate-200 bg-white'
     };
 
@@ -2393,7 +2393,7 @@ function updateFilterChips() {
     if (activeFilters.status) {
         chips.push({
             label: `Status: ${activeFilters.status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}`,
-            color: 'bg-blue-100 text-blue-700',
+            color: 'bg-teal-50 text-teal-700',
             onRemove: () => { applyStatusFilter(''); }
         });
     }

@@ -1098,8 +1098,8 @@ function updateSelectedPOAMInfo() {
     const status = poam.status || 'open';
     const statusColors = {
         'open': 'bg-red-100 text-red-700',
-        'in_progress': 'bg-yellow-100 text-yellow-700',
-        'completed': 'bg-green-100 text-green-700',
+        'in_progress': 'bg-teal-50 text-teal-800',
+        'completed': 'bg-slate-100 text-slate-600',
         'overdue': 'bg-amber-50 text-amber-800',
         'risk-accepted': 'bg-slate-100 text-slate-700'
     };

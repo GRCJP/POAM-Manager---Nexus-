@@ -112,13 +112,13 @@ function auditEvidenceUpload(poamId, filename) {
 // ═══════════════════════════════════════════════════════════════
 
 const AUDIT_ICONS = {
-    scan_import: { icon: 'fa-file-import', color: 'text-blue-500', bg: 'bg-blue-50' },
-    status_change: { icon: 'fa-exchange-alt', color: 'text-green-500', bg: 'bg-green-50' },
+    scan_import: { icon: 'fa-file-import', color: 'text-teal-600', bg: 'bg-teal-50' },
+    status_change: { icon: 'fa-exchange-alt', color: 'text-teal-700', bg: 'bg-teal-50' },
     poam_created: { icon: 'fa-plus-circle', color: 'text-teal-600', bg: 'bg-teal-50' },
     poam_updated: { icon: 'fa-edit', color: 'text-amber-600', bg: 'bg-amber-50' },
-    jira_ticket: { icon: 'fa-ticket-alt', color: 'text-blue-600', bg: 'bg-blue-50' },
+    jira_ticket: { icon: 'fa-ticket-alt', color: 'text-slate-600', bg: 'bg-slate-100' },
     settings_change: { icon: 'fa-cog', color: 'text-slate-500', bg: 'bg-slate-100' },
-    evidence_upload: { icon: 'fa-paperclip', color: 'text-green-600', bg: 'bg-green-50' },
+    evidence_upload: { icon: 'fa-paperclip', color: 'text-teal-600', bg: 'bg-teal-50' },
     unknown: { icon: 'fa-info-circle', color: 'text-slate-400', bg: 'bg-slate-50' }
 };
 
