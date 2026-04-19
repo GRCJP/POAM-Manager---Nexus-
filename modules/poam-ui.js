@@ -1340,18 +1340,33 @@ async function mergePOAMsFromScan(newPOAMs) {
 
     const existingPOAMs = await poamDB.getAllPOAMs();
 
-    // Build lookup of existing POAMs by remediationSignature
+    // Build lookup of existing POAMs by remediationSignature (including completed ones for re-open)
     const existingBySig = new Map();
+    const completedBySig = new Map();
     existingPOAMs.forEach(p => {
-        if (p.remediationSignature) {
+        if (!p.remediationSignature) return;
+        const st = (p.findingStatus || p.status || '').toLowerCase();
+        if (st === 'completed' || st === 'closed') {
+            completedBySig.set(p.remediationSignature, p);
+        } else {
             existingBySig.set(p.remediationSignature, p);
         }
     });
+
+    // (A) Scan scope: collect all assets seen in this scan for scope-aware auto-resolve
+    const scannedAssets = new Set();
+    for (const p of newPOAMs) {
+        const assets = p.affectedAssets || p.rawAssets || [];
+        if (Array.isArray(assets)) assets.forEach(a => scannedAssets.add(String(a).trim().toLowerCase()));
+        // Also capture individual host fields
+        if (p.host) scannedAssets.add(String(p.host).trim().toLowerCase());
+    }
 
     // Track signatures seen in new scan (to detect closed POAMs)
     const newSignatures = new Set();
     let created = 0;
     let updated = 0;
+    let reopened = 0;
     let unchanged = 0;
 
     const mergedPOAMs = [];
@@ -1360,7 +1375,45 @@ async function mergePOAMsFromScan(newPOAMs) {
         const sig = newPoam.remediationSignature;
         if (sig) newSignatures.add(sig);
 
+        // (C) First-import timestamp fallback: if firstDetectedDate is missing, use now
+        if (!newPoam.firstDetectedDate && !newPoam.oldestDetectionDate) {
+            newPoam.firstDetectedDate = new Date().toISOString().split('T')[0];
+            newPoam._firstDetectedFallback = true;
+        }
+
         const existing = sig ? existingBySig.get(sig) : null;
+
+        // (B) Re-open flow: check if this was previously completed
+        const previouslyCompleted = !existing && sig ? completedBySig.get(sig) : null;
+
+        if (previouslyCompleted) {
+            // REOPEN: Restore the existing POAM instead of creating a new one
+            const merged = { ...previouslyCompleted };
+            merged.findingStatus = 'Open';
+            merged.status = 'open';
+            merged.actualCompletionDate = '';
+            merged.lastModifiedDate = new Date().toISOString();
+            merged.lastScanDate = new Date().toISOString();
+
+            // Update scan-derived fields
+            for (const field of SCAN_UPDATED_FIELDS) {
+                if (newPoam[field] !== undefined) merged[field] = newPoam[field];
+            }
+
+            merged.statusHistory = merged.statusHistory || [];
+            merged.statusHistory.push({
+                date: new Date().toISOString(),
+                action: 'reopened',
+                details: `Finding reappeared in scan after previously being auto-resolved. Reopening POAM.`,
+                previousStatus: previouslyCompleted.findingStatus || previouslyCompleted.status,
+                newAssetCount: newPoam.totalAffectedAssets || 0,
+                scanId: newPoam.scanId
+            });
+
+            mergedPOAMs.push(merged);
+            reopened++;
+            continue;
+        }
 
         if (existing) {
             // MERGE: Preserve user edits, update scan-derived fields
@@ -1471,9 +1524,11 @@ async function mergePOAMsFromScan(newPOAMs) {
     }
 
     // Check for POAMs no longer in scan (potential closures)
+    // (A) Scan-scope-aware: only auto-resolve if the POAM's assets were in scan scope
     const closureCandidates = [];
+    const scopeSkipped = [];
     const previouslyOpenPOAMs = [];
-    
+
     for (const existing of existingPOAMs) {
         if (!existing.remediationSignature) continue;
         if (newSignatures.has(existing.remediationSignature)) continue;
@@ -1481,7 +1536,29 @@ async function mergePOAMsFromScan(newPOAMs) {
         const status = (existing.findingStatus || existing.status || '').toLowerCase();
         if (status === 'completed' || status === 'closed' || status === 'risk-accepted') continue;
 
-        // This POAM was in the previous scan but not in the new one — mark as closure candidate
+        // (A) Scope check: if we know scanned assets, verify this POAM's assets were scanned
+        if (scannedAssets.size > 0) {
+            const poamAssets = existing.affectedAssets || [];
+            const assetList = Array.isArray(poamAssets) ? poamAssets : [poamAssets];
+            const anyInScope = assetList.length === 0 || assetList.some(a =>
+                scannedAssets.has(String(a).trim().toLowerCase())
+            );
+            if (!anyInScope) {
+                // POAM's assets weren't in this scan — don't auto-close, it's out of scope
+                scopeSkipped.push(existing);
+                existing.statusHistory = existing.statusHistory || [];
+                existing.statusHistory.push({
+                    date: new Date().toISOString(),
+                    action: 'scan_scope_skip',
+                    details: `Finding not in scan but assets not in scan scope — not auto-resolved.`
+                });
+                existing.lastScanDate = new Date().toISOString();
+                mergedPOAMs.push(existing);
+                continue;
+            }
+        }
+
+        // This POAM was in scope and not found — mark as closure candidate
         closureCandidates.push(existing);
         previouslyOpenPOAMs.push({
             id: existing.id,
@@ -1557,22 +1634,27 @@ async function mergePOAMsFromScan(newPOAMs) {
         timestamp: new Date().toISOString(),
         newPOAMs: created,
         updatedPOAMs: updated,
+        reopenedPOAMs: reopened,
         autoClosedPOAMs: closureCandidates.length,
+        scopeSkippedPOAMs: scopeSkipped.length,
         autoClosedIds: autoClosedIds,
         previouslyOpenPOAMs: previouslyOpenPOAMs,
         partialRemediationPOAMs: partialRemediationPOAMs,
-        riskChangedPOAMs: riskChangedPOAMs
+        riskChangedPOAMs: riskChangedPOAMs,
+        scannedAssetCount: scannedAssets.size
     };
 
-    console.log(`🔄 Merge results: ${created} new, ${updated} updated, ${closureCandidates.length} auto-resolved`);
+    console.log(`🔄 Merge results: ${created} new, ${updated} updated, ${reopened} reopened, ${closureCandidates.length} auto-resolved, ${scopeSkipped.length} out-of-scope skipped`);
 
     return {
         mergedPOAMs,
         stats: {
             created,
             updated,
+            reopened,
             unchanged,
             autoResolved: closureCandidates.length,
+            scopeSkipped: scopeSkipped.length,
             total: mergedPOAMs.length
         }
     };

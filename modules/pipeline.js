@@ -288,8 +288,14 @@ class PipelineOrchestrator {
                 continue;
             }
             
+            // (C) First-import timestamp fallback: if no firstDetected, use import date
+            let firstDetected = finding.firstDetected || finding.first_detected || finding.firstFound;
+            if (!firstDetected) {
+                firstDetected = new Date().toISOString();
+                finding.firstDetected = firstDetected;
+                finding._firstDetectedFallback = true;
+            }
             // Gate 2: Exclude findings that haven't reached their severity-based SLA threshold
-            const firstDetected = finding.firstDetected || finding.first_detected || finding.firstFound;
             if (firstDetected) {
                 const detectedDate = new Date(firstDetected);
                 if (!isNaN(detectedDate.getTime())) {
