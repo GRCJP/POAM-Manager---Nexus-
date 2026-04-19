@@ -222,18 +222,44 @@ class POAMDatabase {
         // Transform each POAM to formal structure
         const formalPOAMs = poams.map(poam => this.transformToFormalPOAM(poam));
         console.log('📦 addPOAMsBatch: Transformed', formalPOAMs.length, 'POAMs');
-        
-        // DEBUG: Measure actual size
-        if (formalPOAMs.length > 0) {
-            const sample = formalPOAMs[0];
-            const sampleJSON = JSON.stringify(sample);
-            const sampleSize = sampleJSON.length;
-            console.log('📦 DEBUG: Sample POAM size:', (sampleSize / 1024).toFixed(2), 'KB');
-            console.log('📦 DEBUG: Estimated total:', ((sampleSize * formalPOAMs.length) / (1024 * 1024)).toFixed(2), 'MB');
+
+        // Measure and log actual total size
+        let totalBytes = 0;
+        let maxSize = 0;
+        let maxId = '';
+        for (const p of formalPOAMs) {
+            const size = JSON.stringify(p).length;
+            totalBytes += size;
+            if (size > maxSize) { maxSize = size; maxId = p.id; }
+        }
+        console.log(`📦 STORAGE: Total POAM data: ${(totalBytes/1024/1024).toFixed(2)}MB, avg ${(totalBytes/formalPOAMs.length/1024).toFixed(1)}KB/poam, largest: ${(maxSize/1024).toFixed(1)}KB (${maxId})`);
+
+        // If total exceeds 20MB, aggressively trim assets to fit
+        if (totalBytes > 20 * 1024 * 1024) {
+            console.warn('📦 STORAGE WARNING: Data exceeds 20MB, trimming assets to 20 per POAM');
+            for (const p of formalPOAMs) {
+                if (Array.isArray(p.affectedAssets) && p.affectedAssets.length > 20) {
+                    p.affectedAssets = p.affectedAssets.slice(0, 20);
+                }
+                if (p.findingDescription && p.findingDescription.length > 500) {
+                    p.findingDescription = p.findingDescription.substring(0, 500) + '...';
+                    p.description = p.findingDescription;
+                }
+            }
+            totalBytes = formalPOAMs.reduce((sum, p) => sum + JSON.stringify(p).length, 0);
+            console.log(`📦 STORAGE: After trim: ${(totalBytes/1024/1024).toFixed(2)}MB`);
         }
 
-        // CHUNKED PROCESSING: Split into smaller transactions to avoid QuotaExceededError
-        const CHUNK_SIZE = 25;
+        // Request persistent storage to avoid browser eviction
+        try {
+            if (navigator.storage && navigator.storage.persist) {
+                const persisted = await navigator.storage.persist();
+                console.log(`📦 Persistent storage: ${persisted ? 'granted' : 'denied'}`);
+            }
+        } catch (e) {}
+
+        // CHUNKED PROCESSING: Small chunks to avoid QuotaExceededError
+        const CHUNK_SIZE = 10;
         const chunks = [];
         for (let i = 0; i < formalPOAMs.length; i += CHUNK_SIZE) {
             chunks.push(formalPOAMs.slice(i, i + CHUNK_SIZE));
