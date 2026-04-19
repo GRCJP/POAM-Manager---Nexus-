@@ -62,9 +62,9 @@ test.describe('Workbook POAM CRUD', () => {
     }, itemId);
     await page.waitForTimeout(500);
 
-    // Verify modal is open (dynamically created, look for the modal overlay)
-    const modal = page.locator('.fixed.inset-0.bg-black').first();
-    await expect(modal).toBeVisible();
+    // Verify modal is open (dynamically created, has bg-opacity-50 and is visible)
+    const modal = page.locator('.fixed.inset-0.bg-black.bg-opacity-50:not(.hidden)').first();
+    await expect(modal).toBeVisible({ timeout: 5000 });
 
     // Verify the vulnerability name appears in the modal
     const modalText = await modal.textContent();

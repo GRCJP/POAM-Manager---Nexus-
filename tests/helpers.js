@@ -4,10 +4,18 @@
  * Wait for the app to fully load (partials fetched, DOMContentLoaded complete).
  */
 async function waitForAppLoad(page) {
+  // Set auth token to bypass login redirect
   await page.goto('/');
-  // Wait for the dashboard module to be present (partials loaded)
-  await page.waitForSelector('#dashboard-module', { timeout: 15000 });
-  // Give the app a moment to finish initialization
+  await page.evaluate(() => {
+    sessionStorage.setItem('trace_auth', JSON.stringify({ token: 'test-token', user: 'test@test.com' }));
+    localStorage.setItem('currentModule', 'dashboard');
+  });
+  await page.goto('/');
+  // Wait for partials to load and app to initialize
+  await page.waitForFunction(() => {
+    const el = document.getElementById('dashboard-module');
+    return el && !el.classList.contains('hidden');
+  }, { timeout: 15000 });
   await page.waitForTimeout(500);
 }
 
