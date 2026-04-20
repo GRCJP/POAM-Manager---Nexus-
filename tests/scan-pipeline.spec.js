@@ -164,12 +164,12 @@ test.describe('Scan Import Pipeline', () => {
     expect(result.hasReopenHistory).toBe(true);
   });
 
-  test('addPOAMsBatch does not clear scanRuns store', async ({ page }) => {
+  test('addPOAMsBatch clears poams store but preserves scanRuns store', async ({ page }) => {
     const result = await page.evaluate(async () => {
       if (!window.poamDB.db) await window.poamDB.init();
       // Save a scan run first
       try {
-        await window.poamDB.saveScanRun({ id: 'test-scanrun-001', scanId: 'test-scanrun-001', importedAt: new Date().toISOString(), totalFindings: 100 });
+        await window.poamDB.saveScanRun({ id: 'test-scanrun-001', runId: 'test-scanrun-001', scanId: 'test-scanrun-001', importedAt: new Date().toISOString(), totalFindings: 100 });
       } catch (e) { /* store might not exist */ }
 
       // Now do addPOAMsBatch
@@ -177,7 +177,7 @@ test.describe('Scan Import Pipeline', () => {
         { id: 'batch-001', title: 'Batch Test', status: 'open', remediationSignature: 'sig::batch', affectedAssets: [], statusHistory: [], milestones: [], cves: [], qids: [] },
       ]);
 
-      // Check scan run still exists
+      // Check scan run still exists (addPOAMsBatch only clears poams, not scanRuns)
       try {
         const scanRun = await window.poamDB.getScanRun('test-scanrun-001');
         return { scanRunPreserved: !!scanRun };
@@ -235,5 +235,62 @@ test.describe('Scan Import Pipeline', () => {
     });
     expect(result.poamCount).toBeGreaterThan(0);
     expect(result.scanRunSaved).toBe(true);
+  });
+
+  test('addPOAMsBatch handles 500 POAMs with large asset arrays', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      if (!window.poamDB.db) await window.poamDB.init();
+
+      // Generate 500 POAMs each with 50 assets and long text — simulates real Qualys scan
+      const bigPoams = [];
+      for (let i = 0; i < 500; i++) {
+        const assets = [];
+        for (let a = 0; a < 50; a++) {
+          assets.push({
+            assetName: `server-${i}-${a}.example.com`,
+            ipv4: `10.${Math.floor(i/256)}.${i%256}.${a}`,
+            os: 'Windows Server 2019 Standard',
+            results: 'FAILED: Port 443 SSL certificate expired on 2025-01-15. Remediation: Renew certificate. '.repeat(5),
+          });
+        }
+        bigPoams.push({
+          id: `STRESS-${String(i+1).padStart(4,'0')}`,
+          title: `Stress Test Vulnerability ${i+1} — A Moderately Long Title For Testing Purposes`,
+          vulnerabilityName: `Stress Test Vulnerability ${i+1}`,
+          description: 'This is a test finding description that is moderately long to simulate real data. '.repeat(10),
+          findingDescription: 'This is a test finding description that is moderately long to simulate real data. '.repeat(10),
+          mitigation: 'Apply vendor patch when available. Monitor for exploitation. Implement compensating controls. '.repeat(10),
+          remediationSignature: `sig::stress::${i}`,
+          status: 'open',
+          findingStatus: 'open',
+          risk: ['critical','high','medium','low'][i % 4],
+          totalAffectedAssets: 50,
+          affectedAssets: assets,
+          statusHistory: [{ action: 'created', date: new Date().toISOString() }],
+          milestones: [],
+          cves: [`CVE-2024-${String(i).padStart(4,'0')}`],
+          qids: [`${10000+i}`],
+        });
+      }
+
+      // Measure raw size
+      const rawSize = JSON.stringify(bigPoams).length;
+      const rawMB = (rawSize / 1024 / 1024).toFixed(2);
+
+      const saved = await window.poamDB.addPOAMsBatch(bigPoams);
+      const allPoams = await window.poamDB.getAllPOAMs();
+
+      return {
+        rawDataMB: rawMB,
+        inputCount: bigPoams.length,
+        savedCount: saved.saved,
+        storedCount: allPoams.length,
+        errorCount: saved.errors.length,
+      };
+    });
+
+    console.log('Stress test results:', result);
+    expect(result.savedCount).toBe(500);
+    expect(result.storedCount).toBe(500);
   });
 });

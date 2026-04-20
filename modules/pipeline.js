@@ -67,16 +67,10 @@ class PipelineDatabase {
     }
 
     async saveScanRun(scanRun) {
-        if (!this.db) await this.init();
-        
-        return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction(['scanRuns'], 'readwrite');
-            const store = transaction.objectStore('scanRuns');
-            const request = store.put(scanRun);
-            
-            request.onsuccess = () => resolve(scanRun);
-            request.onerror = () => reject(request.error);
-        });
+        // Progress-tracking writes are skipped to conserve IndexedDB quota.
+        // The final scan run record is persisted by poamDB.saveScanRun() in Phase 5.
+        // Keep run state in memory only.
+        return scanRun;
     }
 
     async getScanRun(runId) {
@@ -93,16 +87,9 @@ class PipelineDatabase {
     }
 
     async savePhaseArtifact(artifact) {
-        if (!this.db) await this.init();
-        
-        return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction(['phaseArtifacts'], 'readwrite');
-            const store = transaction.objectStore('phaseArtifacts');
-            const request = store.put(artifact);
-            
-            request.onsuccess = () => resolve(artifact);
-            request.onerror = () => reject(request.error);
-        });
+        // Phase artifacts are diagnostic only — log to console instead of
+        // persisting to IndexedDB to avoid consuming storage quota.
+        console.log(`📦 Phase ${artifact.phaseIndex} artifact:`, artifact.stats || artifact);
     }
 
     async getPhaseArtifact(runId, phaseIndex) {
@@ -153,9 +140,48 @@ class PipelineOrchestrator {
     
     async runImportPipeline(rawVulnerabilities, scanMetadata, progressCallback) {
         this.progressCallback = progressCallback;
-        
+
         // Initialize database
         await this.db.init();
+
+        // ── Snapshot existing POAMs into memory BEFORE clearing ──
+        // mergePOAMsFromScan needs the old POAMs for comparison (detect fixes,
+        // new findings, re-opened items, etc.). We read them now, then clear
+        // non-essential stores to reclaim quota, then merge in memory during Phase 5.
+        let existingPOAMsSnapshot = [];
+        try {
+            if (window.poamDB) {
+                if (!window.poamDB.db) await window.poamDB.init();
+                existingPOAMsSnapshot = await window.poamDB.getAllPOAMs();
+                this.logger.info(`Snapshotted ${existingPOAMsSnapshot.length} existing POAMs for merge comparison`);
+            }
+        } catch (e) {
+            this.logger.warn('Could not snapshot existing POAMs:', e.message);
+        }
+        this._existingPOAMsSnapshot = existingPOAMsSnapshot;
+
+        // ── Clear non-essential stores to free quota for the import ──
+        // Keep the DB connection alive but clear pipeline artifacts, scan runs,
+        // and scan summaries. The poams store is cleared later in addPOAMsBatch.
+        this.logger.info('Clearing pipeline artifacts to free quota...');
+        try {
+            const db = window.poamDB?.db || this.db?.db;
+            if (db) {
+                const junkStores = ['phaseArtifacts', 'scanRuns', 'scans', 'poamScanSummaries']
+                    .filter(s => db.objectStoreNames.contains(s));
+                if (junkStores.length > 0) {
+                    await new Promise((resolve) => {
+                        const tx = db.transaction(junkStores, 'readwrite');
+                        junkStores.forEach(s => { try { tx.objectStore(s).clear(); } catch(e) {} });
+                        tx.oncomplete = () => { console.log('📦 Pipeline stores cleared'); resolve(); };
+                        tx.onerror = () => resolve();
+                        tx.onabort = () => resolve();
+                    });
+                }
+            }
+        } catch (e) {
+            console.warn('📦 Store cleanup error (non-fatal):', e.message);
+        }
         
         // Create new run
         const runId = `RUN-${Date.now()}`;
@@ -329,11 +355,10 @@ class PipelineOrchestrator {
             
             eligibleFindings.push(finding);
             
-            // Update progress every 100 findings
+            // Update progress every 100 findings (UI only — skip DB writes to save quota)
             if (i % 100 === 0 || i === rawVulnerabilities.length - 1) {
                 const progress = Math.floor((i + 1) / rawVulnerabilities.length * 100);
                 this.currentRun.phaseProgress = progress / 100;
-                await this.db.saveScanRun(this.currentRun);
                 this.updateProgress();
             }
         }
@@ -349,13 +374,11 @@ class PipelineOrchestrator {
         this.currentRun.counts.eligibleCount = eligibleFindings.length;
         this.currentRun.counts.excludedCount = excludedFindings.length;
         
-        // Save phase artifacts
+        // Save phase artifacts (stats only — full data stays in memory to avoid quota issues)
         await this.db.savePhaseArtifact({
             id: `${this.currentRun.runId}-phase1`,
             runId: this.currentRun.runId,
             phaseIndex: 1,
-            eligibleFindings,
-            excludedFindings: excludedFindings.slice(0, 100), // Sample only
             stats: {
                 totalProcessed: rawVulnerabilities.length,
                 eligible: eligibleFindings.length,
@@ -521,12 +544,11 @@ class PipelineOrchestrator {
             group
         }));
         
-        // Save phase artifacts
+        // Save phase artifacts (stats only — full data stays in memory to avoid quota issues)
         await this.db.savePhaseArtifact({
             id: `${this.currentRun.runId}-phase2`,
             runId: this.currentRun.runId,
             phaseIndex: 2,
-            groups: groupsArray,
             stats: {
                 groupCount: groups.size,
                 avgFindingsPerGroup: (eligibleFindings.length / groups.size).toFixed(2),
@@ -605,17 +627,11 @@ class PipelineOrchestrator {
             }
         }
         
-        // Save phase artifacts (sample only to avoid size limits)
-        const enrichedSample = Array.from(enrichedGroups.entries()).slice(0, 10).map(([sig, grp]) => ({
-            signature: sig,
-            enrichment: grp.enrichment
-        }));
-        
+        // Save phase artifacts (stats only — full data stays in memory to avoid quota issues)
         await this.db.savePhaseArtifact({
             id: `${this.currentRun.runId}-phase3`,
             runId: this.currentRun.runId,
             phaseIndex: 3,
-            enrichedSample,
             stats: {
                 enrichedGroups: enrichedGroups.size
             }
@@ -807,21 +823,16 @@ class PipelineOrchestrator {
         console.log('🔍 PHASE 5: Backfilling milestones...');
         this.backfillMissingMilestonesOnDrafts(poamDrafts);
         
-        // Use merge logic if existing POAMs are present (re-import)
+        // Use in-memory snapshot of existing POAMs (captured before DB wipe)
+        // for merge comparison. Do NOT read from DB — it was deleted for quota.
         let saved;
-        console.log('🔍 PHASE 5: Fetching existing POAMs...');
-        let existingPOAMs = [];
-        try {
-            existingPOAMs = await window.poamDB.getAllPOAMs();
-        } catch (e) {
-            console.warn('🔍 PHASE 5: Failed to fetch existing POAMs, treating as first import:', e.message);
-        }
-        console.log('🔍 PHASE 5: Found', existingPOAMs.length, 'existing POAMs');
+        const existingPOAMs = this._existingPOAMsSnapshot || [];
+        console.log('🔍 PHASE 5: Using', existingPOAMs.length, 'snapshotted POAMs for merge');
 
         if (existingPOAMs.length > 0 && typeof window.mergePOAMsFromScan === 'function') {
             this.logger.info(`Re-import detected: ${existingPOAMs.length} existing POAMs. Merging...`);
             console.log('🔍 PHASE 5: Calling mergePOAMsFromScan...');
-            const mergeResult = await window.mergePOAMsFromScan(poamDrafts);
+            const mergeResult = await window.mergePOAMsFromScan(poamDrafts, existingPOAMs);
             console.log('🔍 PHASE 5: Merge complete:', mergeResult.stats);
 
             console.log('🔍 PHASE 5: Calling addPOAMsBatch with', mergeResult.mergedPOAMs.length, 'POAMs...');
@@ -861,6 +872,7 @@ class PipelineOrchestrator {
         this.logger.info('Persisting scan run metadata...');
         const scanRunRecord = {
             id: this.currentRun.scanId,
+            runId: this.currentRun.scanId, // compat: scanRuns store may use runId as keyPath
             scanId: this.currentRun.scanId,
             importedAt: this.currentRun.createdAt,
             timestamp: this.currentRun.createdAt,

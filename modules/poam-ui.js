@@ -1336,10 +1336,16 @@ const SCAN_UPDATED_FIELDS = [
     'lastScanDate'
 ];
 
-async function mergePOAMsFromScan(newPOAMs) {
-    if (!poamDB || !poamDB.db) await poamDB.init();
-
-    const existingPOAMs = await poamDB.getAllPOAMs();
+async function mergePOAMsFromScan(newPOAMs, existingPOAMsOverride) {
+    // Accept pre-loaded existing POAMs (e.g. from in-memory snapshot when DB
+    // was wiped for quota). Fall back to reading from DB if not provided.
+    let existingPOAMs;
+    if (Array.isArray(existingPOAMsOverride) && existingPOAMsOverride.length > 0) {
+        existingPOAMs = existingPOAMsOverride;
+    } else {
+        if (!poamDB || !poamDB.db) await poamDB.init();
+        existingPOAMs = await poamDB.getAllPOAMs();
+    }
 
     // Build lookup of existing POAMs by remediationSignature (including completed ones for re-open)
     const existingBySig = new Map();

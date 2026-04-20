@@ -26,6 +26,9 @@ design-preview.html
 test-evidence.html
 test-*.html
 
+# Personal/marketing
+docs/linkedin-post.md
+
 # Build artifacts
 dist/
 *.log

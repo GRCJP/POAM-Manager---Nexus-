@@ -178,135 +178,134 @@ class POAMDatabase {
 
         console.log('📦 addPOAMsBatch: Starting with', poams.length, 'POAMs');
 
-        // Check storage quota
+        // ── Step 1: Clear the poams store ──
+        // Pipeline already cleared non-essential stores. Clear poams here
+        // so we write fresh data.
+        if (this.db.objectStoreNames.contains('poams')) {
+            await new Promise((resolve) => {
+                const tx = this.db.transaction(['poams'], 'readwrite');
+                tx.objectStore('poams').clear();
+                tx.oncomplete = () => { console.log('📦 poams store cleared'); resolve(); };
+                tx.onerror = () => resolve();
+                tx.onabort = () => resolve();
+            });
+        }
+
+        // Check available storage
+        let availMB = Infinity;
         if (navigator.storage && navigator.storage.estimate) {
             const estimate = await navigator.storage.estimate();
             const usedMB = (estimate.usage / (1024 * 1024)).toFixed(2);
             const quotaMB = (estimate.quota / (1024 * 1024)).toFixed(2);
-            const availMB = ((estimate.quota - estimate.usage) / (1024 * 1024)).toFixed(2);
-            console.log(`📦 STORAGE: Used ${usedMB}MB / ${quotaMB}MB (${availMB}MB available)`);
+            availMB = (estimate.quota - estimate.usage) / (1024 * 1024);
+            console.log(`📦 STORAGE: Used ${usedMB}MB / ${quotaMB}MB (${availMB.toFixed(2)}MB available)`);
         }
 
-        // Clear ALL data stores before import to free maximum space
-        console.log('📦 addPOAMsBatch: Clearing stores to free space...');
-        const storesToClear = ['poams', 'poamScanSummaries', 'phaseArtifacts', 'scans'];
-        for (const storeName of storesToClear) {
-            if (this.db.objectStoreNames.contains(storeName)) {
-                try {
-                    await new Promise((resolve, reject) => {
-                        const tx = this.db.transaction([storeName], 'readwrite');
-                        const req = tx.objectStore(storeName).clear();
-                        req.onsuccess = () => {
-                            console.log(`📦 Cleared store: ${storeName}`);
-                            resolve();
-                        };
-                        req.onerror = () => {
-                            console.warn(`📦 Failed to clear store: ${storeName}`);
-                            resolve(); // continue anyway
-                        };
-                    });
-                } catch (e) {
-                    console.warn(`📦 Skipped store: ${storeName}`, e.message);
-                }
+        // Request persistent storage
+        try {
+            if (navigator.storage && navigator.storage.persist) {
+                await navigator.storage.persist();
             }
-        }
-        
-        // Check storage after clearing
-        if (navigator.storage && navigator.storage.estimate) {
-            const est2 = await navigator.storage.estimate();
-            console.log(`📦 STORAGE AFTER CLEAR: Used ${(est2.usage / (1024 * 1024)).toFixed(2)}MB / ${(est2.quota / (1024 * 1024)).toFixed(2)}MB`);
-        }
-        console.log('📦 addPOAMsBatch: All stores cleared');
+        } catch (e) {}
 
-        // Transform each POAM to formal structure
+        // ── Step 2: Transform and measure ──
         const formalPOAMs = poams.map(poam => this.transformToFormalPOAM(poam));
-        console.log('📦 addPOAMsBatch: Transformed', formalPOAMs.length, 'POAMs');
+        let totalBytes = formalPOAMs.reduce((sum, p) => sum + JSON.stringify(p).length, 0);
+        const totalMB = totalBytes / (1024 * 1024);
+        console.log(`📦 STORAGE: Total POAM data: ${totalMB.toFixed(2)}MB for ${formalPOAMs.length} POAMs (avg ${(totalBytes/formalPOAMs.length/1024).toFixed(1)}KB each)`);
 
-        // Measure and log actual total size
-        let totalBytes = 0;
-        let maxSize = 0;
-        let maxId = '';
-        for (const p of formalPOAMs) {
-            const size = JSON.stringify(p).length;
-            totalBytes += size;
-            if (size > maxSize) { maxSize = size; maxId = p.id; }
-        }
-        console.log(`📦 STORAGE: Total POAM data: ${(totalBytes/1024/1024).toFixed(2)}MB, avg ${(totalBytes/formalPOAMs.length/1024).toFixed(1)}KB/poam, largest: ${(maxSize/1024).toFixed(1)}KB (${maxId})`);
-
-        // Aggressively trim if data is large
-        if (totalBytes > 5 * 1024 * 1024) {
-            console.warn(`📦 STORAGE WARNING: Data is ${(totalBytes/1024/1024).toFixed(1)}MB, trimming to fit`);
+        // ── Step 3: Always trim to fit — target max 50% of available quota ──
+        const targetMB = Math.min(availMB * 0.5, 20); // never exceed 20MB
+        if (totalMB > targetMB || totalMB > 2) {
+            console.warn(`📦 Trimming POAM data (${totalMB.toFixed(1)}MB > target ${targetMB.toFixed(1)}MB)`);
             for (const p of formalPOAMs) {
-                // Keep only 10 sample assets, preserve the count
-                if (Array.isArray(p.affectedAssets) && p.affectedAssets.length > 10) {
-                    p.affectedAssets = p.affectedAssets.slice(0, 10);
+                // Cap assets to 5
+                if (Array.isArray(p.affectedAssets) && p.affectedAssets.length > 5) {
+                    p.affectedAssets = p.affectedAssets.slice(0, 5);
                 }
-                // Truncate text fields
-                if (p.findingDescription && p.findingDescription.length > 500) {
-                    p.findingDescription = p.findingDescription.substring(0, 500) + '...';
-                    p.description = p.findingDescription;
+                // Truncate text fields aggressively
+                for (const field of ['findingDescription', 'description', 'mitigation', 'notes']) {
+                    if (p[field] && p[field].length > 300) {
+                        p[field] = p[field].substring(0, 300) + '...';
+                    }
                 }
-                if (p.mitigation && p.mitigation.length > 500) {
-                    p.mitigation = p.mitigation.substring(0, 500) + '...';
+                // Cap history and milestones
+                if (Array.isArray(p.statusHistory) && p.statusHistory.length > 10) {
+                    p.statusHistory = p.statusHistory.slice(-10);
                 }
-                // Cap history
-                if (Array.isArray(p.statusHistory) && p.statusHistory.length > 20) {
-                    p.statusHistory = p.statusHistory.slice(-20);
+                if (Array.isArray(p.milestones) && p.milestones.length > 5) {
+                    p.milestones = p.milestones.slice(0, 5);
                 }
+                // Remove CVE/QID arrays if very long
+                if (Array.isArray(p.cves) && p.cves.length > 10) p.cves = p.cves.slice(0, 10);
+                if (Array.isArray(p.qids) && p.qids.length > 10) p.qids = p.qids.slice(0, 10);
             }
             totalBytes = formalPOAMs.reduce((sum, p) => sum + JSON.stringify(p).length, 0);
             console.log(`📦 STORAGE: After trim: ${(totalBytes/1024/1024).toFixed(2)}MB`);
         }
 
-        // If STILL too large, drop all assets and non-essential fields
-        if (totalBytes > 10 * 1024 * 1024) {
-            console.warn('📦 STORAGE CRITICAL: Still too large, dropping asset details');
+        // If still won't fit, drop all non-essential fields
+        if (totalBytes / (1024 * 1024) > targetMB) {
+            console.warn('📦 STORAGE CRITICAL: Dropping asset details and history');
             for (const p of formalPOAMs) {
                 p.affectedAssets = [];
                 p.milestones = [];
-                p.statusHistory = p.statusHistory ? p.statusHistory.slice(-5) : [];
+                p.statusHistory = [];
+                p.cves = [];
+                p.qids = [];
             }
             totalBytes = formalPOAMs.reduce((sum, p) => sum + JSON.stringify(p).length, 0);
             console.log(`📦 STORAGE: After aggressive trim: ${(totalBytes/1024/1024).toFixed(2)}MB`);
         }
 
-        // Request persistent storage to avoid browser eviction
-        try {
-            if (navigator.storage && navigator.storage.persist) {
-                const persisted = await navigator.storage.persist();
-                console.log(`📦 Persistent storage: ${persisted ? 'granted' : 'denied'}`);
+        // ── Step 4: Write in chunks ──
+        const writeChunks = async (poamsToWrite) => {
+            const CHUNK_SIZE = 10;
+            const chunks = [];
+            for (let i = 0; i < poamsToWrite.length; i += CHUNK_SIZE) {
+                chunks.push(poamsToWrite.slice(i, i + CHUNK_SIZE));
             }
-        } catch (e) {}
+            console.log(`📦 Writing ${chunks.length} chunks of ${CHUNK_SIZE} POAMs each`);
 
-        // CHUNKED PROCESSING: Small chunks to avoid QuotaExceededError
-        const CHUNK_SIZE = 10;
-        const chunks = [];
-        for (let i = 0; i < formalPOAMs.length; i += CHUNK_SIZE) {
-            chunks.push(formalPOAMs.slice(i, i + CHUNK_SIZE));
-        }
-        
-        console.log(`📦 addPOAMsBatch: Processing ${chunks.length} chunks of ${CHUNK_SIZE} POAMs each`);
-        
-        let totalSaved = 0;
-        let totalErrors = [];
-        
-        for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
-            const chunk = chunks[chunkIndex];
-            console.log(`📦 addPOAMsBatch: Processing chunk ${chunkIndex + 1}/${chunks.length} (${chunk.length} POAMs)`);
-            
-            try {
+            let saved = 0;
+            let errors = [];
+            for (const chunk of chunks) {
                 const result = await this.addPOAMsChunk(chunk);
-                totalSaved += result.saved;
-                totalErrors = totalErrors.concat(result.errors);
-                console.log(`📦 addPOAMsBatch: Chunk ${chunkIndex + 1} complete - saved ${result.saved}, errors ${result.errors.length}`);
-            } catch (err) {
-                console.error(`📦 addPOAMsBatch: Chunk ${chunkIndex + 1} failed:`, err);
-                throw err;
+                saved += result.saved;
+                errors = errors.concat(result.errors);
+            }
+            return { saved, errors };
+        };
+
+        try {
+            const result = await writeChunks(formalPOAMs);
+            console.log(`✅ addPOAMsBatch: Complete - saved ${result.saved} POAMs, ${result.errors.length} errors`);
+            return result;
+        } catch (err) {
+            if (!err.message || !err.message.includes('Quota')) throw err;
+
+            // ── QuotaExceededError fallback: nuke DB and retry ──
+            console.warn('📦 QuotaExceededError — deleting database and retrying...');
+            try {
+                this.db.close();
+                this.db = null;
+                await new Promise((resolve) => {
+                    const delReq = indexedDB.deleteDatabase(this.dbName);
+                    delReq.onsuccess = () => resolve();
+                    delReq.onerror = () => resolve();
+                    delReq.onblocked = () => resolve();
+                });
+                await new Promise(r => setTimeout(r, 200));
+                await this.init();
+                console.log('📦 Fresh database ready — retrying write');
+                const result = await writeChunks(formalPOAMs);
+                console.log(`✅ addPOAMsBatch: Complete (after retry) - saved ${result.saved} POAMs`);
+                return result;
+            } catch (retryErr) {
+                console.error('📦 Retry also failed:', retryErr.message);
+                throw retryErr;
             }
         }
-        
-        console.log(`✅ addPOAMsBatch: Complete - saved ${totalSaved} POAMs, ${totalErrors.length} errors`);
-        return { saved: totalSaved, errors: totalErrors };
     }
 
     async addPOAMsChunk(poams) {
@@ -984,11 +983,16 @@ class POAMDatabase {
             throw new Error(`Scan store '${storeName}' not found in IndexedDB`);
         }
 
+        // Ensure record has both id and runId so it works regardless of store keyPath
+        const record = { ...scanRun };
+        if (record.id && !record.runId) record.runId = record.id;
+        if (record.runId && !record.id) record.id = record.runId;
+
         const transaction = this.db.transaction([storeName], 'readwrite');
         const store = transaction.objectStore(storeName);
-        
+
         return new Promise((resolve, reject) => {
-            const request = store.put(scanRun);
+            const request = store.put(record);
             request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
         });

@@ -94,7 +94,7 @@
         const uniqueSystems = new Set();
         const scannedSystems = new Set();
         poams.forEach(p => {
-            const sys = p.system || p.assetName || (p.affectedAssets && p.affectedAssets[0]) || null;
+            const sys = p.system || p.assetName || (p.affectedAssets && p.affectedAssets[0] && (p.affectedAssets[0].name || p.affectedAssets[0].assetName || p.affectedAssets[0])) || null;
             if (sys) uniqueSystems.add(sys);
             if (p.lastScanDate && sys) scannedSystems.add(sys);
         });
@@ -302,7 +302,7 @@
                     : `<span style="color:#374151">${item.daysToDue}d left</span>`;
             const urgencyPct = item.overdueDays > 0 ? 100 : Math.max(5, Math.min(100, 100 - item.daysToDue * 2));
             const title = escapeHtml((p.title || p.vulnerabilityName || 'Untitled POAM').substring(0, 90));
-            const system = escapeHtml(p.system || p.assetName || (p.affectedAssets && p.affectedAssets[0]) || 'Unknown');
+            const system = escapeHtml(p.system || p.assetName || (p.affectedAssets && p.affectedAssets[0] && (p.affectedAssets[0].name || p.affectedAssets[0].assetName || p.affectedAssets[0])) || 'Unknown');
             return `
                 <div class="pri-item" onclick="showModule('vulnerability-tracking')">
                     <div class="pri-sev" style="background:${sevBar}"></div>
@@ -332,7 +332,7 @@
         const openList = poams.filter(isOpen);
         const bySystem = new Map();
         openList.forEach(p => {
-            const sys = p.system || p.assetName || (p.affectedAssets && p.affectedAssets[0]) || 'Unknown';
+            const sys = p.system || p.assetName || (p.affectedAssets && p.affectedAssets[0] && (p.affectedAssets[0].name || p.affectedAssets[0].assetName || p.affectedAssets[0])) || 'Unknown';
             bySystem.set(sys, (bySystem.get(sys) || 0) + 1);
         });
         const ranked = [...bySystem.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);

@@ -1591,8 +1591,35 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- POC Workload Widget -->
+                        <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                            <h3 class="text-sm font-semibold text-slate-900 mb-4">POC Workload</h3>
+                            <div class="space-y-2" id="poc-workload-list">
+                                <p class="text-xs text-slate-400">Loading...</p>
+                            </div>
+                        </div>
+
+                        <!-- Scan Coverage Widget -->
+                        <div id="scan-coverage-widget" class="hidden bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                            <h3 class="text-sm font-semibold text-slate-900 mb-3">Scan Coverage</h3>
+                            <div id="scan-coverage-content" class="space-y-2">
+                            </div>
+                        </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Remediation Work Items Panel -->
+            <div id="remediation-work-items" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">Remediation Work Items</h3>
+                        <p class="text-sm text-slate-500 mt-0.5">Related POAMs grouped by remediation action — one patch/update fixes multiple POAMs</p>
+                    </div>
+                    <button onclick="document.getElementById('remediation-work-items').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 text-sm"><i class="fas fa-times mr-1"></i>Close</button>
+                </div>
+                <div id="work-items-list" class="space-y-3"></div>
             </div>
 
             
@@ -1616,24 +1643,27 @@
                         <div class="text-sm text-slate-600">
                             <span id="poam-count-display">0-0 of 0 POAMs</span>
                         </div>
+                        <button onclick="toggleWorkItemsPanel()" class="px-3 py-1.5 text-sm font-medium text-teal-700 border border-teal-300 rounded-lg hover:bg-teal-50">
+                            <i class="fas fa-layer-group mr-1"></i>Work Items
+                        </button>
                     </div>
                 </div>
                 
-                <!-- Search Bar -->
-                <div class="mb-6">
+                <!-- Search & Filters -->
+                <div class="mb-6 space-y-3">
                     <div class="relative flex items-center gap-2">
-                        <input 
-                            type="text" 
-                            id="poam-search-input" 
-                            placeholder="Search by vulnerability title..." 
+                        <input
+                            type="text"
+                            id="poam-search-input"
+                            placeholder="Search by vulnerability title..."
                             class="w-full px-4 py-2 pl-10 border border-slate-300 rounded-lg focus:ring-2 teal-focus focus:border-teal-600"
                             oninput="filterPOAMsBySearch()"
                             onkeydown="if(event.key === 'Enter'){ executePOAMSearchFromInput(); }"
                         />
                         <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
-                        <button 
+                        <button
                             id="clear-search-btn"
-                            onclick="clearPOAMSearch()" 
+                            onclick="clearPOAMSearch()"
                             class="hidden absolute right-24 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
                         >
                             <i class="fas fa-times"></i>
@@ -1644,6 +1674,42 @@
                             class="px-4 py-2 text-sm font-semibold text-white bg-teal-700 rounded-lg hover:bg-teal-800 whitespace-nowrap">
                             Search
                         </button>
+                    </div>
+                    <!-- Filter Dropdowns -->
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <select id="filter-status" class="px-3 py-2 border border-slate-200 rounded-lg text-sm" onchange="applyPOAMFilters(this)">
+                            <option value="">All Statuses</option>
+                            <option value="open">Open</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="delayed">Delayed</option>
+                            <option value="extended">Extended</option>
+                            <option value="completed">Completed</option>
+                            <option value="risk-accepted">Risk Accepted</option>
+                        </select>
+                        <select id="filter-risk" class="px-3 py-2 border border-slate-200 rounded-lg text-sm" onchange="applyPOAMFilters(this)">
+                            <option value="">All Severities</option>
+                            <option value="critical">Critical</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                        <select id="filter-poc" class="px-3 py-2 border border-slate-200 rounded-lg text-sm" onchange="applyPOAMFilters(this)">
+                            <option value="">All POC Teams</option>
+                        </select>
+                        <button onclick="clearPOAMFilters()" class="px-3 py-2 text-sm text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg">Clear Filters</button>
+                    </div>
+                </div>
+
+                <!-- Priority Focus Panel -->
+                <div id="priority-focus-panel" class="hidden mb-6 bg-white rounded-xl border border-slate-200 shadow-sm">
+                    <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-900">Priority Focus — Quick Wins</h4>
+                            <p class="text-xs text-slate-500 mt-0.5">Critical/High POAMs with KEV or few remaining assets — most actionable items</p>
+                        </div>
+                        <button onclick="document.getElementById('priority-focus-panel').classList.add('hidden')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div id="priority-focus-list" class="divide-y divide-slate-100 max-h-96 overflow-y-auto">
                     </div>
                 </div>
 
@@ -1820,10 +1886,15 @@
                                     </div>
                                 </th>
                                 
-                                <!-- Due Date Column with Presets -->
+                                <!-- Due Date Column -->
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">
+                                    <span>Due Date</span>
+                                </th>
+
+                                <!-- Days Remaining Column with Presets -->
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase relative group">
                                     <div class="flex items-center gap-2 cursor-pointer" onclick="toggleColumnFilter('duedate')">
-                                        <span>Due Date</span>
+                                        <span>Days Left</span>
                                         <i class="fas fa-filter text-xs" id="duedate-filter-icon"></i>
                                         <span id="duedate-filter-count" class="hidden px-1.5 py-0.5 bg-teal-700 text-white rounded-full text-[10px]"></span>
                                     </div>
@@ -1876,7 +1947,7 @@
                         <tbody id="vulnerability-poam-list" class="divide-y divide-slate-100">
                             <!-- POAM rows will be populated here -->
                             <tr>
-                                <td colspan="8" class="px-4 py-12 text-center text-slate-500">
+                                <td colspan="9" class="px-4 py-12 text-center text-slate-500">
                                     <i class="fas fa-inbox text-4xl mb-3"></i>
                                     <p class="font-medium">No POAMs generated yet</p>
                                     <p class="text-sm mt-1">Upload a vulnerability scan to generate POAMs</p>
@@ -3045,7 +3116,7 @@
     <script src="config/notification-config.js?v=20260225-1"></script>
     
     <!-- Core Database -->
-    <script src="poam-database.js?v=20260419-quota"></script>
+    <script src="poam-database.js?v=20260419-quota2"></script>
     
     <!-- Diagnostic Logger -->
     <script src="poam-diagnostic-logger.js"></script>
@@ -3063,12 +3134,12 @@
     
     <!-- Consolidated Modules (v2.0.0) -->
     <script src="modules/data-processing.js?v=20260418-6"></script>
-    <script src="modules/pipeline.js"></script>
+    <script src="modules/pipeline.js?v=20260419-quota2"></script>
     <script src="modules/pipeline-progress-ui.js"></script>
     <script src="modules/pipeline-logger.js"></script>
     <script src="modules/milestone-pipeline-orchestrator-v2.js"></script>
     <script src="vulnerability-analysis-engine-v3.js"></script>
-    <script src="modules/poam-ui.js?v=20260418-1"></script>
+    <script src="modules/poam-ui.js?v=20260419-quota2"></script>
     <script src="modules/status-normalization.js"></script>
     <script src="modules/poam-activity-monitor.js"></script>
     <script src="modules/poam-activity-widget.js"></script>
@@ -3081,12 +3152,12 @@
     <script src="modules/workbook-import-simple.js"></script>
     <script src="modules/integrations.js"></script>
     <script src="modules/reporting.js"></script>
-    <script src="modules/dashboard-mockup-c.js?v=20260410-mc1"></script>
+    <script src="modules/dashboard-mockup-c.js?v=20260419-objfix"></script>
     <script src="modules/mock-poam-seeder.js?v=20260410-mc1"></script>
     <script src="modules/audit-log.js?v=20260418"></script>
     
     <!-- Core Modules -->
-    <script src="vulnerability-tracking.js?v=20260418-3"></script>
+    <script src="vulnerability-tracking.js?v=20260419-duedate"></script>
     <script src="vulnerability-tracking-milestones.js?v=20260120-1"></script>
     <script src="sidebar-navigation.js"></script>
     <script src="script.js?v=20260418-6"></script>
