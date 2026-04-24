@@ -2,7 +2,8 @@
 
 const crypto = require('crypto');
 const { parseQualysCSV } = require('../parsers/qualys-csv-parser');
-const { normalizeFinding } = require('./normalizer');
+const { parseWizCSV } = require('../parsers/wiz-csv-parser');
+const { normalizeFinding, normalizeWizFinding } = require('./normalizer');
 const { deriveIdentityKey, generateDisplayName } = require('./identity-resolver');
 const { buildAssetSnapshot, compareSnapshots, calculateProgress } = require('./asset-ledger');
 const { calculatePriorityScore } = require('./priority-scorer');
@@ -76,6 +77,7 @@ async function runImportPipeline(filePath, store, options = {}) {
   const today = options.today || new Date();
   const source = options.source || 'qualys';
   const filename = options.filename || '';
+  const scopeId = options.scopeId || null;
   const progress = options.progressCallback || (() => {});
 
   const scanId = crypto.randomUUID
@@ -86,10 +88,19 @@ async function runImportPipeline(filePath, store, options = {}) {
   // Step 1: Parse & Normalize
   // ──────────────────────────────────────────────────────
   progress('parse', 'Parsing CSV file');
-  const rawRows = await parseQualysCSV(filePath);
-  const totalParsed = rawRows.length;
 
-  const normalized = rawRows.map(r => normalizeFinding(r));
+  let rawRows;
+  let normalized;
+
+  if (source === 'wiz') {
+    rawRows = await parseWizCSV(filePath);
+    normalized = rawRows.map(r => normalizeWizFinding(r));
+  } else {
+    rawRows = await parseQualysCSV(filePath);
+    normalized = rawRows.map(r => normalizeFinding(r));
+  }
+
+  const totalParsed = rawRows.length;
 
   // 30-day eligibility gate
   const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
@@ -106,6 +117,11 @@ async function runImportPipeline(filePath, store, options = {}) {
   }
 
   progress('parse', `Parsed ${totalParsed}, eligible ${eligible.length}, excluded ${excluded}`);
+
+  // Stamp scope on all eligible findings
+  if (scopeId) {
+    eligible.forEach(f => { f.scopeId = scopeId; f.scopeSource = 'api'; });
+  }
 
   // ──────────────────────────────────────────────────────
   // Step 2: Resolve Identities

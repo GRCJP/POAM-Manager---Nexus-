@@ -1541,6 +1541,13 @@ async function mergePOAMsFromScan(newPOAMs, existingPOAMsOverride) {
     const scopeSkipped = [];
     const previouslyOpenPOAMs = [];
 
+    // Collect scope IDs from this import for scope-aware auto-resolve
+    const importScopeIds = new Set();
+    for (const p of newPOAMs) {
+        if (p.scopeId) importScopeIds.add(p.scopeId);
+    }
+    const hasScopes = importScopeIds.size > 0;
+
     for (const existing of existingPOAMs) {
         if (!existing.remediationSignature) continue;
         if (newSignatures.has(existing.remediationSignature)) continue;
@@ -1548,7 +1555,18 @@ async function mergePOAMsFromScan(newPOAMs, existingPOAMsOverride) {
         const status = (existing.findingStatus || existing.status || '').toLowerCase();
         if (status === 'completed' || status === 'closed' || status === 'risk-accepted') continue;
 
-        // (A) Scope check: if we know scanned assets, verify this POAM's assets were scanned
+        // Scope check: only auto-resolve POAMs within the same scope as this import
+        if (hasScopes) {
+            const existingScope = existing.scopeId || null;
+            if (!existingScope || !importScopeIds.has(existingScope)) {
+                // POAM is unassigned or belongs to a different scope — don't auto-close
+                scopeSkipped.push(existing);
+                mergedPOAMs.push(existing);
+                continue;
+            }
+        }
+
+        // (A) Asset scope check: if we know scanned assets, verify this POAM's assets were scanned
         if (scannedAssets.size > 0) {
             const poamAssets = existing.affectedAssets || [];
             const assetList = Array.isArray(poamAssets) ? poamAssets : [poamAssets];
@@ -2102,6 +2120,105 @@ async function executeBulkAssignPOC() {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// BULK ASSIGN SCOPE
+// ═══════════════════════════════════════════════════════════════
+
+async function showBulkAssignScope() {
+    // Build scope options from existing scopes
+    let scopeOptions = '<option value="">Select a scope...</option>';
+    try {
+        const scopes = await window.poamDB.getAllScopes();
+        scopes.forEach(s => {
+            scopeOptions += `<option value="${s.id}">${s.displayName || s.id}</option>`;
+        });
+    } catch (e) {}
+    scopeOptions += '<option value="__new__">+ Create New Scope...</option>';
+
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+            <h2 class="text-lg font-bold text-slate-900 mb-2">Assign Scope to ${selectedPOAMs.size} POAMs</h2>
+            <p class="text-sm text-slate-500 mb-6">Group selected POAMs under an application scope for filtering and scoped auto-resolve.</p>
+
+            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Select Scope</label>
+            <select id="bulk-scope-select" class="w-full px-3 py-2 border border-slate-300 rounded-lg mb-3 text-sm" onchange="if(this.value==='__new__'){document.getElementById('new-scope-row').classList.remove('hidden')}else{document.getElementById('new-scope-row').classList.add('hidden')}">
+                ${scopeOptions}
+            </select>
+
+            <div id="new-scope-row" class="hidden mb-3">
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">New Scope Name</label>
+                <input type="text" id="bulk-scope-new-name" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="e.g. EBRS Production">
+            </div>
+
+            <div class="flex gap-3 mt-4">
+                <button onclick="this.closest('.fixed').remove()" class="flex-1 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 text-sm font-medium">
+                    Cancel
+                </button>
+                <button onclick="executeBulkAssignScope()" class="flex-1 px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800 text-sm font-medium">
+                    Assign Scope
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+async function executeBulkAssignScope() {
+    const select = document.getElementById('bulk-scope-select');
+    let scopeId = select.value;
+
+    if (scopeId === '__new__') {
+        const newName = document.getElementById('bulk-scope-new-name')?.value?.trim();
+        if (!newName) {
+            alert('Please enter a scope name.');
+            return;
+        }
+        scopeId = window.scopeRegistry.normalizeId(newName);
+        await window.poamDB.saveScope({
+            id: scopeId,
+            displayName: newName,
+            description: '',
+            createdAt: new Date().toISOString(),
+            autoCreated: false
+        });
+    }
+
+    if (!scopeId) {
+        alert('Please select a scope.');
+        return;
+    }
+
+    try {
+        let successCount = 0;
+        for (const poamId of selectedPOAMs) {
+            try {
+                const poam = await poamDB.getPOAM(poamId);
+                if (poam) {
+                    poam.scopeId = scopeId;
+                    poam.scopeSource = 'manual';
+                    await poamDB.savePOAM(poam);
+                    successCount++;
+                }
+            } catch (error) {
+                console.error(`Failed to update POAM ${poamId}:`, error);
+            }
+        }
+        showUpdateFeedback(`Assigned scope to ${successCount} POAMs`, 'success');
+    } catch (error) {
+        console.error('Bulk assign scope failed:', error);
+        showUpdateFeedback('Operation failed: ' + error.message, 'error');
+    } finally {
+        document.querySelectorAll('.fixed.inset-0.bg-black.bg-opacity-50').forEach(m => m.remove());
+        await displayVulnerabilityPOAMs();
+        clearSelection();
+    }
+}
+
+window.showBulkAssignScope = showBulkAssignScope;
+window.executeBulkAssignScope = executeBulkAssignScope;
+
+// ═══════════════════════════════════════════════════════════════
 // BULK CHANGE STATUS
 // ═══════════════════════════════════════════════════════════════
 
@@ -2367,6 +2484,10 @@ function toggleColumnFilter(columnName) {
         if (columnName === 'poc' && !dropdown.classList.contains('hidden')) {
             initializePOCOptions();
         }
+        // Initialize PCA options if opening PCA filter
+        if (columnName === 'pca' && !dropdown.classList.contains('hidden')) {
+            populatePCAFilterOptions();
+        }
     }
 }
 
@@ -2416,6 +2537,32 @@ function applyDueDateFilter(value) {
     currentPOAMPage = 1;
     displayVulnerabilityPOAMs();
 }
+
+// PCA Code / Scope Filter
+function applyPCAFilter(value) {
+    activeFilters.pca = value;
+    updateFilterIndicator('pca', value ? 1 : 0);
+    updateFilterChips();
+    currentPOAMPage = 1;
+    displayVulnerabilityPOAMs();
+}
+
+async function populatePCAFilterOptions() {
+    const container = document.getElementById('pca-filter-options');
+    if (!container) return;
+    try {
+        const allPoams = await poamDB.getAllPOAMs();
+        const pcaCodes = [...new Set(allPoams.map(p => p.pcaCode).filter(Boolean))].sort();
+        container.innerHTML = '<label class="flex items-center gap-2 text-sm font-normal"><input type="radio" name="pca-filter" value="" onchange="applyPCAFilter(this.value)" checked><span>All</span></label>';
+        pcaCodes.forEach(code => {
+            const count = allPoams.filter(p => p.pcaCode === code).length;
+            container.innerHTML += `<label class="flex items-center gap-2 text-sm font-normal"><input type="radio" name="pca-filter" value="${code}" onchange="applyPCAFilter(this.value)" ${activeFilters.pca === code ? 'checked' : ''}><span>${code} (${count})</span></label>`;
+        });
+    } catch (e) {}
+}
+
+window.applyPCAFilter = applyPCAFilter;
+window.populatePCAFilterOptions = populatePCAFilterOptions;
 
 // POC Filter with Typeahead
 const pocTeams = [

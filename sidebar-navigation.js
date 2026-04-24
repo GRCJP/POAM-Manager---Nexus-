@@ -98,6 +98,8 @@ function showSettingsTab(tabName) {
     } else if (finalTabName === 'integrations') {
         if (typeof renderAPISettingsTab === 'function') renderAPISettingsTab();
         if (typeof loadJiraConfig === 'function') loadJiraConfig();
+    } else if (finalTabName === 'scopes') {
+        if (typeof initScopeSettings === 'function') initScopeSettings();
     }
 
     // Close mobile sidebar after selection

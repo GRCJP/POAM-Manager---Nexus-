@@ -38,7 +38,7 @@ class PipelineDatabase {
 
         // Fallback: open directly (version must match POAMDatabase.version)
         return new Promise((resolve, reject) => {
-            const request = indexedDB.open(this.dbName, 12);
+            const request = indexedDB.open(this.dbName, 13);
             
             request.onerror = () => reject(request.error);
             request.onsuccess = () => {
@@ -396,7 +396,22 @@ class PipelineOrchestrator {
             excluded: excludedFindings.length,
             exclusionRate: rawVulnerabilities.length > 0 ? (excludedFindings.length / rawVulnerabilities.length * 100).toFixed(2) + '%' : '0%'
         });
-        
+
+        // Scope resolution: assign scopeId to each eligible finding
+        if (window.scopeRegistry) {
+            const source = this.currentRun?.scanMetadata?.scanType || this.currentRun?.scanMetadata?.source || 'qualys';
+            const scopeOverride = this.currentRun?.scanMetadata?.scopeId || null;
+
+            if (scopeOverride) {
+                // Manual override from upload modal or API
+                eligibleFindings.forEach(f => { f.scopeId = scopeOverride; f.scopeSource = 'manual'; });
+                console.log(`📦 Scope override: all ${eligibleFindings.length} findings assigned to "${scopeOverride}"`);
+            } else {
+                const scopeResult = await window.scopeRegistry.resolveScopeForFindings(eligibleFindings, source);
+                console.log(`📦 Scope resolution complete:`, scopeResult);
+            }
+        }
+
         return eligibleFindings;
     }
 

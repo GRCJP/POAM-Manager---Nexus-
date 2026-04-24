@@ -293,4 +293,178 @@ test.describe('Scan Import Pipeline', () => {
     expect(result.savedCount).toBe(500);
     expect(result.storedCount).toBe(500);
   });
+
+  test('Wiz findings with same DetailedName group into one POAM', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      // Simulate 5 CVEs all targeting "Windows Server 2016"
+      const wizFindings = [];
+      for (let i = 1; i <= 5; i++) {
+        wizFindings.push({
+          title: 'Windows Server 2016',
+          host: `server-${i}.example.com`,
+          operatingSystem: 'Windows Server 2016',
+          severity: 'high',
+          status: 'Open',
+          solution: i <= 3 ? `Update 'Windows Server 2016' to version KB508219${i}` : '',
+          cve: [`CVE-2026-3200${i}`],
+          qid: [],
+          wizComponent: 'Windows Server 2016',
+          firstDetected: '2025-01-01T00:00:00Z',
+        });
+      }
+
+      // Run through classification
+      const classSkill = window.skillsIntegration?.orchestrator?.skills?.get('classification');
+      if (!classSkill) {
+        // Fallback: use legacy engine
+        const engine = new VulnerabilityAnalysisEngineV3();
+        const classified = engine.classifyRemediation(wizFindings);
+        const groups = engine.groupByRemediationSignature(classified);
+        return { groupCount: groups.size, findingCount: wizFindings.length, method: 'legacy' };
+      }
+
+      const classResult = await classSkill.execute({ findings: wizFindings });
+      const groupSkill = window.skillsIntegration.orchestrator.skills.get('grouping');
+      const groupResult = await groupSkill.execute({ findings: classResult.data.findings });
+      return {
+        groupCount: groupResult.data.groups.length,
+        findingCount: wizFindings.length,
+        method: 'skills',
+      };
+    });
+
+    console.log('Wiz grouping result:', result);
+    // All 5 CVEs for Windows Server 2016 should collapse into 1 group
+    expect(result.groupCount).toBe(1);
+  });
+
+  test('Linux sub-packages normalize to same group', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      // All vim variants should collapse into one group
+      const variants = ['vim', 'vim-minimal', 'vim-enhanced', 'vim-filesystem', 'vim-common', 'vim-X11'];
+      const findings = variants.map((comp, i) => ({
+        title: comp,
+        host: `linux-server-${String(i+1).padStart(2,'0')}`,
+        operatingSystem: 'CentOS 7',
+        severity: 'medium',
+        status: 'Open',
+        solution: '',
+        cve: [`CVE-2026-400${i}`],
+        qid: [],
+        wizComponent: comp,
+        firstDetected: '2025-01-01T00:00:00Z',
+      }));
+
+      const engine = new VulnerabilityAnalysisEngineV3();
+      const classified = engine.classifyRemediation(findings);
+      const groups = engine.groupByRemediationSignature(classified);
+      const group = Array.from(groups.values())[0];
+      return {
+        groupCount: groups.size,
+        signatures: Array.from(groups.keys()),
+        assetCount: group.assets.size,
+        findingCount: group.findings.length
+      };
+    });
+
+    console.log('Sub-package grouping:', result);
+    expect(result.groupCount).toBe(1);
+    expect(result.assetCount).toBe(6);
+    expect(result.findingCount).toBe(6);
+  });
+
+  test('scopes store exists and CRUD works', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      if (!window.poamDB.db) await window.poamDB.init();
+
+      const hasStore = window.poamDB.db.objectStoreNames.contains('scopes');
+      const version = window.poamDB.db.version;
+
+      // Test CRUD
+      await window.poamDB.saveScope({ id: 'test-app-a', displayName: 'Test App A', autoCreated: false, createdAt: new Date().toISOString() });
+      await window.poamDB.saveScope({ id: 'test-app-b', displayName: 'Test App B', autoCreated: true, createdAt: new Date().toISOString() });
+
+      const all = await window.poamDB.getAllScopes();
+      const one = await window.poamDB.getScope('test-app-a');
+
+      await window.poamDB.deleteScope('test-app-b');
+      const afterDelete = await window.poamDB.getAllScopes();
+
+      return { hasStore, version, allCount: all.length, oneName: one?.displayName, afterDeleteCount: afterDelete.length };
+    });
+
+    console.log('Scopes CRUD result:', result);
+    expect(result.hasStore).toBe(true);
+    expect(result.version).toBe(13);
+    expect(result.allCount).toBe(2);
+    expect(result.oneName).toBe('Test App A');
+    expect(result.afterDeleteCount).toBe(1);
+  });
+
+  test('scope-aware auto-resolve skips out-of-scope POAMs', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      if (!window.poamDB.db) await window.poamDB.init();
+
+      // Existing POAMs: two scopes
+      const existingPOAMs = [
+        { id: 'POAM-A1', title: 'App A vuln', remediationSignature: 'upgrade::windows server 2016::server::open::app-a', findingStatus: 'open', scopeId: 'app-a', affectedAssets: ['server1'] },
+        { id: 'POAM-B1', title: 'App B vuln', remediationSignature: 'upgrade::chrome::endpoint::open::app-b', findingStatus: 'open', scopeId: 'app-b', affectedAssets: ['workstation1'] },
+      ];
+
+      // New scan only covers app-a scope, and the finding is still there
+      const newPOAMs = [
+        { id: 'POAM-A1-NEW', title: 'App A vuln', remediationSignature: 'upgrade::windows server 2016::server::open::app-a', scopeId: 'app-a' },
+      ];
+
+      const mergeResult = await window.mergePOAMsFromScan(newPOAMs, existingPOAMs);
+
+      // App B POAM should NOT be auto-resolved (different scope)
+      const appBPoam = mergeResult.mergedPOAMs.find(p => p.id === 'POAM-B1');
+      const appBStatus = appBPoam?.findingStatus || appBPoam?.status;
+
+      return { totalMerged: mergeResult.mergedPOAMs.length, appBStatus };
+    });
+
+    console.log('Scope-aware auto-resolve:', result);
+    expect(result.appBStatus).not.toBe('completed');
+    expect(result.appBStatus).toBe('open');
+  });
+
+  test('scope registry resolves and creates scopes', async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      if (!window.poamDB.db) await window.poamDB.init();
+      if (!window.scopeRegistry) return { error: 'scopeRegistry not loaded' };
+
+      // Configure a rule
+      window.scopeRegistry.saveRuleForSource('wiz', 'pcaCode', 'auto', {});
+
+      // Test findings with pcaCode field
+      const findings = [
+        { pcaCode: 'FE410', host: 'server1' },
+        { pcaCode: 'FE410', host: 'server2' },
+        { pcaCode: 'AB123', host: 'server3' },
+        { host: 'server4' }, // no PCA code
+      ];
+
+      const result = await window.scopeRegistry.resolveScopeForFindings(findings, 'wiz');
+
+      // Check scopes were auto-created
+      const scopes = await window.poamDB.getAllScopes();
+      const scopeIds = scopes.map(s => s.id);
+
+      return {
+        scoped: result.scoped,
+        unassigned: result.unassigned,
+        scopeIds,
+        finding0Scope: findings[0].scopeId,
+        finding3Scope: findings[3].scopeId,
+      };
+    });
+
+    console.log('Scope registry result:', result);
+    expect(result.scoped).toBe(3);
+    expect(result.unassigned).toBe(1);
+    expect(result.finding0Scope).toBe('fe410');
+    expect(result.finding3Scope).toBeNull();
+  });
 });

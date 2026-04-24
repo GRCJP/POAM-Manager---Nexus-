@@ -792,6 +792,23 @@ console.log('📋 executive-reports.js loading...');
 
 let _reportHistory = [];
 
+/**
+ * Format Wiz tags for export. Extracts key metadata from the raw tags
+ * stored on the POAM (PCA Code, Application, Environment, etc.).
+ */
+function formatTagsForExport(poam) {
+    // If full Wiz tags string is available, use it directly
+    if (poam.wizTags) return poam.wizTags;
+    // Fallback to individual fields
+    const parts = [];
+    if (poam.pcaCode) parts.push(`PCA Code:${poam.pcaCode}`);
+    if (poam.wizProjects) parts.push(`Projects:${poam.wizProjects}`);
+    if (poam.subscriptionName) parts.push(`Subscription:${poam.subscriptionName}`);
+    if (poam.cloudPlatform) parts.push(`Cloud:${poam.cloudPlatform}`);
+    if (poam.assetRegion) parts.push(`Region:${poam.assetRegion}`);
+    return parts.join('; ');
+}
+
 // ═══════════════════════════════════════════════════════════════
 // MODULE INITIALIZATION
 // ═══════════════════════════════════════════════════════════════
@@ -824,6 +841,15 @@ async function generateReport(reportType) {
         if (!poamDB || !poamDB.db) await poamDB.init();
         const poams = await poamDB.getAllPOAMs();
         const scanRuns = await poamDB.getAllScanRuns();
+
+        // Resolve scope display names for export
+        try {
+            const scopes = await poamDB.getAllScopes();
+            const scopeMap = new Map(scopes.map(s => [s.id, s.displayName]));
+            poams.forEach(p => {
+                if (p.scopeId) p.scopeDisplayName = scopeMap.get(p.scopeId) || p.scopeId;
+            });
+        } catch (e) { /* non-fatal */ }
 
         const dateFrom = document.getElementById('report-date-from')?.value || '';
         const dateTo = document.getElementById('report-date-to')?.value || '';
@@ -922,7 +948,8 @@ function generateStatusSummary(poams, scanRuns) {
         exportRows: poams.map(p => ({
             'POAM ID': p.id, 'Vulnerability': p.vulnerabilityName || p.title || '', 'Status': p.findingStatus || p.status || '',
             'Risk Level': p.riskLevel || p.risk || '', 'Control Family': p.controlFamily || '', 'POC': p.poc || '',
-            'Due Date': p.updatedScheduledCompletionDate || p.dueDate || '', 'Created': p.createdDate || ''
+            'Due Date': p.updatedScheduledCompletionDate || p.dueDate || '', 'Created': p.createdDate || '',
+            'Scope': p.scopeDisplayName || p.scopeId || '', 'PCA Code': p.pcaCode || '', 'Tags': formatTagsForExport(p)
         }))
     };
 }
@@ -956,7 +983,8 @@ function generateQuarterlyCompliance(poams, scanRuns) {
             'POAM ID': p.id, 'Vulnerability': p.vulnerabilityName || '', 'Status': p.findingStatus || p.status || '',
             'Risk': p.riskLevel || p.risk || '', 'Control Family': p.controlFamily || '', 'POC': p.poc || '',
             'Initial Due': p.initialScheduledCompletionDate || '', 'Current Due': p.updatedScheduledCompletionDate || p.dueDate || '',
-            'Actual Completion': p.actualCompletionDate || '', 'SLA Status': new Date(p.updatedScheduledCompletionDate || p.dueDate) >= now ? 'Within SLA' : 'Outside SLA'
+            'Actual Completion': p.actualCompletionDate || '', 'SLA Status': new Date(p.updatedScheduledCompletionDate || p.dueDate) >= now ? 'Within SLA' : 'Outside SLA',
+            'Scope': p.scopeDisplayName || p.scopeId || '', 'PCA Code': p.pcaCode || '', 'Tags': formatTagsForExport(p)
         }))
     };
 }
@@ -1018,7 +1046,8 @@ function generateRiskAssessment(poams) {
         exportRows: poams.map(p => ({
             'POAM ID': p.id, 'Vulnerability': p.vulnerabilityName || '', 'Risk': p.riskLevel || p.risk || '',
             'Status': p.findingStatus || p.status || '', 'Age (days)': p.createdDate ? Math.round((now - new Date(p.createdDate)) / 86400000) : '',
-            'Due Date': p.updatedScheduledCompletionDate || p.dueDate || ''
+            'Due Date': p.updatedScheduledCompletionDate || p.dueDate || '',
+            'Scope': p.scopeDisplayName || p.scopeId || '', 'PCA Code': p.pcaCode || '', 'Tags': formatTagsForExport(p)
         }))
     };
 }

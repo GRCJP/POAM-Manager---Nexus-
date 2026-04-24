@@ -27,6 +27,7 @@ class ClassificationSkill extends BaseSkill {
         const classified = findings.map(f => {
             const solution = f.solution || '';
             const title = f.title || '';
+            const description = f.description || '';
             const os = f.operatingSystem || f.asset?.operatingSystem || f.os || '';
 
             // Generic extraction from raw data columns
@@ -34,43 +35,67 @@ class ClassificationSkill extends BaseSkill {
             const rawVersion = this.extractTargetVersion(solution);
             const fixedTarget = rawVersion || '';
             const truncatedVersion = rawVersion ? this.truncateVersion(rawVersion) : null;
-            const component = this.genericExtractProduct(title);
+            // Try to extract component from description (Wiz file-level findings)
+            // before falling back to title-based extraction
+            const componentFromDesc = this.extractComponentFromDescription(description);
+            const component = componentFromDesc || this.genericExtractProduct(title);
             const vendor = this.genericExtractVendor(title, solution);
             const patchDate = this.extractPatchMonth(solution);
             const actionText = solution || title || '';
             const assetClass = this.deriveAssetClass(os);
 
-            // Build targetKey for grouping: prioritize version/patch/component/title over solution hash
-            // This ensures findings with the same remediation action group together
+            // Build targetKey for grouping.
+            // Wiz findings have a wizComponent field (from DetailedName) that
+            // identifies the software component (e.g., "Windows Server 2016",
+            // "Google Chrome", "vim"). ALL CVEs for the same component should
+            // group into ONE POAM. The POAM remediation will reference the
+            // highest fix version.
+            const wizComponent = f.wizComponent || '';
             let targetKey;
-            if (truncatedVersion) {
+            if (wizComponent) {
+                // Wiz finding: group by normalized component name.
+                // Strip common Linux package suffixes so related sub-packages
+                // (ncurses, ncurses-libs, ncurses-base) collapse into one group.
+                targetKey = this.normalizeWizComponent(wizComponent);
+            } else if (componentFromDesc) {
+                // Wiz file-level description pattern
+                targetKey = componentFromDesc;
+            } else if (truncatedVersion) {
                 targetKey = truncatedVersion;
             } else if (patchDate) {
                 targetKey = patchDate;
+            } else if (this.isPackageLevelRemediation(solution)) {
+                targetKey = component || this.normalizeForHash(title);
+            } else if (solution && solution.length > 10 && solution.toLowerCase() !== 'no remediation available') {
+                targetKey = this.normalizeForHash(solution);
             } else if (component) {
                 targetKey = component;
             } else {
-                // Fallback: normalize title for consistent grouping (e.g., "Pending Reboot Detected")
                 targetKey = this.normalizeForHash(title || solution);
             }
 
             // Determine targeting strategy
             const targetingStrategy = (rawVersion || patchDate) ? 'version' : 'asset';
 
+            // For Wiz findings, use a consistent actionType so that all CVEs
+            // for the same component collapse into one POAM regardless of
+            // whether Remediation text says "Update", "Patch", or is empty.
+            const effectiveActionType = wizComponent ? 'upgrade' : actionType;
+
             // Map actionType to legacy remediationType for downstream compat
-            let remediationType = actionType;
-            if (actionType === 'upgrade') remediationType = 'patch_update';
-            else if (actionType === 'patch') remediationType = 'patch_update';
-            else if (actionType === 'configure') remediationType = 'config_change';
-            else if (actionType === 'remove') remediationType = 'removal';
-            else if (actionType === 'workaround') remediationType = 'operational_mitigation';
+            let remediationType = effectiveActionType;
+            if (effectiveActionType === 'upgrade') remediationType = 'patch_update';
+            else if (effectiveActionType === 'patch') remediationType = 'patch_update';
+            else if (effectiveActionType === 'configure') remediationType = 'config_change';
+            else if (effectiveActionType === 'remove') remediationType = 'removal';
+            else if (effectiveActionType === 'workaround') remediationType = 'operational_mitigation';
             else remediationType = 'operational_mitigation';
 
             return {
                 ...f,
                 remediation: {
                     remediationType,
-                    actionType,
+                    actionType: effectiveActionType,
                     component,
                     platform: assetClass,
                     targetingStrategy,
@@ -138,6 +163,67 @@ class ClassificationSkill extends BaseSkill {
         return monthYear ? monthYear[1].toLowerCase() + '_' + monthYear[2] : null;
     }
 
+    /**
+     * Extract software component from Wiz-style description fields.
+     * Pattern: File `C:\...\vim.exe` version `8.2.2859` is vulnerable to ...
+     * Returns the filename without extension as the component (e.g., "vim").
+     * Also handles Linux paths: File `/usr/lib64/libssl.so.1.1` ...
+     */
+    extractComponentFromDescription(description) {
+        if (!description) return '';
+        // Match: File `<path>` version `<ver>` — extract the filename
+        const fileMatch = description.match(/File\s+`([^`]+)`\s+version/i);
+        if (fileMatch) {
+            const fullPath = fileMatch[1];
+            // Extract filename from path (handles both \ and /)
+            const parts = fullPath.split(/[\\\/]/);
+            const filename = parts[parts.length - 1] || '';
+            // Strip extension and version suffixes for cleaner grouping
+            // e.g., "libssl-1_1.dll" → "libssl", "vim.exe" → "vim"
+            const cleaned = filename
+                .replace(/\.(dll|exe|so|dylib|jar|py|rb|pl|sh)(\.\d+)*$/i, '')
+                .replace(/[-_]\d+.*$/, '') // strip version suffixes like -1_1
+                .toLowerCase();
+            return cleaned || filename.toLowerCase();
+        }
+        return '';
+    }
+
+    /**
+     * Detect package-level remediation commands (yum update X, apt-get install X, pip install X).
+     * These should group by vulnerability, not by package name.
+     */
+    isPackageLevelRemediation(solution) {
+        if (!solution) return false;
+        const s = solution.toLowerCase().trim();
+        return /^(yum|dnf|apt-get|apt|pip|pip3|npm|gem|apk)\s+(update|install|upgrade)\s+\S+$/i.test(s);
+    }
+
+    /**
+     * Normalize Wiz DetailedName (wizComponent) so related sub-packages
+     * collapse into one group. Examples:
+     *   ncurses-libs  → ncurses
+     *   ncurses-base  → ncurses
+     *   dbus-libs     → dbus
+     *   vim-minimal   → vim
+     * Windows names pass through unchanged.
+     */
+    normalizeWizComponent(name) {
+        if (!name) return 'unknown';
+        let n = name.toLowerCase().trim();
+        // Don't strip suffixes from multi-word product names (Windows Server 2016, MySQL Workbench)
+        if (n.includes(' ')) return n;
+        // For single-word hyphenated names (RPM sub-packages like vim-minimal,
+        // vim-enhanced, ncurses-libs, dbus-glib), take just the base name
+        // before the first hyphen if it's 3+ chars. This collapses all
+        // sub-packages into one POAM (e.g., vim-minimal + vim-enhanced → vim).
+        const hyphenIdx = n.indexOf('-');
+        if (hyphenIdx >= 3) {
+            return n.substring(0, hyphenIdx);
+        }
+        return n;
+    }
+
     normalizeForHash(solution) {
         if (!solution) return 'no_solution';
         let n = solution.toLowerCase()
@@ -183,9 +269,14 @@ class ClassificationSkill extends BaseSkill {
         if (lower.includes('php')) return 'php';
         if (lower.includes('cisco')) return 'cisco';
         if (lower.includes('oracle')) return 'oracle';
-        // Fallback: first word of title
+        // Wiz/CVE-titled findings: use full CVE ID as component (e.g. "CVE-2022-4304")
+        const cveMatch = title.match(/^(CVE-\d{4}-\d+)$/i);
+        if (cveMatch) return cveMatch[1].toUpperCase();
+        // Fallback: first word of title (but not if it's just "CVE")
         const words = title.split(/[\s\-:]/);
-        return words[0] ? words[0].toLowerCase() : 'unknown';
+        const firstWord = words[0] ? words[0].toLowerCase() : 'unknown';
+        if (firstWord === 'cve') return title.trim();
+        return firstWord;
     }
 
     genericExtractVendor(title, solution) {

@@ -39,7 +39,8 @@ class GroupingSkill extends BaseSkill {
                 status === 'risk accepted' || status === 'risk-accepted' ||
                 status === 'ignored' || status === 'yes';
             const statusBucket = isRiskAccepted ? 'risk-accepted' : 'open';
-            const signature = `${rem.actionType || 'other'}::${rem.targetKey || 'unknown'}::${rem.assetClass || 'general'}::${statusBucket}`;
+            const scopeId = finding.scopeId || 'unassigned';
+            const signature = `${rem.actionType || 'other'}::${rem.targetKey || 'unknown'}::${rem.assetClass || 'general'}::${statusBucket}::${scopeId}`;
             
             // Create or update group
             if (!groups.has(signature)) {
@@ -267,9 +268,14 @@ class GroupingSkill extends BaseSkill {
         if (lower.includes('php')) return 'php';
         if (lower.includes('cisco')) return 'cisco';
         if (lower.includes('oracle')) return 'oracle';
-        // Fallback: first word of title
+        // Wiz/CVE-titled findings: use full CVE ID as component
+        const cveMatch = title.match(/^(CVE-\d{4}-\d+)$/i);
+        if (cveMatch) return cveMatch[1].toUpperCase();
+        // Fallback: first word of title (but not if it's just "CVE")
         const words = title.split(/[\s\-:]/);
-        return words[0] ? words[0].toLowerCase() : 'unknown';
+        const firstWord = words[0] ? words[0].toLowerCase() : 'unknown';
+        if (firstWord === 'cve') return title.trim();
+        return firstWord;
     }
     
     extractVendor(title, solution) {

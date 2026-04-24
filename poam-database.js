@@ -7,7 +7,7 @@ console.log('📦 poam-database.js loading...');
 class POAMDatabase {
     constructor() {
         this.dbName = 'POAMDatabase';
-        this.version = 12;
+        this.version = 13;
         this.db = null;
     }
 
@@ -166,6 +166,26 @@ class POAMDatabase {
                     apiStore.createIndex('lastSync', 'lastSync', { unique: false });
                 }
                 
+                // Create scopes object store for import scope management
+                if (!db.objectStoreNames.contains('scopes')) {
+                    console.log('📦 Creating scopes object store');
+                    const scopeStore = db.createObjectStore('scopes', { keyPath: 'id' });
+                    scopeStore.createIndex('displayName', 'displayName', { unique: false });
+                    scopeStore.createIndex('autoCreated', 'autoCreated', { unique: false });
+                }
+
+                // Add scopeId index to poams store if not present
+                if (db.objectStoreNames.contains('poams')) {
+                    try {
+                        const poamStore = event.currentTarget.transaction.objectStore('poams');
+                        if (!poamStore.indexNames.contains('scopeId')) {
+                            poamStore.createIndex('scopeId', 'scopeId', { unique: false });
+                        }
+                    } catch (e) {
+                        console.warn('📦 Could not add scopeId index (non-fatal):', e.message);
+                    }
+                }
+
                 console.log('✅ Database upgrade complete');
             };
         });
@@ -219,9 +239,11 @@ class POAMDatabase {
         if (totalMB > targetMB || totalMB > 2) {
             console.warn(`📦 Trimming POAM data (${totalMB.toFixed(1)}MB > target ${targetMB.toFixed(1)}MB)`);
             for (const p of formalPOAMs) {
-                // Cap assets to 5
-                if (Array.isArray(p.affectedAssets) && p.affectedAssets.length > 5) {
-                    p.affectedAssets = p.affectedAssets.slice(0, 5);
+                // Cap asset detail array but preserve the true count
+                if (Array.isArray(p.affectedAssets) && p.affectedAssets.length > 50) {
+                    p.totalAffectedAssets = p.totalAffectedAssets || p.affectedAssets.length;
+                    p.assetCount = p.totalAffectedAssets;
+                    p.affectedAssets = p.affectedAssets.slice(0, 50);
                 }
                 // Truncate text fields aggressively
                 for (const field of ['findingDescription', 'description', 'mitigation', 'notes']) {
@@ -248,6 +270,9 @@ class POAMDatabase {
         if (totalBytes / (1024 * 1024) > targetMB) {
             console.warn('📦 STORAGE CRITICAL: Dropping asset details and history');
             for (const p of formalPOAMs) {
+                // Preserve counts before dropping arrays
+                p.totalAffectedAssets = p.totalAffectedAssets || p.affectedAssets?.length || 0;
+                p.assetCount = p.totalAffectedAssets;
                 p.affectedAssets = [];
                 p.milestones = [];
                 p.statusHistory = [];
@@ -431,8 +456,8 @@ class POAMDatabase {
 
     transformAssetsWithMetadata(assets) {
         // Store only essential asset identification — drop verbose results/evidence to save space
-        // Cap at 25 sample assets per POAM — totalAffectedAssets preserves the real count
-        const capped = assets.length > 25 ? assets.slice(0, 25) : assets;
+        // Cap at 100 sample assets per POAM — totalAffectedAssets preserves the real count
+        const capped = assets.length > 100 ? assets.slice(0, 100) : assets;
         return capped.map(asset => ({
             id: asset.id || asset.assetId || asset.asset_id || asset.name || 'Unknown',
             name: asset.name || asset.assetName || asset.asset_name || asset.assetId || 'Unknown Asset',
@@ -1138,6 +1163,67 @@ class POAMDatabase {
             const request = index.getAll(scanId);
             request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
+        });
+    }
+    // ═══════════════════════════════════════════════════════════════
+    // SCOPE MANAGEMENT
+    // ═══════════════════════════════════════════════════════════════
+
+    async getAllScopes() {
+        if (!this.db) await this.init();
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(['scopes'], 'readonly');
+            const store = tx.objectStore('scopes');
+            const request = store.getAll();
+            request.onsuccess = () => resolve(request.result || []);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async getScope(scopeId) {
+        if (!this.db) await this.init();
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(['scopes'], 'readonly');
+            const store = tx.objectStore('scopes');
+            const request = store.get(scopeId);
+            request.onsuccess = () => resolve(request.result || null);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async saveScope(scope) {
+        if (!this.db) await this.init();
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(['scopes'], 'readwrite');
+            const store = tx.objectStore('scopes');
+            const request = store.put(scope);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async deleteScope(scopeId) {
+        if (!this.db) await this.init();
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(['scopes'], 'readwrite');
+            const store = tx.objectStore('scopes');
+            const request = store.delete(scopeId);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async getPOAMsByScope(scopeId) {
+        if (!this.db) await this.init();
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(['poams'], 'readonly');
+            const store = tx.objectStore('poams');
+            const allRequest = store.getAll();
+            allRequest.onsuccess = () => {
+                const results = (allRequest.result || []).filter(p => p.scopeId === scopeId);
+                resolve(results);
+            };
+            allRequest.onerror = () => reject(allRequest.error);
         });
     }
 }

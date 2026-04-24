@@ -516,4 +516,62 @@
                 </div>
             </div>
 
+            <!-- Scopes Settings Tab -->
+            <div id="settings-scopes" class="settings-tab hidden">
+                <div class="card" style="margin-bottom:16px">
+                    <div class="card-head">
+                        <h2 class="card-title flex items-center gap-2">
+                            <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                            Scope Rules
+                        </h2>
+                    </div>
+                    <div style="padding:16px 20px">
+                        <p class="text-sm text-slate-500 mb-4">Configure which scan field determines the import scope for each source. Scope isolates auto-resolve so one application's scan does not close another's POAMs.</p>
+                        <div id="scope-rules-container"></div>
+                        <button onclick="addScopeRule()" class="btn-sec" style="margin-top:12px">
+                            <i class="fas fa-plus" style="margin-right:6px"></i>Add Rule
+                        </button>
+                    </div>
+                </div>
+                <div class="card" style="margin-bottom:16px">
+                    <div class="card-head">
+                        <h2 class="card-title flex items-center gap-2">
+                            <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                            Registered Scopes
+                        </h2>
+                    </div>
+                    <div style="padding:16px 20px">
+                        <p class="text-sm text-slate-500 mb-4">Scopes are created automatically when findings are imported with a matching rule. Edit display names below.</p>
+                        <table class="w-full" id="scopes-table">
+                            <thead>
+                                <tr style="border-bottom:1px solid #E2E4E8">
+                                    <th class="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Display Name</th>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">ID</th>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Auto-created</th>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scopes-table-body">
+                                <tr><td colspan="4" class="px-3 py-4 text-center text-sm text-slate-400">No scopes registered yet</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-head">
+                        <h2 class="card-title flex items-center gap-2">
+                            <span class="w-2 h-5 bg-teal-700 rounded-full"></span>
+                            PCA Code Mapping
+                        </h2>
+                    </div>
+                    <div style="padding:16px 20px">
+                        <p class="text-sm text-slate-500 mb-4">Map PCA codes from Wiz tags to application scopes. When a tag contains a PCA code, findings are automatically routed to the mapped scope.</p>
+                        <div id="pca-mapping-container"></div>
+                        <button onclick="addPCAMapping()" class="btn-sec" style="margin-top:12px">
+                            <i class="fas fa-plus" style="margin-right:6px"></i>Add Mapping
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         </div>

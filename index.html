@@ -309,7 +309,15 @@
                         <p class="text-slate-500 mb-4">or click to browse</p>
                         <p class="text-xs text-slate-400">Supported formats: CSV</p>
                     </div>
-                    
+
+                    <div class="mt-4 text-left">
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Import Scope</label>
+                        <select id="upload-scope-select" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-700 focus:border-teal-500 focus:outline-none">
+                            <option value="">Auto-detect</option>
+                        </select>
+                        <p class="text-[11px] text-slate-400 mt-1">Auto-detect uses configured scope rules. Override to assign all findings to a specific scope.</p>
+                    </div>
+
                     <input type="file" id="scan-file-input" accept=".csv" class="hidden" onchange="handleScanFileSelect(event)">
                     
                     <div id="upload-progress" class="mt-4 hidden">
@@ -551,6 +559,10 @@
                 <a href="#" onclick="showSettingsTab('critical-assets')" class="sb-item sidebar-sublink" style="font-size:12.5px;padding-left:32px">
                     <i class="fas fa-shield-virus" style="width:13px;text-align:center;font-size:11px"></i>
                     <span>Critical Assets</span>
+                </a>
+                <a href="#" onclick="showSettingsTab('scopes')" class="sb-item sidebar-sublink" style="font-size:12.5px;padding-left:32px">
+                    <i class="fas fa-layer-group" style="width:13px;text-align:center;font-size:11px"></i>
+                    <span>Import Scopes</span>
                 </a>
                 <a href="#" onclick="confirmClearVulnerabilityData()" class="sb-item sidebar-sublink" style="font-size:12.5px;padding-left:32px;color:#DC2626">
                     <i class="fas fa-trash-alt" style="width:13px;text-align:center;font-size:11px"></i>
@@ -1696,6 +1708,9 @@
                         <select id="filter-poc" class="px-3 py-2 border border-slate-200 rounded-lg text-sm" onchange="applyPOAMFilters(this)">
                             <option value="">All POC Teams</option>
                         </select>
+                        <select id="filter-pca" class="px-3 py-2 border border-slate-200 rounded-lg text-sm" onchange="applyPOAMFilters(this)">
+                            <option value="">All PCA Codes</option>
+                        </select>
                         <button onclick="clearPOAMFilters()" class="px-3 py-2 text-sm text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg">Clear Filters</button>
                     </div>
                 </div>
@@ -1743,6 +1758,11 @@
                                 <i class="fas fa-comment mr-2"></i>Add Note
                             </button>
                             <button
+                                onclick="showBulkAssignScope()"
+                                class="px-4 py-2 bg-white border border-teal-300 text-teal-800 rounded-lg hover:bg-teal-50 text-sm font-medium">
+                                <i class="fas fa-layer-group mr-2"></i>Assign Scope
+                            </button>
+                            <button
                                 onclick="bulkPromoteToWorkbook()"
                                 class="px-4 py-2 bg-white border border-teal-300 text-teal-800 rounded-lg hover:bg-teal-50 text-sm font-medium">
                                 <i class="fas fa-arrow-up mr-2"></i>Promote Selected
@@ -1784,7 +1804,7 @@
                                 </th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">POAM ID</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Vulnerability</th>
-                                
+
                                 <!-- Asset Column with Range Filter -->
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase relative group">
                                     <div class="flex items-center gap-2 cursor-pointer" onclick="toggleColumnFilter('asset')">
@@ -3125,20 +3145,22 @@
     <script src="skills/base-skill.js"></script>
     <script src="skills/csv-parser-skill.js"></script>
     <script src="skills/sla-calculator-skill.js"></script>
-    <script src="skills/classification-skill.js"></script>
-    <script src="skills/grouping-skill.js"></script>
+    <script src="skills/classification-skill.js?v=20260424-1"></script>
+    <script src="skills/grouping-skill.js?v=20260423-2"></script>
     <script src="skills/poam-builder-skill.js"></script>
     <script src="skills/search-skill.js"></script>
     <script src="skills/skill-orchestrator.js"></script>
     <script src="skills-integration.js"></script>
     
     <!-- Consolidated Modules (v2.0.0) -->
-    <script src="modules/data-processing.js?v=20260418-6"></script>
+    <script src="modules/data-processing.js?v=20260424-1"></script>
+    <script src="modules/scope-registry.js?v=20260424-1"></script>
+    <script src="modules/scope-settings-ui.js?v=20260424-1"></script>
     <script src="modules/pipeline.js?v=20260419-quota2"></script>
     <script src="modules/pipeline-progress-ui.js"></script>
     <script src="modules/pipeline-logger.js"></script>
     <script src="modules/milestone-pipeline-orchestrator-v2.js"></script>
-    <script src="vulnerability-analysis-engine-v3.js"></script>
+    <script src="vulnerability-analysis-engine-v3.js?v=20260423-2"></script>
     <script src="modules/poam-ui.js?v=20260419-quota2"></script>
     <script src="modules/status-normalization.js"></script>
     <script src="modules/poam-activity-monitor.js"></script>
