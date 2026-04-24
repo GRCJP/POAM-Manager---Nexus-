@@ -525,31 +525,327 @@ class QualysProcessor {
 class WizProcessor {
     constructor() {
         this.name = 'Wiz';
-        // Wiz-specific headers and processing logic will go here
+        this.expectedHeaders = [
+            'WizURL', 'Name', 'CVEDescription', 'HasExploit', 'Score',
+            'Severity', 'FirstDetected', 'LastDetected', 'Remediation',
+            'AssetName', 'Status', 'OperatingSystem', 'IpAddresses'
+        ];
     }
 
     async process(csvContent, filename) {
-        console.log(`🔍 Processing Wiz CSV: ${filename}`);
-        // TODO: Implement Wiz-specific parsing logic
-        throw new Error('Wiz processor not yet implemented');
+        console.log(`Processing Wiz CSV: ${filename}`);
+
+        const parseResult = await new Promise((resolve, reject) => {
+            Papa.parse(csvContent, {
+                header: false,
+                skipEmptyLines: true,
+                complete: resolve,
+                error: reject
+            });
+        });
+
+        console.log(`Parsed ${parseResult.data.length} rows from Wiz CSV`);
+
+        const headerRowIndex = this.findHeaderRow(parseResult.data);
+        if (headerRowIndex === -1) {
+            console.error('Could not find Wiz header row. First 5 rows:', parseResult.data.slice(0, 5));
+            throw new Error('Could not find Wiz header row');
+        }
+
+        console.log(`Found Wiz headers at row ${headerRowIndex + 1}`);
+
+        const vulnerabilities = this.extractVulnerabilities(parseResult.data, headerRowIndex);
+
+        console.log(`Wiz Parse result: headerRow=${headerRowIndex + 1}, rowCount=${vulnerabilities.length}`);
+
+        return {
+            format: 'wiz',
+            source: 'Wiz',
+            vulnerabilities: vulnerabilities,
+            metadata: {
+                filename: filename,
+                headerRow: headerRowIndex + 1,
+                totalRows: parseResult.data.length,
+                processedAt: new Date().toISOString()
+            }
+        };
+    }
+
+    findHeaderRow(data) {
+        for (let i = 0; i < Math.min(10, data.length); i++) {
+            const row = data[i];
+            if (Array.isArray(row)) {
+                const rowStr = row.join('|');
+                // Match any Wiz export variant: must have AssetName + Severity + at least one Wiz-specific field
+                const hasAssetName = rowStr.includes('AssetName');
+                const hasSeverity = rowStr.includes('Severity');
+                const hasWizField = rowStr.includes('WizURL') || rowStr.includes('FindingStatus') || rowStr.includes('HasFix') || rowStr.includes('DetectionMethod');
+                if (hasAssetName && hasSeverity && hasWizField) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    extractVulnerabilities(data, headerRowIndex) {
+        const vulnerabilities = [];
+        const headers = data[headerRowIndex];
+
+        // Build header index map
+        const headerMap = {};
+        headers.forEach((h, i) => { headerMap[h.trim()] = i; });
+
+        let skippedEmpty = 0;
+        let skippedNoName = 0;
+        let parsed = 0;
+
+        for (let i = headerRowIndex + 1; i < data.length; i++) {
+            const row = data[i];
+            if (!row || row.length === 0) continue;
+
+            const hasAnyData = row.some(cell => cell && cell.toString().trim() !== '');
+            if (!hasAnyData) { skippedEmpty++; continue; }
+
+            // Build row object from headers
+            const obj = {};
+            for (const [header, idx] of Object.entries(headerMap)) {
+                obj[header] = (row[idx] || '').trim();
+            }
+
+            // Must have a vulnerability name
+            if (!obj['Name'] || obj['Name'].trim() === '') {
+                skippedNoName++;
+                continue;
+            }
+
+            const normalized = this.normalizeWizRow(obj);
+            if (normalized) {
+                vulnerabilities.push(normalized);
+                parsed++;
+            }
+        }
+
+        console.log(`Wiz CSV: parsed=${parsed}, skippedEmpty=${skippedEmpty}, skippedNoName=${skippedNoName}`);
+        return vulnerabilities;
+    }
+
+    normalizeWizRow(row) {
+        try {
+            const severity = this.normalizeSeverity(row['Severity']);
+            const description = row['Description'] || row['CVEDescription'] || '';
+            // Name is the CVE ID (e.g., "CVE-2026-32090")
+            // DetailedName is the software component (e.g., "Windows Server 2016", "vim.exe")
+            const cveName = row['Name'] || '';
+            const detailedName = row['DetailedName'] || '';
+            const cveList = this.extractCVEs(cveName);
+            const firstDetected = this.parseWizDate(row['FirstDetected']);
+            const lastDetected = this.parseWizDate(row['LastDetected']);
+
+            const osValue = (row['OperatingSystem'] || '').trim();
+            const hasExploit = (row['HasExploit'] || '').toLowerCase();
+            const hasFix = (row['HasFix'] || '').toLowerCase();
+            const status = (row['FindingStatus'] || row['Status'] || '').trim() || 'ACTIVE';
+
+            // Parse Tags JSON to extract PCA Code and other metadata
+            const parsedTags = this.parseWizTags(row['Tags']);
+
+            // Component name for grouping: DetailedName is the software component
+            // e.g., "Windows Server 2016", "Google Chrome", "vim"
+            const wizComponent = detailedName || cveName;
+
+            return {
+                // Core vulnerability data — title is the component, NOT the CVE ID
+                title: wizComponent || 'Unknown Vulnerability',
+                host: (row['AssetName'] || '').trim() || 'unknown',
+                operatingSystem: osValue,
+                asset: {
+                    hostname: (row['AssetName'] || '').trim() || 'unknown',
+                    assetId: (row['AssetID'] || '').trim(),
+                    ipv4: (row['IpAddresses'] || '').trim(),
+                    ipv6: '',
+                    operatingSystem: osValue,
+                    assetType: (row['AssetType'] || '').trim(),
+                    tags: parsedTags
+                },
+                ip: (row['IpAddresses'] || '').trim(),
+
+                // Risk and severity
+                severity: severity,
+                risk: severity,
+
+                // Vulnerability details
+                description: description || `${cveName}: ${wizComponent}`,
+                solution: row['Remediation'] || 'No remediation available',
+                results: '',
+
+                // CVSS scores
+                cvss: {
+                    v2: null,
+                    v3: this.parseScore(row['Score'])
+                },
+
+                // Identifiers
+                cve: cveList,
+                qid: [],
+                kb: [],
+                port: '',
+                protocol: '',
+
+                // Version info (Wiz-specific — current version and fix target)
+                currentVersion: row['Version'] || '',
+                fixedVersion: row['FixedVersion'] || '',
+
+                // Dates
+                firstDetected: firstDetected,
+                lastDetected: lastDetected,
+                resolvedAt: this.parseWizDate(row['ResolvedAt']),
+                publishedDate: null,
+                patchReleased: null,
+                scheduledCompletionDate: null,
+
+                // POC — extract from Tags if available
+                poc: parsedTags.PrimaryContact || null,
+                pocEmail: null,
+                timesDetected: 1,
+
+                // Classification
+                category: 'vulnerability',
+                threat: hasExploit === 'true' || hasExploit === 'yes' ? 'Known Exploit' : 'unknown',
+                type: 'vulnerability',
+
+                // Status and flags
+                status: status,
+                disabled: false,
+                ignored: false,
+                patchable: hasFix === 'true' || hasFix === 'yes',
+
+                // Scores
+                qvsScore: 0,
+                detectionAge: 0,
+                assetCriticalScore: 0,
+                truRiskScore: this.parseScore(row['Score']) || 0,
+
+                // Wiz-specific metadata
+                wizComponent: wizComponent,
+                locationPath: row['LocationPath'] || '',
+                detectionMethod: row['DetectionMethod'] || '',
+                wizSource: row['Source'] || '',
+                wizProjects: row['Projects'] || '',
+                wizLink: row['Link'] || '',
+                pcaCode: parsedTags['PCA Code'] || '',
+                cloudPlatform: row['CloudPlatform'] || '',
+                assetRegion: row['AssetRegion'] || '',
+                subscriptionName: row['SubscriptionName'] || '',
+
+                // Additional metadata
+                identifiers: {
+                    cve: cveList,
+                    qid: [],
+                    kb: []
+                },
+                text: cveName || '',
+                evidence: '',
+                sourceUrl: row['Link'] || row['WizURL'] || '',
+
+                // Raw data
+                raw: row
+            };
+        } catch (error) {
+            console.warn('Error normalizing Wiz row:', error, row);
+            return null;
+        }
+    }
+
+    extractCVEs(cveField) {
+        if (!cveField) return [];
+        const matches = cveField.match(/CVE-\d{4}-\d+/g);
+        return matches || [];
+    }
+
+    normalizeSeverity(severityField) {
+        if (!severityField) return 'unknown';
+        switch (severityField.toLowerCase().trim()) {
+            case 'critical': return 'critical';
+            case 'high': return 'high';
+            case 'medium': return 'medium';
+            case 'low': return 'low';
+            case 'info':
+            case 'informational': return 'low';
+            default: return 'unknown';
+        }
+    }
+
+    parseWizDate(dateStr) {
+        if (!dateStr || dateStr.trim() === '') return null;
+        try {
+            const d = new Date(dateStr);
+            return isNaN(d.getTime()) ? null : d.toISOString();
+        } catch (e) {
+            return null;
+        }
+    }
+
+    parseWizTags(tagsStr) {
+        if (!tagsStr || tagsStr.trim() === '') return {};
+        try {
+            // Tags field is JSON: {"Team":"...", "PCA Code":"FE440", ...}
+            const parsed = JSON.parse(tagsStr);
+            if (typeof parsed !== 'object' || parsed === null) return {};
+
+            // Normalize PCA code key variations: "PCA Code", "PCACode", "PCA code", "pca_code", etc.
+            // Find whichever key matches and copy to a canonical "PCA Code" key
+            if (!parsed['PCA Code']) {
+                for (const key of Object.keys(parsed)) {
+                    if (key.toLowerCase().replace(/[\s_-]/g, '') === 'pcacode') {
+                        parsed['PCA Code'] = parsed[key];
+                        break;
+                    }
+                }
+            }
+
+            return parsed;
+        } catch (e) {
+            // If not valid JSON, return as-is in a generic key
+            return { raw: tagsStr };
+        }
+    }
+
+    parseScore(scoreStr) {
+        if (!scoreStr) return null;
+        const score = parseFloat(scoreStr);
+        return isNaN(score) ? null : score;
     }
 }
 
 // Auto-detects CSV format
 class AutoDetector {
     detect(csvContent) {
-        // Look for Qualys-specific headers
-        if (csvContent.includes('CVE-Description') && csvContent.includes('QID') && csvContent.includes('Asset IPV4')) {
-            return 'qualys';
-        }
-        
-        // Look for Wiz-specific headers
-        if (csvContent.includes('wiz') || csvContent.includes('cloud')) {
+        // Look for Wiz-specific headers (check first — more specific match)
+        if (csvContent.includes('AssetName') && csvContent.includes('FindingStatus')) {
             return 'wiz';
         }
-        
-        // Default to Qualys for now
+        if (csvContent.includes('WizURL') && csvContent.includes('AssetName')) {
+            return 'wiz';
+        }
+
+        // Look for Qualys-specific headers
+        if (csvContent.includes('QID') && csvContent.includes('Title') && csvContent.includes('Severity')) {
+            return 'qualys';
+        }
+
+        // Default to Qualys
         return 'qualys';
+    }
+
+    async process(csvContent, filename) {
+        const format = this.detect(csvContent);
+        console.log(`Auto-detected format: ${format}`);
+        const processors = {
+            qualys: new QualysProcessor(),
+            wiz: new WizProcessor()
+        };
+        return await processors[format].process(csvContent, filename);
     }
 }
 
