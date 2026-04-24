@@ -450,7 +450,16 @@ class POAMDatabase {
             promotedToWorkbook: poam.promotedToWorkbook || false,
             promotedDate: poam.promotedDate || null,
             promotedSystemId: poam.promotedSystemId || null,
-            promotedWorkbookItemId: poam.promotedWorkbookItemId || null
+            promotedWorkbookItemId: poam.promotedWorkbookItemId || null,
+            // Scope and tagging
+            scopeId: poam.scopeId || null,
+            scopeSource: poam.scopeSource || null,
+            pcaCode: poam.pcaCode || '',
+            wizTags: cap(poam.wizTags || '', 500),
+            wizProjects: cap(poam.wizProjects || '', 200),
+            subscriptionName: cap(poam.subscriptionName || '', 200),
+            cloudPlatform: poam.cloudPlatform || '',
+            assetRegion: poam.assetRegion || ''
         };
     }
 
