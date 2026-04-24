@@ -949,7 +949,7 @@ function generateStatusSummary(poams, scanRuns) {
             'POAM ID': p.id, 'Vulnerability': p.vulnerabilityName || p.title || '', 'Status': p.findingStatus || p.status || '',
             'Risk Level': p.riskLevel || p.risk || '', 'Control Family': p.controlFamily || '', 'POC': p.poc || '',
             'Due Date': p.updatedScheduledCompletionDate || p.dueDate || '', 'Created': p.createdDate || '',
-            'Scope': p.scopeDisplayName || p.scopeId || '', 'PCA Code': p.pcaCode || '', 'Tags': formatTagsForExport(p)
+            'Tags': formatTagsForExport(p)
         }))
     };
 }
@@ -984,7 +984,7 @@ function generateQuarterlyCompliance(poams, scanRuns) {
             'Risk': p.riskLevel || p.risk || '', 'Control Family': p.controlFamily || '', 'POC': p.poc || '',
             'Initial Due': p.initialScheduledCompletionDate || '', 'Current Due': p.updatedScheduledCompletionDate || p.dueDate || '',
             'Actual Completion': p.actualCompletionDate || '', 'SLA Status': new Date(p.updatedScheduledCompletionDate || p.dueDate) >= now ? 'Within SLA' : 'Outside SLA',
-            'Scope': p.scopeDisplayName || p.scopeId || '', 'PCA Code': p.pcaCode || '', 'Tags': formatTagsForExport(p)
+            'Tags': formatTagsForExport(p)
         }))
     };
 }
@@ -1047,7 +1047,7 @@ function generateRiskAssessment(poams) {
             'POAM ID': p.id, 'Vulnerability': p.vulnerabilityName || '', 'Risk': p.riskLevel || p.risk || '',
             'Status': p.findingStatus || p.status || '', 'Age (days)': p.createdDate ? Math.round((now - new Date(p.createdDate)) / 86400000) : '',
             'Due Date': p.updatedScheduledCompletionDate || p.dueDate || '',
-            'Scope': p.scopeDisplayName || p.scopeId || '', 'PCA Code': p.pcaCode || '', 'Tags': formatTagsForExport(p)
+            'Tags': formatTagsForExport(p)
         }))
     };
 }
